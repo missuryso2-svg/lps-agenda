@@ -1,0 +1,466 @@
+# LPS Agenda
+
+Fundação técnica do **LPS Agenda**, um SaaS multi-tenant de agenda e gestão para barbearias, desenvolvido pela LPS Solutions.
+
+A versão atual entrega a base de produto: identidade visual, site institucional, autenticação, onboarding, painel administrativo, página pública de demonstração, banco PostgreSQL versionado e políticas de isolamento por barbearia.
+
+> **Estado:** fundação `v0.1`. A interface e o schema estão prontos para evoluir, mas cobrança, agendamento completo, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
+
+---
+
+## O que está pronto
+
+- Landing page institucional em pt-BR, com identidade preto/grafite/dourado, tema claro/escuro e layout responsivo.
+- Autenticação com Supabase: login, cadastro, confirmação de e-mail, recuperação e redefinição de senha.
+- Onboarding transacional: criação da barbearia e do vínculo `owner` na mesma operação.
+- Dashboard com troca de barbearia, navegação por papel, topbar, sidebar desktop, menu mobile e estados de carregamento/erro/vazio.
+- Páginas de visão geral, agenda, clientes, serviços, equipe, financeiro, plano e configurações.
+- Página pública de demonstração `/barbearia/barbearia-aurora`, estática e claramente identificada como fictícia.
+- Páginas de termos, privacidade, 404, erro global e aviso de configuração obrigatória.
+- Migrações SQL versionadas para 17 tabelas, enums, funções, triggers, grants e RLS.
+- Testes estáticos de schema, RLS, segredos, validações, permissões e formatação.
+
+## O que é protótipo ou está fora desta etapa
+
+- **Pagamentos:** não há chamada ao Asaas. As tabelas `plans`, `subscriptions`, `payments` e `webhook_events` existem, mas nenhuma cobrança é criada.
+- **Agendamento completo:** o painel lê agendamentos reais, porém criação, edição, cancelamento e cálculo de disponibilidade ainda não estão habilitados.
+- **Convites e gestão de equipe:** o schema suporta `owner` e `staff`, mas o fluxo de convite ainda não existe.
+- **Página pública por tenant:** a única página pública é a demonstração estática da Barbearia Aurora. Ela não consulta o banco nem reserva horários.
+- **Notificações, uploads e webhooks:** as tabelas e colunas estão preparadas; não há envio, armazenamento ou processamento real.
+- **Administração global:** o papel `platform_admin` eleva o acesso dentro de uma barbearia, mas não existe um painel global separado.
+
+---
+
+## Stack
+
+| Camada | Tecnologia |
+| --- | --- |
+| Framework | Next.js `16.4.5` com App Router, Turbopack e Server Components |
+| UI | React `19.3.0`, Tailwind CSS `4`, shadcn/ui, Radix UI, Lucide React |
+| Tipos | TypeScript `5` em modo `strict` |
+| Formulários | React Hook Form + `@hookform/resolvers` + Zod `4` |
+| Banco e Auth | Supabase (PostgreSQL, Auth e Row Level Security) |
+| Testes | Vitest `5` |
+| Lint | ESLint `9` + `eslint-config-next` |
+
+## Requisitos
+
+- Node.js **20.9 ou superior** (validado nesta fundação com Node `26.13.0`).
+- npm **10 ou superior** (validado com npm `11.20.0`).
+- Docker Desktop apenas se for usar o Supabase local.
+- Projeto Supabase local ou na nuvem para testar autenticação e dados reais.
+
+Sem variáveis de ambiente, a landing, a demonstração, as páginas legais e o build continuam funcionando. Login, cadastro, onboarding e dashboard exibem uma tela de configuração obrigatória em vez de quebrar.
+
+---
+
+## Como rodar
+
+### 1. Instalar dependências
+
+```bash
+npm install
+```
+
+### 2. Criar o arquivo de ambiente
+
+Copie `.env.example` para `.env.local` e preencha as variáveis:
+
+```bash
+# Windows PowerShell
+Copy-Item .env.example .env.local
+
+# macOS/Linux
+cp .env.example .env.local
+```
+
+O `.env.example` contém exatamente as seis variáveis necessárias, sem valores reais:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+ASAAS_API_KEY=
+ASAAS_WEBHOOK_TOKEN=
+NEXT_PUBLIC_APP_URL=
+```
+
+### 3. Subir o Supabase
+
+#### Opção A — Supabase local (recomendado para desenvolvimento)
+
+Requer Docker Desktop em execução.
+
+```bash
+npx supabase start
+npx supabase db reset
+npx supabase status
+```
+
+Use a `API URL` e a `anon key` retornadas por `supabase status`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key local>
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+Serviços locais:
+
+| Serviço | Endereço |
+| --- | --- |
+| API Supabase | `http://127.0.0.1:54321` |
+| PostgreSQL | `127.0.0.1:54322` |
+| Supabase Studio | `http://127.0.0.1:54323` |
+| Inbucket (e-mails de teste) | `http://127.0.0.1:54324` |
+
+O `config.toml` local já define:
+
+- confirmação de e-mail obrigatória;
+- senha mínima de 8 caracteres com letras e dígitos;
+- `auto_expose_new_tables = false`;
+- seed desabilitado;
+- URLs de callback para `http://localhost:3000/auth/callback` e `http://127.0.0.1:3000/auth/callback`.
+
+Os e-mails de confirmação e recuperação enviados localmente aparecem no Inbucket.
+
+#### Opção B — Supabase na nuvem
+
+1. Crie um projeto no [Supabase](https://supabase.com/).
+2. Aplique as migrações com a CLI:
+
+```bash
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+```
+
+Ou execute os arquivos de `supabase/migrations/` **em ordem numérica** no SQL Editor do projeto.
+
+3. Copie a URL do projeto e a chave `anon` em **Project Settings → API**.
+4. Em **Authentication → URL Configuration**, adicione as URLs de redirecionamento:
+
+```text
+http://localhost:3000/auth/callback
+https://seu-dominio.com/auth/callback
+```
+
+5. Para produção, configure um provedor de SMTP confiável antes de liberar cadastros.
+
+### 4. Iniciar o app
+
+```bash
+npm run dev
+```
+
+Abra [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Variáveis de ambiente
+
+| Variável | Exposição | Uso |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Pública | URL do projeto Supabase usada no navegador e no servidor. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Pública | Chave `anon`; o acesso real é limitado pela RLS. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Somente servidor** | Cliente administrativo, jobs e futuras rotas de webhook. Ignora RLS; nunca deve ir ao navegador. |
+| `ASAAS_API_KEY` | **Somente servidor** | Reservada para a futura integração de cobrança. Não é usada nesta versão. |
+| `ASAAS_WEBHOOK_TOKEN` | **Somente servidor** | Reservada para validação de webhooks futuros. Não é usada nesta versão. |
+| `NEXT_PUBLIC_APP_URL` | Pública | URL base para links de confirmação e recuperação de senha. |
+
+Regras importantes:
+
+- Nunca crie uma variável `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` nem exponha chaves `SUPABASE_SERVICE_ROLE_KEY` ou `ASAAS_*` em Client Components.
+- O cliente administrativo fica em `src/lib/supabase/admin.ts`, marcado com `server-only`. Ele ainda não é chamado por nenhuma rota.
+- A chave `anon` é pública por design; a proteção dos dados depende das políticas RLS.
+
+---
+
+## Migrações
+
+As migrações estão em `supabase/migrations/` e foram escritas para um banco **novo**, na ordem abaixo. Não são idempotentes: não as execute duas vezes manualmente no mesmo banco.
+
+| Arquivo | Conteúdo |
+| --- | --- |
+| `20261108090000_extensions_and_enums.sql` | Extensões `pgcrypto`/`btree_gist` e enums de status, papéis, cobrança, notificações e webhooks. |
+| `20261108090100_core_tables.sql` | `profiles`, `barbershops`, `barbershop_members`, `barbers`, `services`, `barber_services`, `business_hours`, `barber_working_hours` e `customers`. |
+| `20261108090200_scheduling_tables.sql` | `blocked_slots`, `appointments`, índices e restrição de exclusão contra sobreposição por profissional. |
+| `20261108090300_billing_and_operations.sql` | `plans`, `subscriptions`, `payments`, `webhook_events`, `notifications` e `audit_logs`. |
+| `20261108090400_functions_and_triggers.sql` | Helpers de autorização, criação automática de perfil, proteção de vínculos, auditoria, onboarding transacional e `updated_at`. |
+| `20261108090500_rls_policies.sql` | Habilitação de RLS e políticas por tabela. |
+| `20261108090600_grants_and_hardening.sql` | Grants explícitos, revogação de acesso anônimo e privilégios padrão restritivos. |
+
+Comandos úteis:
+
+```bash
+# Recriar o banco local e aplicar todas as migrações
+npx supabase db reset
+
+# Enviar migrações para o projeto vinculado
+npx supabase db push
+
+# Ver status dos serviços locais
+npx supabase status
+```
+
+> **Validação:** neste ambiente não havia Docker, PostgreSQL nem projeto Supabase configurado. As migrações foram revisadas e validadas por testes estáticos, mas **não foram aplicadas em um banco real**. O primeiro passo da próxima etapa é rodar `supabase db reset` ou `db push` e testar as políticas com dois tenants distintos.
+
+---
+
+## Modelo de dados
+
+São 17 tabelas no schema `public`:
+
+- **Identidade:** `profiles`.
+- **Tenant:** `barbershops`, `barbershop_members`.
+- **Equipe e catálogo:** `barbers`, `services`, `barber_services`.
+- **Horários:** `business_hours`, `barber_working_hours`, `blocked_slots`.
+- **Operação:** `customers`, `appointments`.
+- **Cobrança:** `plans`, `subscriptions`, `payments`, `webhook_events`.
+- **Comunicação e auditoria:** `notifications`, `audit_logs`.
+
+Decisões relevantes:
+
+- Todas as chaves primárias são `uuid`.
+- Tabelas mutáveis usam `created_at` e `updated_at` com trigger de atualização.
+- Todo dado operacional referencia `barbershop_id`.
+- As FKs compostas incluem `barbershop_id` para impedir que um agendamento misture cliente, profissional e serviço de barbearias diferentes.
+- `appointments` usa uma restrição `exclude using gist` para bloquear sobreposição de horário do mesmo profissional nos status `scheduled`, `confirmed` e `in_progress`.
+- `barbershop_members` tem índice único de proprietário ativo por barbearia e trigger que impede ficar sem owner.
+- `payments.appointment_id` usa `on delete set null (appointment_id)`, recurso do PostgreSQL 15+. O projeto local está configurado com PostgreSQL 17.
+
+---
+
+## Segurança e RLS
+
+Todas as tabelas do schema `public` têm Row Level Security habilitado. A regra central é: **um usuário autenticado só acessa dados de barbearias das quais é membro ativo**.
+
+### Administrador da plataforma
+
+O papel global é lido exclusivamente de `auth.jwt() -> 'app_metadata' ->> 'lps_role'`. O valor esperado é:
+
+```json
+{ "lps_role": "platform_admin" }
+```
+
+Nunca use `user_metadata` para isso: esse campo pode ser alterado pelo próprio usuário. Para promover uma conta já existente, execute no SQL Editor com uma conta administrativa confiável:
+
+```sql
+update auth.users
+set raw_app_meta_data =
+  coalesce(raw_app_meta_data, '{}'::jsonb)
+  || jsonb_build_object('lps_role', 'platform_admin')
+where email = 'admin@exemplo.com';
+```
+
+Depois, saia e entre novamente (ou renove o token) para que o novo JWT inclua a claim. Para remover:
+
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) - 'lps_role'
+where email = 'admin@exemplo.com';
+```
+
+### Matriz resumida de acesso
+
+| Tabela | Leitura | Escrita |
+| --- | --- | --- |
+| `profiles` | Próprio perfil, colegas de barbearia e admin | Próprio `full_name`, `phone`, `avatar_url`; admin |
+| `barbershops` | Membro ativo ou admin | Owner ou admin (colunas públicas) |
+| `barbershop_members` | Membro ativo ou admin | Owner pode inserir `staff`, atualizar papel/atividade e remover; admin |
+| `barbers`, `services`, `barber_services`, `business_hours`, `barber_working_hours`, `blocked_slots` | Membro ativo ou admin | Owner ou admin |
+| `customers`, `appointments` | Membro ativo ou admin | Membro ativo cria/edita; exclusão apenas owner/admin |
+| `plans` | Qualquer autenticado | Admin da plataforma |
+| `subscriptions`, `payments` | Owner ou admin | Admin da plataforma; service role para jobs |
+| `webhook_events` | Admin da plataforma | Service role |
+| `notifications` | Própria notificação ou admin | Própria notificação; inserção via service role |
+| `audit_logs` | Owner da barbearia ou admin | Apenas triggers internos; sem DML direto para usuários |
+
+### Proteções adicionais
+
+- O schema `private` concentra helpers `security definer` com `search_path = ''`; ele não é exposto pela Data API.
+- O trigger de vínculos impede mover membership entre barbearias, trocar o usuário e alterar o próprio papel.
+- Um trigger de constraint garante ao menos um `owner` ativo por barbearia.
+- Triggers de auditoria registram alterações em memberships, agendamentos e assinaturas.
+- `anon` não recebe acesso a nenhuma tabela de negócio. A demonstração pública é estática e não consulta o banco.
+- Grants são explícitos; privilégios padrão para tabelas, sequences e funções futuras foram revogados de `anon` e `authenticated`.
+- A política de recuperação de senha responde de forma genérica, evitando enumeração de e-mails.
+- O callback de autenticação aceita `code` e `token_hash`/`verifyOtp` e valida o caminho de retorno com `safeNextPath`.
+- Respostas HTTP enviam `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e `Permissions-Policy`; `Strict-Transport-Security` é adicionado em produção.
+
+### Limitações de segurança conhecidas
+
+- `profiles` é compartilhado entre membros da mesma barbearia, incluindo e-mail e telefone quando preenchidos. Isso é intencional para a página de equipe, mas deve ser revisto se esses dados passarem a ser sensíveis.
+- O cliente administrativo com service role existe, mas não está conectado a nenhuma rota. Quando for usado em webhooks, valide assinatura/token, idempotência e origem antes de qualquer escrita.
+- Ainda não há rate limiting de aplicação para cadastro, login ou criação de barbearias. Configure limites no Supabase e/ou em um proxy de borda antes de produção.
+- Não há teste automatizado com banco real nem teste E2E de RLS. A validação atual é estática.
+
+---
+
+## Arquitetura
+
+```text
+src/
+  app/
+    (auth)/                 login, cadastro, recuperar-senha, redefinir-senha
+    auth/callback/          troca de code/token_hash por sessão
+    dashboard/              visão geral, agenda, clientes, serviços, equipe,
+                            financeiro, plano e configurações
+    onboarding/             criação transacional da barbearia
+    barbearia/[slug]/       demonstração pública estática
+    termos/, privacidade/   páginas legais
+  components/
+    ui/                     componentes shadcn/ui
+    dashboard/              shell, sidebar, topbar, cards, tabelas e estados
+    marketing/              header, footer e layout legal
+    brand/                  logo e alternador de tema
+    forms/                  campos e mensagens reutilizáveis
+  features/
+    auth/                   actions, mensagens e formulários
+    barbershop/             actions de criação, troca e edição
+    onboarding/             formulário de primeiro acesso
+    dashboard/              consultas do painel
+    settings/               formulário de configurações
+    marketing/              landing page
+    public-barbershop/      dados fictícios da demonstração
+  lib/
+    auth/                   sessão, DAL e permissões
+    supabase/               clients browser/server/admin/proxy
+    validation/             schemas Zod
+    env/                    leitura e validação de ambiente
+    format.ts, slug.ts, ... helpers
+  types/database.ts         tipos do schema Supabase
+  proxy.ts                  renovação de sessão e checagens otimistas
+supabase/
+  config.toml
+  migrations/               sete migrações versionadas
+tests/                      Vitest (schema, RLS, segredos, validações)
+```
+
+Decisões de implementação:
+
+- Server Components são o padrão; Client Components existem apenas para formulários, menus, tema e interações.
+- `src/proxy.ts` renova a sessão e faz checagens otimistas. A autorização real acontece na DAL (`requireDashboardContext`/`requireOwnerDashboardContext`), nas Server Actions e na RLS.
+- Páginas de autenticação, onboarding e dashboard usam `dynamic = "force-dynamic"` para não depender de sessão em build estático.
+- A demonstração pública usa `dynamicParams = false` e apenas o slug `barbearia-aurora`, com `robots: noindex`.
+- O botão de agendamento da demo e os recursos futuros usam o modal `PrototypeAction`, deixando explícito que nenhum dado é criado.
+
+### Rotas
+
+| Rota | Descrição |
+| --- | --- |
+| `/` | Landing page institucional |
+| `/login` | Entrada de usuários |
+| `/cadastro` | Criação de conta com confirmação de e-mail |
+| `/recuperar-senha` | Solicitação de link de recuperação |
+| `/redefinir-senha` | Definição de nova senha após recuperação |
+| `/onboarding` | Criação da primeira barbearia |
+| `/dashboard` | Visão geral da barbearia ativa |
+| `/dashboard/agenda` | Agenda do dia e próximos horários |
+| `/dashboard/clientes` | Base de clientes e busca |
+| `/dashboard/servicos` | Catálogo de serviços |
+| `/dashboard/equipe` | Membros e profissionais |
+| `/dashboard/financeiro` | Indicadores financeiros (owner/admin) |
+| `/dashboard/plano` | Plano e assinatura (owner/admin) |
+| `/dashboard/configuracoes` | Dados da barbearia (owner/admin) |
+| `/barbearia/barbearia-aurora` | Demonstração pública fictícia |
+| `/termos`, `/privacidade` | Páginas legais |
+
+---
+
+## Scripts
+
+| Comando | Função |
+| --- | --- |
+| `npm run dev` | Servidor de desenvolvimento com Turbopack. |
+| `npm run build` | Build de produção. |
+| `npm run start` | Servidor de produção após o build. |
+| `npm run lint` | ESLint em todo o projeto. |
+| `npm run typecheck` | Verificação TypeScript sem emissão. |
+| `npm test` | Testes Vitest em modo run. |
+| `npm run test:watch` | Testes em modo watch. |
+
+---
+
+## Validação executada
+
+Resultados da última verificação local:
+
+```text
+npm run typecheck  ✅
+npm run lint       ✅
+npm test           ✅ 42 testes em 4 arquivos
+npm run build      ✅
+```
+
+Também foram verificados manualmente no navegador: landing page, login em estado sem configuração, demonstração pública, página 404 e abertura do modal de protótipo. Não houve erros de console nas páginas válidas. Os headers de segurança foram confirmados na resposta HTTP do servidor local.
+
+Os testes cobrem:
+
+- presença e ordem das migrações;
+- RLS habilitado em todas as 17 tabelas;
+- isolamento por `barbershop_id`;
+- reconhecimento de admin apenas via `app_metadata`;
+- função de onboarding transacional;
+- restrição de sobreposição de agenda;
+- ausência de acesso anônimo às tabelas;
+- `.env.example` com exatamente seis variáveis vazias;
+- cliente administrativo marcado como `server-only`;
+- ausência de segredos em Client Components;
+- validações de auth, barbearia, permissões e formatação.
+
+O que **não** foi testado:
+
+- aplicação real das migrações em PostgreSQL;
+- login, cadastro e recuperação com Supabase real;
+- políticas RLS com usuários de duas barbearias;
+- fluxos E2E no navegador;
+- integração Asaas, webhooks, e-mails de produção e jobs.
+
+---
+
+## Limitações conhecidas
+
+1. **Sem banco real nesta entrega.** Não havia Docker, `psql` ou projeto Supabase configurado no ambiente. As migrações precisam ser aplicadas e validadas em um projeto de desenvolvimento.
+2. **Sem pagamentos.** As tabelas e a UI financeira são uma fundação; não há cobrança, assinatura ativa, boleto, Pix ou cartão.
+3. **Sem agendamento completo.** A agenda lê registros existentes; criação/edição/cancelamento e cálculo de disponibilidade ficam para a próxima etapa.
+4. **Sem convites.** A equipe pode ser lida, mas não há fluxo de convite, aceite ou reenvio.
+5. **Sem página pública real por tenant.** A demo é estática, com dados fictícios, e não reserva horários.
+6. **Sem uploads.** `logo_url` e `cover_url` existem no schema, mas não há storage configurado.
+7. **Sem notificações reais.** A tabela `notifications` existe; não há envio por e-mail, WhatsApp ou push.
+8. **Sem painel global de plataforma.** O `platform_admin` eleva o acesso dentro de uma barbearia; não há uma área separada para administrar todos os tenants.
+9. **Transferência de propriedade limitada.** Há um único owner ativo por barbearia; a troca exige intervenção administrativa/manual, e a exclusão do único owner é bloqueada pelo trigger de proteção.
+10. **Dependência de PostgreSQL 15+.** O `on delete set null (appointment_id)` não funciona em versões anteriores.
+11. **Sem versionamento Git.** O ambiente não tinha Git instalado; nenhum commit foi criado.
+
+---
+
+## Próximos passos recomendados
+
+1. **Provisionar o Supabase** e aplicar as sete migrações em um projeto de desenvolvimento.
+2. **Testar RLS com dois tenants**: criar duas barbearias, dois owners e um staff; tentar leituras e escritas cruzadas via API.
+3. **Implementar convites e gestão de equipe**, incluindo aceite, reenvio e revogação.
+4. **Implementar o agendamento completo**, com disponibilidade por profissional, bloqueios, timezone e transições de status.
+5. **Conectar o Asaas no servidor**, com webhook idempotente, validação de token e registro em `webhook_events`.
+6. **Criar a página pública real por tenant**, com slug dinâmico, serviços, equipe e agendamento.
+7. **Adicionar testes E2E** (Playwright ou similar) e um pipeline de CI com typecheck, lint, testes e build.
+8. **Configurar observabilidade e limites**: logs, alertas, rate limiting, backup e política de retenção.
+
+---
+
+## Solução de problemas
+
+| Sintoma | Causa provável | Ação |
+| --- | --- | --- |
+| “Supabase não configurado” | `.env.local` ausente ou incompleto | Preencha `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` e reinicie o dev server. |
+| Cadastro não envia e-mail | SMTP local/cloud não configurado | Local: abra o Inbucket em `http://127.0.0.1:54324`. Cloud: configure SMTP. |
+| Link de confirmação cai em erro | URL de callback fora da allow-list | Adicione `.../auth/callback` em Authentication → URL Configuration. |
+| `create_barbershop` não existe | Migrações não aplicadas | Rode `npx supabase db reset` ou `db push`. |
+| Admin não é reconhecido | Claim ausente no JWT ou papel em `user_metadata` | Use `raw_app_meta_data.lps_role` e faça login novamente. |
+| `docker` não encontrado | Docker Desktop não instalado/aberto | Instale/abra o Docker ou use um projeto Supabase na nuvem. |
+| Build falha por ambiente | Variáveis públicas inválidas | Verifique se a URL é válida e a chave `anon` está preenchida. |
+
+---
+
+## Licença e uso
+
+Projeto proprietário da **LPS Solutions**. Uso interno e evolução restrita à equipe autorizada.

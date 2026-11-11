@@ -1,0 +1,67 @@
+import type { Metadata } from "next";
+
+import { ConfigRequiredPage } from "@/components/config-required-page";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { isCurrentUserPlatformAdmin, requireDashboardContext } from "@/lib/auth/dal";
+import { getSupabasePublicEnv } from "@/lib/env/public";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Painel",
+    template: "%s · LPS Agenda",
+  },
+  description:
+    "Painel de gestão da sua barbearia: agenda, clientes, serviços, equipe e financeiro.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  if (!getSupabasePublicEnv()) {
+    return (
+      <ConfigRequiredPage
+        title="Conecte o Supabase para abrir o painel"
+        description="O painel consulta sessão, barbearias e dados operacionais no Supabase. Sem um projeto configurado, esta área permanece bloqueada com segurança."
+      />
+    );
+  }
+
+  const context = await requireDashboardContext();
+  const { user, profile, memberships, active } = context;
+
+  const displayName =
+    profile?.full_name?.trim() ||
+    (typeof user.user_metadata?.full_name === "string"
+      ? user.user_metadata.full_name.trim()
+      : "") ||
+    user.email?.split("@")[0] ||
+    "Usuário";
+
+  const membershipSummaries = memberships.map((membership) => ({
+    id: membership.barbershop_id,
+    name: membership.barbershop.name,
+    slug: membership.barbershop.slug,
+    role: membership.role,
+  }));
+
+  return (
+    <DashboardShell
+      userName={displayName}
+      userEmail={user.email ?? "E-mail não informado"}
+      memberships={membershipSummaries}
+      activeBarbershopId={active.barbershop_id}
+      role={active.role}
+      isPlatformAdmin={isCurrentUserPlatformAdmin(user)}
+    >
+      {children}
+    </DashboardShell>
+  );
+}

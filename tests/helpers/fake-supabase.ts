@@ -10,7 +10,9 @@ type Filter =
   | { kind: "lt"; column: string; value: unknown }
   | { kind: "gt"; column: string; value: unknown }
   | { kind: "lte"; column: string; value: unknown }
-  | { kind: "gte"; column: string; value: unknown };
+  | { kind: "gte"; column: string; value: unknown }
+  | { kind: "ilike"; column: string; pattern: string }
+  | { kind: "or"; filters: Filter[] };
 
 type QueryResult = {
   data: FakeRow[] | FakeRow | null;
@@ -43,33 +45,84 @@ function compareValues(left: unknown, right: unknown): number {
   return leftString < rightString ? -1 : 1;
 }
 
-function matchesFilters(row: FakeRow, filters: Filter[]): boolean {
-  return filters.every((filter) => {
-    if (filter.kind === "eq") {
-      return row[filter.column] === filter.value;
+function ilikeToRegExp(pattern: string): RegExp {
+  const escaped = pattern
+    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/%/g, ".*")
+    .replace(/_/g, ".");
+
+  return new RegExp(`^${escaped}$`, "i");
+}
+
+function parseOrExpression(expression: string): Filter {
+  const filters: Filter[] = [];
+
+  for (const part of expression.split(",")) {
+    const trimmed = part.trim();
+    const firstDot = trimmed.indexOf(".");
+    const secondDot = trimmed.indexOf(".", firstDot + 1);
+
+    if (firstDot <= 0 || secondDot <= firstDot) {
+      continue;
     }
 
-    if (filter.kind === "in") {
-      return filter.values.includes(row[filter.column]);
-    }
+    const column = trimmed.slice(0, firstDot);
+    const operator = trimmed.slice(firstDot + 1, secondDot);
+    const value = trimmed.slice(secondDot + 1);
 
-    if (row[filter.column] === undefined || row[filter.column] === null) {
+    if (operator === "ilike") {
+      filters.push({ kind: "ilike", column, pattern: value });
+    } else if (operator === "eq") {
+      filters.push({ kind: "eq", column, value });
+    }
+  }
+
+  return { kind: "or", filters };
+}
+
+function matchesFilter(row: FakeRow, filter: Filter): boolean {
+  if (filter.kind === "eq") {
+    return row[filter.column] === filter.value;
+  }
+
+  if (filter.kind === "in") {
+    return filter.values.includes(row[filter.column]);
+  }
+
+  if (filter.kind === "or") {
+    return filter.filters.some((item) => matchesFilter(row, item));
+  }
+
+  if (filter.kind === "ilike") {
+    const value = row[filter.column];
+
+    if (value === undefined || value === null) {
       return false;
     }
 
-    const comparison = compareValues(row[filter.column], filter.value);
+    return ilikeToRegExp(filter.pattern).test(String(value));
+  }
 
-    switch (filter.kind) {
-      case "lt":
-        return comparison < 0;
-      case "gt":
-        return comparison > 0;
-      case "lte":
-        return comparison <= 0;
-      case "gte":
-        return comparison >= 0;
-    }
-  });
+  if (row[filter.column] === undefined || row[filter.column] === null) {
+    return false;
+  }
+
+  const comparison = compareValues(row[filter.column], filter.value);
+
+  switch (filter.kind) {
+    case "lt":
+      return comparison < 0;
+    case "gt":
+      return comparison > 0;
+    case "lte":
+      return comparison <= 0;
+    case "gte":
+      return comparison >= 0;
+  }
+}
+
+function matchesFilters(row: FakeRow, filters: Filter[]): boolean {
+  return filters.every((filter) => matchesFilter(row, filter));
 }
 
 export class FakeSupabase {
@@ -124,6 +177,8 @@ class FakeQuery implements PromiseLike<QueryResult> {
   private filters: Filter[] = [];
   private orderings: Array<{ column: string; ascending: boolean }> = [];
   private limitCount: number | null = null;
+  private rangeFrom: number | null = null;
+  private rangeTo: number | null = null;
   private selectOptions: SelectOptions = {};
   private singleMode: "single" | "maybeSingle" | null = null;
   private upsertOptions: UpsertOptions = {};
@@ -190,6 +245,22 @@ class FakeQuery implements PromiseLike<QueryResult> {
 
   gte(column: string, value: unknown) {
     this.filters.push({ kind: "gte", column, value });
+    return this;
+  }
+
+  ilike(column: string, pattern: string) {
+    this.filters.push({ kind: "ilike", column, pattern });
+    return this;
+  }
+
+  or(expression: string) {
+    this.filters.push(parseOrExpression(expression));
+    return this;
+  }
+
+  range(from: number, to: number) {
+    this.rangeFrom = from;
+    this.rangeTo = to;
     return this;
   }
 
@@ -261,6 +332,11 @@ class FakeQuery implements PromiseLike<QueryResult> {
       });
     }
 
+    if (this.rangeFrom !== null) {
+      const end = this.rangeTo === null ? undefined : this.rangeTo + 1;
+      result = result.slice(this.rangeFrom, end);
+    }
+
     if (this.limitCount !== null) {
       result = result.slice(0, this.limitCount);
     }
@@ -279,7 +355,7 @@ class FakeQuery implements PromiseLike<QueryResult> {
     };
   }
 
-  private respond(data: FakeRow[]): QueryResult {
+  private respond(data: FakeRow[], count: number | null = null): QueryResult {
     if (this.singleMode === "single") {
       if (data.length !== 1) {
         return {
@@ -292,14 +368,14 @@ class FakeQuery implements PromiseLike<QueryResult> {
         };
       }
 
-      return { data: data[0], error: null, count: null };
+      return { data: data[0], error: null, count };
     }
 
     if (this.singleMode === "maybeSingle") {
-      return { data: data[0] ?? null, error: null, count: null };
+      return { data: data[0] ?? null, error: null, count };
     }
 
-    return { data, error: null, count: null };
+    return { data, error: null, count };
   }
 
   private execute(): QueryResult {
@@ -310,17 +386,25 @@ class FakeQuery implements PromiseLike<QueryResult> {
     }
 
     if (this.operation === "select") {
-      const filtered = this.filteredRows(this.db.getRows(this.table));
+      const rows = this.db.getRows(this.table);
+      const filteredCount = rows.filter((row) =>
+        matchesFilters(row, this.filters),
+      ).length;
 
       if (this.selectOptions.head) {
         return {
           data: null,
           error: null,
-          count: filtered.length,
+          count: filteredCount,
         };
       }
 
-      return this.respond(filtered);
+      const filtered = this.filteredRows(rows);
+
+      return this.respond(
+        filtered,
+        this.selectOptions.count === "exact" ? filteredCount : null,
+      );
     }
 
     if (this.operation === "insert") {

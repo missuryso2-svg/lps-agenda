@@ -12,6 +12,14 @@ import {
   updateBarbershopSchema,
 } from "@/lib/validation/barbershop";
 import {
+  customerActiveSchema,
+  customerFormSchema,
+  customerIdSchema,
+  isValidBrazilianPhone,
+  normalizePhoneDigits,
+  phoneLookupVariants,
+} from "@/lib/validation/customers";
+import {
   blockedSlotFormSchema,
   timeToMinutes,
   WEEKDAYS,
@@ -259,5 +267,136 @@ describe("validação de horários", () => {
     expect(timeToMinutes("09:30")).toBe(570);
     expect(timeToMinutes("09:30:00")).toBe(570);
     expect(timeToMinutes("24:00")).toBeNaN();
+  });
+});
+
+describe("validação de clientes", () => {
+  const validCustomer = {
+    fullName: "  Ana   Souza ",
+    phone: "+55 (11) 98765-4321",
+    email: " ANA@EXEMPLO.COM ",
+    notes: " Prefere atendimento pela manhã. ",
+  };
+
+  it("normaliza nome, telefone, e-mail e observações", () => {
+    const result = customerFormSchema.safeParse(validCustomer);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        fullName: "Ana Souza",
+        phone: "11987654321",
+        email: "ana@exemplo.com",
+        notes: "Prefere atendimento pela manhã.",
+      });
+    }
+  });
+
+  it("aceita telefone fixo e celular com DDD", () => {
+    expect(isValidBrazilianPhone("(11) 3456-7890")).toBe(true);
+    expect(isValidBrazilianPhone("+55 21 99876-5432")).toBe(true);
+    expect(isValidBrazilianPhone("11987654321")).toBe(true);
+  });
+
+  it.each([
+    "",
+    "123",
+    "0800 123 4567",
+    "(00) 98765-4321",
+    "(10) 98765-4321",
+    "(11) 18765-4321",
+    "telefone",
+  ])("rejeita o telefone %s", (phone) => {
+    const result = customerFormSchema.safeParse({
+      ...validCustomer,
+      phone,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain("telefone");
+    }
+  });
+
+  it("remove o código do país e a formatação do telefone", () => {
+    expect(normalizePhoneDigits("+55 (11) 98765-4321")).toBe("11987654321");
+    expect(normalizePhoneDigits("55 11 98765 4321")).toBe("11987654321");
+    expect(normalizePhoneDigits("(11) 98765-4321")).toBe("11987654321");
+  });
+
+  it("gera variações formatadas para detectar duplicidade legada", () => {
+    const variants = phoneLookupVariants("(11) 98765-4321");
+
+    expect(variants).toContain("11987654321");
+    expect(variants).toContain("5511987654321");
+    expect(variants).toContain("+5511987654321");
+    expect(variants).toContain("(11) 98765-4321");
+    expect(variants).toContain("11 98765-4321");
+    expect(variants).toContain("98765-4321");
+    expect(phoneLookupVariants("")).toEqual([]);
+  });
+
+  it("exige nome com pelo menos dois caracteres", () => {
+    const result = customerFormSchema.safeParse({
+      ...validCustomer,
+      fullName: " A ",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain("nome completo");
+    }
+  });
+
+  it("rejeita nome acima de 120 caracteres", () => {
+    expect(
+      customerFormSchema.safeParse({
+        ...validCustomer,
+        fullName: "a".repeat(121),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejeita e-mail inválido quando informado", () => {
+    expect(
+      customerFormSchema.safeParse({
+        ...validCustomer,
+        email: "sem-arroba",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("aceita e-mail vazio como opcional", () => {
+    const result = customerFormSchema.safeParse({
+      ...validCustomer,
+      email: "   ",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBe("");
+    }
+  });
+
+  it("rejeita observações acima de 2000 caracteres", () => {
+    expect(
+      customerFormSchema.safeParse({
+        ...validCustomer,
+        notes: "a".repeat(2001),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejeita identificador de cliente inválido", () => {
+    expect(customerIdSchema.safeParse("nao-e-uuid").success).toBe(false);
+    expect(
+      customerIdSchema.safeParse("11111111-1111-4111-8111-111111111111")
+        .success,
+    ).toBe(true);
+  });
+
+  it("exige boolean no estado de arquivamento", () => {
+    expect(customerActiveSchema.safeParse(true).success).toBe(true);
+    expect(customerActiveSchema.safeParse("false").success).toBe(false);
   });
 });

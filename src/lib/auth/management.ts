@@ -5,7 +5,11 @@ import {
   getActiveDashboardContext,
   type DashboardContext,
 } from "@/lib/auth/dal";
-import { canManageShop, isPlatformAdmin } from "@/lib/auth/permissions";
+import {
+  canManageShop,
+  canOperateShop,
+  isPlatformAdmin,
+} from "@/lib/auth/permissions";
 
 export type ManagementAuthorization =
   | { context: DashboardContext; error?: never }
@@ -35,6 +39,39 @@ export async function authorizeShopManagement(): Promise<ManagementAuthorization
     return {
       error: actionError(
         "Somente o proprietário pode gerenciar o catálogo, a equipe e os horários.",
+      ),
+    };
+  }
+
+  return { context };
+}
+
+/**
+ * Autorização de servidor para o gerenciamento operacional de clientes.
+ * A RLS de customers permite leitura, cadastro e edição para membros da
+ * barbearia (owner e staff); exclusão física continua restrita ao owner.
+ * Como esta fase usa arquivamento via is_active, owner e staff podem
+ * manter o cadastro. O barbershop_id continua vindo apenas da sessão.
+ */
+export async function authorizeCustomerManagement(): Promise<ManagementAuthorization> {
+  const context = await getActiveDashboardContext();
+
+  if (!context) {
+    return {
+      error: actionError(
+        "Sua sessão expirou. Entre novamente para continuar.",
+      ),
+    };
+  }
+
+  const allowed =
+    canOperateShop(context.active.role) ||
+    isPlatformAdmin(context.user.app_metadata);
+
+  if (!allowed) {
+    return {
+      error: actionError(
+        "Você não tem permissão para gerenciar os clientes desta barbearia.",
       ),
     };
   }

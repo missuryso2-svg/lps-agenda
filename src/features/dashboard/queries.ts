@@ -1,6 +1,12 @@
 import "server-only";
 
+import type {
+  CustomerListResult,
+  CustomerStats,
+  CustomerStatus,
+} from "@/features/customers/types";
 import { getDayRange, getMonthRange } from "@/lib/format";
+import { normalizePhoneDigits } from "@/lib/validation/customers";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -195,23 +201,143 @@ export async function getServices(barbershopId: string) {
   return data ?? [];
 }
 
-export async function getCustomers(barbershopId: string, search?: string) {
-  const supabase = await createClient();
-  const term = search?.trim().slice(0, 80)?.replace(/[(),]/g, " ").trim();
-  let query = supabase
-    .from("customers")
-    .select("*")
-    .eq("barbershop_id", barbershopId)
-    .order("created_at", { ascending: false })
-    .limit(50);
+const CUSTOMER_PAGE_SIZE = 20;
 
-  if (term) {
-    query = query.or(`full_name.ilike.%${term}%,phone.ilike.%${term}%`);
+function sanitizeCustomerSearch(value: string | undefined): string {
+  return (value ?? "")
+    .replace(/[%,()\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
+
+export function parseCustomerStatus(
+  value: string | undefined,
+): CustomerStatus {
+  return value === "archived" || value === "all" ? value : "active";
+}
+
+export async function getCustomersPage({
+  barbershopId,
+  search,
+  status = "active",
+  page = 1,
+  pageSize = CUSTOMER_PAGE_SIZE,
+}: {
+  barbershopId: string;
+  search?: string;
+  status?: CustomerStatus;
+  page?: number;
+  pageSize?: number;
+}): Promise<CustomerListResult> {
+  const supabase = await createClient();
+  const safePageSize = Math.min(Math.max(Math.trunc(pageSize), 1), 100);
+  const safeSearch = sanitizeCustomerSearch(search);
+  const phoneDigits = normalizePhoneDigits(safeSearch);
+  const requestedPage = Math.max(Math.trunc(page) || 1, 1);
+
+  const buildQuery = (targetPage: number) => {
+    let query = supabase
+      .from("customers")
+      .select("*", { count: "exact" })
+      .eq("barbershop_id", barbershopId);
+
+    if (status === "active") {
+      query = query.eq("is_active", true);
+    } else if (status === "archived") {
+      query = query.eq("is_active", false);
+    }
+
+    if (safeSearch) {
+      const conditions = [
+        `full_name.ilike.%${safeSearch}%`,
+        `email.ilike.%${safeSearch}%`,
+      ];
+
+      if (phoneDigits.length >= 3) {
+        conditions.push(`phone.ilike.%${phoneDigits}%`);
+      }
+
+      query = query.or(conditions.join(","));
+    }
+
+    const from = (targetPage - 1) * safePageSize;
+
+    return query
+      .order("created_at", { ascending: false })
+      .order("full_name", { ascending: true })
+      .range(from, from + safePageSize - 1);
+  };
+
+  const first = await buildQuery(requestedPage);
+
+  if (first.error) {
+    return {
+      rows: [],
+      total: 0,
+      page: 1,
+      pageSize: safePageSize,
+      totalPages: 0,
+      error: true,
+    };
   }
 
-  const { data } = await query;
+  const total = first.count ?? (first.data ?? []).length;
+  const totalPages = total === 0 ? 0 : Math.ceil(total / safePageSize);
+  let currentPage = requestedPage;
+  let rows = first.data ?? [];
 
-  return data ?? [];
+  // Se a página pedida ficou além do total (por filtro ou exclusão), busca a
+  // última página válida em vez de exibir uma lista vazia enganosa.
+  if (rows.length === 0 && total > 0 && requestedPage > totalPages) {
+    currentPage = totalPages;
+    const retry = await buildQuery(currentPage);
+
+    if (retry.error) {
+      return {
+        rows: [],
+        total: 0,
+        page: 1,
+        pageSize: safePageSize,
+        totalPages: 0,
+        error: true,
+      };
+    }
+
+    rows = retry.data ?? [];
+  }
+
+  return {
+    rows,
+    total,
+    page: currentPage,
+    pageSize: safePageSize,
+    totalPages,
+    error: false,
+  };
+}
+
+export async function getCustomerStats(
+  barbershopId: string,
+): Promise<CustomerStats> {
+  const supabase = await createClient();
+  const [activeResult, archivedResult] = await Promise.all([
+    supabase
+      .from("customers")
+      .select("id", { count: "exact", head: true })
+      .eq("barbershop_id", barbershopId)
+      .eq("is_active", true),
+    supabase
+      .from("customers")
+      .select("id", { count: "exact", head: true })
+      .eq("barbershop_id", barbershopId)
+      .eq("is_active", false),
+  ]);
+
+  const active = activeResult.count ?? 0;
+  const archived = archivedResult.count ?? 0;
+
+  return { active, archived, total: active + archived };
 }
 
 export async function getTeam(barbershopId: string) {

@@ -4,7 +4,7 @@ Fundação técnica do **LPS Agenda**, um SaaS multi-tenant de agenda e gestão 
 
 A versão atual entrega a base de produto: identidade visual, site institucional, autenticação, onboarding, painel administrativo, página pública de demonstração, banco PostgreSQL versionado e políticas de isolamento por barbearia.
 
-> **Estado:** fundação `v0.1` com as Etapas 2.1 e 2.2 implementadas. Serviços, profissionais, horários de funcionamento, jornadas individuais e bloqueios estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, agendamento completo, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
+> **Estado:** fundação `v0.1` com as Etapas 2.1, 2.2 e 2.3 implementadas. Serviços, profissionais, horários de funcionamento, jornadas individuais, bloqueios e clientes estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, agendamento completo, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
 
 ---
 
@@ -18,10 +18,11 @@ A versão atual entrega a base de produto: identidade visual, site institucional
 - **Serviços:** CRUD real, busca por nome, ativação/desativação, preço em centavos e duração validados com Zod no formulário e no servidor.
 - **Profissionais:** CRUD real, busca por nome, ativação/desativação, telefone, descrição e associação com os serviços da mesma barbearia.
 - **Horários e disponibilidade:** funcionamento semanal da barbearia, jornada individual dos profissionais e bloqueios por dia inteiro ou intervalo, com validação de fuso e sobreposição.
+- **Clientes:** cadastro, listagem paginada, busca por nome/telefone/e-mail, filtros por situação, edição, detalhes e arquivamento reversível, com deduplicação dentro da barbearia.
 - Página pública de demonstração `/barbearia/barbearia-aurora`, estática e claramente identificada como fictícia.
 - Páginas de termos, privacidade, 404, erro global e aviso de configuração obrigatória.
 - Migrações SQL versionadas para 17 tabelas, enums, funções, triggers, grants e RLS.
-- Testes estáticos de schema, RLS, segredos, validações, permissões, formatação e das Server Actions de catálogo/equipe.
+- Testes estáticos de schema, RLS, segredos, validações, permissões, formatação e das Server Actions de catálogo, equipe, horários e clientes.
 
 ## O que é protótipo ou está fora desta etapa
 
@@ -131,6 +132,71 @@ A rota `/dashboard/horarios` reúne três abas conectadas ao Supabase e à barbe
 - `tests/schedule-actions.test.ts`
 
 Nenhuma migration nova foi necessária nesta etapa: `business_hours`, `barber_working_hours` e `blocked_slots` já tinham colunas, FKs, checks, índices, grants e políticas suficientes.
+
+---
+
+## Etapa 2.3 — Clientes
+
+A rota `/dashboard/clientes` agora gerencia a base de clientes da barbearia ativa, com consultas server-side e as mesmas permissões operacionais de owner e staff.
+
+### Cadastro e edição
+
+- Campos: nome completo, telefone obrigatório, e-mail opcional e observações opcionais. CPF, endereço e data de nascimento **não** são coletados nesta fase.
+- Nome tem espaços repetidos normalizados e limite de 120 caracteres; observações aceitam até 2000 caracteres.
+- Telefone aceita fixo ou celular com DDD, inclusive `+55`, e é persistido apenas com dígitos. A exibição usa `formatPhoneBR`.
+- E-mail é validado, convertido para minúsculas e gravado como `null` quando vazio.
+- A validação roda no formulário com Zod e novamente no servidor; o banco mantém seus próprios `check` de tamanho.
+- O `barbershop_id` é sempre o da barbearia ativa da sessão e não é enviado pelo navegador.
+- A edição preserva `barbershop_id`, `birth_date`, `created_at` e demais campos não editáveis.
+
+### Listagem, busca e paginação
+
+- Tabela em desktop e cards em dispositivos móveis, com nome, telefone, e-mail, data de cadastro e situação.
+- Busca por nome, telefone e e-mail, executada no servidor e limitada à barbearia ativa.
+- A busca por telefone normaliza a digitação para dígitos, então `(11) 98765-4321` encontra `11987654321`.
+- Filtros por ativos, arquivados e todos, com contadores calculados no servidor.
+- Paginação server-side de 20 registros por página, ordenada por data de cadastro e nome.
+- Estados de carregamento, vazio, erro de consulta e atualização automática após cada mutação via `revalidatePath`.
+- Página fora do intervalo é corrigida para a última página válida.
+
+### Arquivamento e relacionamentos
+
+- A remoção física não é usada. `customers` já possui `is_active`, então o arquivamento apenas marca o cadastro como inativo.
+- Essa escolha preserva observações, dados de contato e o histórico: `appointments.customer_id` referencia `(id, barbershop_id)` com `on delete restrict`.
+- O cliente arquivado sai da lista ativa, continua consultável no filtro “Arquivados” e pode ser reativado.
+- A operação exige confirmação no diálogo e informa claramente que o histórico é preservado.
+- Não existe action de exclusão física de clientes nesta etapa.
+
+### Duplicidade dentro do tenant
+
+- A checagem é feita na aplicação, sempre com o `barbershop_id` da sessão e incluindo clientes arquivados.
+- Telefone é comparado por dígitos e por variações formatadas legadas (com/sem `+55` e com pontuação comum).
+- E-mail é comparado sem diferenciar maiúsculas de minúsculas.
+- O mesmo telefone ou e-mail pode ser cadastrado por outra barbearia; não há restrição global.
+- Na edição, o próprio registro é ignorado na checagem.
+- **Limitação:** não há índice único de telefone/e-mail normalizado no banco. Duas requisições simultâneas podem passar pela checagem antes da escrita; uma migration futura pode adicionar uma constraint compatível com multi-tenancy.
+
+### Segurança
+
+- `owner`, `staff` e `platform_admin` podem cadastrar, editar e arquivar; a RLS de `customers` permite leitura/inserção/atualização para membros e mantém exclusão física restrita a owner/admin.
+- Cada Server Action chama `authorizeCustomerManagement()` antes de validar e escrever.
+- Leituras e escritas filtram por `barbershop_id`; um cliente de outra barbearia não é encontrado nem alterado.
+- Nenhuma action ou componente usa `SUPABASE_SERVICE_ROLE_KEY`.
+- Erros de banco são traduzidos para mensagens seguras, sem expor SQL, constraints ou detalhes internos.
+- A interface informa a minimização de dados e o isolamento por barbearia.
+
+### Principais arquivos
+
+- `src/features/customers/actions.ts`
+- `src/features/customers/types.ts`
+- `src/features/customers/components/`
+- `src/lib/validation/customers.ts`
+- `src/lib/auth/management.ts`
+- `src/features/dashboard/queries.ts`
+- `src/app/dashboard/clientes/page.tsx` e `src/app/dashboard/clientes/loading.tsx`
+- `tests/customer-actions.test.ts` e `tests/helpers/fake-supabase.ts`
+
+Nenhuma migration nova foi necessária: a tabela `customers`, os índices `customers_shop_idx`/`customers_phone_idx`, a FK composta com `barbershops`, os checks, os grants e as políticas RLS já cobriam esta etapa.
 
 ---
 
@@ -425,6 +491,7 @@ src/
     services/               actions e componentes do catálogo
     barbers/                actions e componentes da equipe de atendimento
     schedule/               actions e componentes de horários e bloqueios
+    customers/              actions e componentes da base de clientes
     settings/               formulário de configurações
     marketing/              landing page
     public-barbershop/      dados fictícios da demonstração
@@ -462,7 +529,7 @@ Decisões de implementação:
 | `/onboarding` | Criação da primeira barbearia |
 | `/dashboard` | Visão geral da barbearia ativa |
 | `/dashboard/agenda` | Agenda do dia e próximos horários |
-| `/dashboard/clientes` | Base de clientes e busca |
+| `/dashboard/clientes` | Base de clientes (busca, filtros, paginação, CRUD e arquivamento) |
 | `/dashboard/servicos` | Catálogo de serviços (CRUD, busca, status) |
 | `/dashboard/equipe` | Acessos, profissionais e associação de serviços |
 | `/dashboard/horarios` | Funcionamento, jornada dos profissionais e bloqueios |
@@ -495,7 +562,7 @@ Resultados da última verificação local:
 ```text
 npm run typecheck  ✅
 npm run lint       ✅
-npm test           ✅ 130 testes em 6 arquivos
+npm test           ✅ 178 testes em 7 arquivos
 npm run build      ✅
 ```
 
@@ -530,7 +597,16 @@ Os testes cobrem:
 - detecção de sobreposição por profissional, bloqueio geral e edição do próprio registro;
 - isolamento de bloqueios e profissionais de outra barbearia;
 - bloqueio de escrita para `staff` nas três áreas;
-- validações de auth, barbearia, permissões e formatação.
+- cadastro de clientes com normalização de nome, telefone e e-mail e derivação do tenant da sessão;
+- edição de clientes preservando `barbershop_id` e campos não editáveis;
+- prevenção de telefone e e-mail duplicados dentro da mesma barbearia, incluindo arquivados e variações de formatação;
+- permissão do mesmo telefone/e-mail em barbearias diferentes;
+- arquivamento e reativação via `is_active`, sem exclusão física;
+- bloqueio de edição/arquivamento de clientes de outra barbearia;
+- listagem paginada, busca por nome, telefone e e-mail, filtros por situação e estatísticas por tenant;
+- erro de consulta sem inventar registros e página fora do intervalo corrigida;
+- políticas RLS de clientes e FK restritiva com agendamentos;
+- validações de auth, barbearia, clientes, permissões e formatação.
 
 O que **não** foi testado:
 
@@ -538,8 +614,9 @@ O que **não** foi testado:
 - CRUD real com credenciais de teste no Supabase vinculado (não houve autorização para alterar dados remotos);
 - login, cadastro e recuperação com Supabase real;
 - políticas RLS com usuários de duas barbearias em banco real;
-- fluxos E2E de catálogo/equipe/horários no navegador;
+- fluxos E2E de catálogo/equipe/horários/clientes no navegador;
 - concorrência real de bloqueios simultâneos no banco;
+- concorrência real de cadastros duplicados de clientes no banco;
 - integração Asaas, webhooks, e-mails de produção e jobs;
 - upload de avatar (sem Storage configurado).
 
@@ -561,6 +638,8 @@ O que **não** foi testado:
 12. **Duplicidade de serviço validada na aplicação.** O schema não possui `unique` para nome normalizado; a checagem é feita no servidor e pode ser contornada apenas por escrita direta com privilégios de owner. Não há coluna gerada nem extensão `unaccent` aplicada nesta etapa.
 13. **Sobreposição de bloqueios sem constraint no banco.** `blocked_slots` não tem constraint de exclusão; a validação é feita na aplicação e duas requisições concorrentes podem gravar períodos sobrepostos. Uma migration futura pode adicionar `exclude using gist` com escopo por profissional e barbearia.
 14. **Uma faixa por dia na interface.** `business_hours` e `barber_working_hours` aceitam múltiplas faixas, mas a edição atual mantém uma faixa por dia e consolida duplicatas legadas ao salvar.
+15. **Duplicidade de cliente validada na aplicação.** `customers` não possui índice único de telefone/e-mail normalizado. A checagem considera arquivados e variações de formatação, mas duas requisições concorrentes podem gravar duplicatas; uma migration futura pode adicionar índice funcional com escopo por `barbershop_id`.
+16. **Clientes não têm exclusão física na interface.** O arquivamento preserva histórico e relacionamentos. Atender a um pedido de eliminação da LGPD exige procedimento administrativo no banco, verificando antes se não há agendamentos vinculados.
 
 ---
 

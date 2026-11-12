@@ -254,3 +254,84 @@ describe("ações de catálogo e equipe", () => {
     expect(scheduleActions).toContain("barbershop_id: barbershopId");
   });
 });
+
+describe("clientes, RLS e integridade", () => {
+  const customersActions = read("src/features/customers/actions.ts");
+  const customersQueries = read("src/features/dashboard/queries.ts");
+  const managementAuthorization = read("src/lib/auth/management.ts");
+
+  it("define RLS de clientes para membros e exclusão restrita ao proprietário", () => {
+    for (const action of ["select", "insert", "update"]) {
+      expect(migrationSql).toContain(
+        `create policy customers_${action}_member_or_admin`,
+      );
+    }
+
+    expect(migrationSql).toContain(
+      "create policy customers_delete_owner_or_admin",
+    );
+    expect(migrationSql).not.toContain(
+      "create policy customers_delete_member_or_admin",
+    );
+  });
+
+  it("protege o histórico com chave estrangeira restritiva", () => {
+    expect(migrationSql).toContain("appointments_customer_fk");
+    expect(migrationSql).toMatch(
+      /appointments_customer_fk[\s\S]*?references public\.customers \(id, barbershop_id\)[\s\S]*?on delete restrict/,
+    );
+  });
+
+  it("mantém o vínculo do cliente com a barbearia no banco", () => {
+    expect(migrationSql).toMatch(
+      /create table public\.customers \([\s\S]*?barbershop_id uuid not null references public\.barbershops/,
+    );
+    expect(migrationSql).toContain(
+      "constraint customers_id_shop_unique unique (id, barbershop_id)",
+    );
+  });
+
+  it("marca as mutações de clientes como Server Actions autorizadas", () => {
+    expect(customersActions.startsWith('"use server";')).toBe(true);
+    expect(customersActions).toContain("authorizeCustomerManagement()");
+    expect(customersActions).toContain(
+      "authorization.context.active.barbershop_id",
+    );
+    expect(customersActions).not.toMatch(
+      /SUPABASE_SERVICE_ROLE_KEY|@\/lib\/supabase\/admin/,
+    );
+    expect(managementAuthorization).toContain(
+      "export async function authorizeCustomerManagement",
+    );
+    expect(managementAuthorization).toContain("canOperateShop");
+  });
+
+  it("não aceita barbershop_id enviado pelo formulário de cliente", () => {
+    expect(customersActions).not.toMatch(/parsed\.data\.barbershop/i);
+    expect(customersActions).not.toMatch(/values\.barbershop/i);
+    expect(customersActions).not.toMatch(/input\.barbershop/i);
+    expect(customersActions).toContain("barbershop_id: barbershopId");
+  });
+
+  it("filtra leitura e escrita de clientes pela barbearia ativa", () => {
+    expect(customersActions).toContain('.eq("barbershop_id", barbershopId)');
+    expect(customersQueries).toContain(
+      '.eq("barbershop_id", barbershopId)',
+    );
+  });
+
+  it("usa arquivamento reversível e não expõe exclusão física", () => {
+    expect(customersActions).toContain("setCustomerActiveAction");
+    expect(customersActions).toContain("is_active: parsedActive.data");
+    expect(customersActions).not.toMatch(/\.delete\(\)/);
+    expect(customersActions).not.toContain("deleteCustomerAction");
+  });
+
+  it("verifica duplicidade dentro do tenant, incluindo arquivados", () => {
+    expect(customersActions).toContain("phoneLookupVariants");
+    expect(customersActions).toContain('.in("phone", phoneVariants)');
+    expect(customersActions).toContain('.ilike("email", email)');
+    expect(customersActions).toContain('excludeId');
+    expect(customersActions).not.toContain(".eq(\"is_active\", true)");
+  });
+});

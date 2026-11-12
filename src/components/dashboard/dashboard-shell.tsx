@@ -2,6 +2,7 @@
 
 import {
   Bell,
+  CalendarClock,
   CalendarDays,
   Check,
   ChevronsUpDown,
@@ -66,6 +67,7 @@ type NavItem = {
 const operationNav: NavItem[] = [
   { href: "/dashboard", label: "Visão geral", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/agenda", label: "Agenda", icon: CalendarDays },
+  { href: "/dashboard/horarios", label: "Horários", icon: CalendarClock },
   { href: "/dashboard/clientes", label: "Clientes", icon: Users },
   { href: "/dashboard/servicos", label: "Serviços", icon: Scissors },
   { href: "/dashboard/equipe", label: "Equipe", icon: UsersRound },

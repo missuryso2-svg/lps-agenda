@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addDaysToDateString,
   formatCurrencyFromCents,
   formatDateOnlyBR,
   formatPhoneBR,
+  getDateRange,
   getDayRange,
   getMonthRange,
   initialsFromName,
+  isFullDayRange,
+  localDateString,
+  localDateTimeToUtc,
+  localTimeString,
   shortWeekdayLabel,
   weekdayLabel,
 } from "@/lib/format";
@@ -74,5 +80,58 @@ describe("intervalos no fuso da barbearia", () => {
 
     expect(start.toISOString()).toBe("2026-11-01T03:00:00.000Z");
     expect(end.toISOString()).toBe("2026-12-01T03:00:00.000Z");
+  });
+
+  it("converte data e horário locais para UTC", () => {
+    expect(
+      localDateTimeToUtc("2026-11-20", "09:00", "America/Sao_Paulo").toISOString(),
+    ).toBe("2026-11-20T12:00:00.000Z");
+    expect(
+      localDateTimeToUtc(
+        "2026-11-20",
+        "09:30:15",
+        "America/Sao_Paulo",
+      ).toISOString(),
+    ).toBe("2026-11-20T12:30:15.000Z");
+    expect(() =>
+      localDateTimeToUtc("2026-02-30", "09:00", "America/Sao_Paulo"),
+    ).toThrow();
+  });
+
+  it("soma dias civis atravessando mês e ano", () => {
+    expect(addDaysToDateString("2026-12-31", 1)).toBe("2027-01-01");
+    expect(addDaysToDateString("2026-03-01", -1)).toBe("2026-02-28");
+  });
+
+  it("calcula o intervalo de uma data local", () => {
+    const range = getDateRange("2026-11-20", "America/Sao_Paulo");
+
+    expect(range.start.toISOString()).toBe("2026-11-20T03:00:00.000Z");
+    expect(range.end.toISOString()).toBe("2026-11-21T03:00:00.000Z");
+  });
+
+  it("extrai data e horário locais de um instante", () => {
+    const instant = "2026-11-20T12:30:00.000Z";
+
+    expect(localDateString(instant, "America/Sao_Paulo")).toBe("2026-11-20");
+    expect(localTimeString(instant, "America/Sao_Paulo")).toBe("09:30");
+    expect(localDateString(instant, "UTC")).toBe("2026-11-20");
+  });
+
+  it("reconhece bloqueios de dia inteiro no fuso da barbearia", () => {
+    expect(
+      isFullDayRange(
+        "2026-11-20T03:00:00.000Z",
+        "2026-11-21T03:00:00.000Z",
+        "America/Sao_Paulo",
+      ),
+    ).toBe(true);
+    expect(
+      isFullDayRange(
+        "2026-11-20T12:00:00.000Z",
+        "2026-11-20T15:00:00.000Z",
+        "America/Sao_Paulo",
+      ),
+    ).toBe(false);
   });
 });

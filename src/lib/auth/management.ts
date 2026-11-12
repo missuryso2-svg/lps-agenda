@@ -34,7 +34,7 @@ export async function authorizeShopManagement(): Promise<ManagementAuthorization
   if (!allowed) {
     return {
       error: actionError(
-        "Somente o proprietário pode gerenciar o catálogo e a equipe.",
+        "Somente o proprietário pode gerenciar o catálogo, a equipe e os horários.",
       ),
     };
   }

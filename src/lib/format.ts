@@ -210,6 +210,152 @@ function zonedTimeToUtc(parts: ZonedParts, timeZone: string): Date {
   return firstResult;
 }
 
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+function parseDateInput(value: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+
+  if (!match) {
+    throw new Error("Data inválida.");
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const check = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 ||
+    check.getUTCDate() !== day
+  ) {
+    throw new Error("Data inválida.");
+  }
+
+  return { year, month, day };
+}
+
+/**
+ * Converte data e horário locais da barbearia para o instante UTC correspondente.
+ * Use sempre o fuso da barbearia para não deslocar horários de funcionamento.
+ */
+export function localDateTimeToUtc(
+  date: string,
+  time: string,
+  timeZone: string,
+): Date {
+  const { year, month, day } = parseDateInput(date);
+  const match = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(time.trim());
+
+  if (!match) {
+    throw new Error("Horário inválido.");
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  const second = Number(match[3] ?? "0");
+
+  if (
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59 ||
+    second < 0 ||
+    second > 59
+  ) {
+    throw new Error("Horário inválido.");
+  }
+
+  return zonedTimeToUtc(
+    { year, month, day, hour, minute, second },
+    timeZone,
+  );
+}
+
+export function addDaysToDateString(value: string, days: number): string {
+  const { year, month, day } = parseDateInput(value);
+  const next = new Date(Date.UTC(year, month - 1, day + days));
+
+  return [
+    next.getUTCFullYear(),
+    pad2(next.getUTCMonth() + 1),
+    pad2(next.getUTCDate()),
+  ].join("-");
+}
+
+/**
+ * Início e fim (exclusivo) de uma data civil no fuso da barbearia.
+ */
+export function getDateRange(
+  date: string,
+  timeZone: string,
+): { start: Date; end: Date } {
+  const start = localDateTimeToUtc(date, "00:00", timeZone);
+  const end = localDateTimeToUtc(
+    addDaysToDateString(date, 1),
+    "00:00",
+    timeZone,
+  );
+
+  return { start, end };
+}
+
+export function localDateString(
+  value: string | Date,
+  timeZone: string,
+): string {
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Data inválida.");
+  }
+
+  const parts = getZonedParts(date, timeZone);
+
+  return [parts.year, pad2(parts.month), pad2(parts.day)].join("-");
+}
+
+export function localTimeString(
+  value: string | Date,
+  timeZone: string,
+): string {
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Data inválida.");
+  }
+
+  const parts = getZonedParts(date, timeZone);
+
+  return `${pad2(parts.hour)}:${pad2(parts.minute)}`;
+}
+
+export function isFullDayRange(
+  startsAt: string | Date,
+  endsAt: string | Date,
+  timeZone: string,
+): boolean {
+  const start = startsAt instanceof Date ? startsAt : new Date(startsAt);
+  const end = endsAt instanceof Date ? endsAt : new Date(endsAt);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return false;
+  }
+
+  const range = getDateRange(localDateString(start, timeZone), timeZone);
+
+  return (
+    start.getTime() === range.start.getTime() &&
+    end.getTime() === range.end.getTime()
+  );
+}
+
 /**
  * Início e fim (exclusivo) do dia civil no fuso da barbearia.
  */

@@ -6,7 +6,11 @@ type FakeError = { code: string; message: string };
 
 type Filter =
   | { kind: "eq"; column: string; value: unknown }
-  | { kind: "in"; column: string; values: unknown[] };
+  | { kind: "in"; column: string; values: unknown[] }
+  | { kind: "lt"; column: string; value: unknown }
+  | { kind: "gt"; column: string; value: unknown }
+  | { kind: "lte"; column: string; value: unknown }
+  | { kind: "gte"; column: string; value: unknown };
 
 type QueryResult = {
   data: FakeRow[] | FakeRow | null;
@@ -24,13 +28,47 @@ type UpsertOptions = {
   ignoreDuplicates?: boolean;
 };
 
+function compareValues(left: unknown, right: unknown): number {
+  if (typeof left === "number" && typeof right === "number") {
+    return left - right;
+  }
+
+  const leftString = String(left);
+  const rightString = String(right);
+
+  if (leftString === rightString) {
+    return 0;
+  }
+
+  return leftString < rightString ? -1 : 1;
+}
+
 function matchesFilters(row: FakeRow, filters: Filter[]): boolean {
   return filters.every((filter) => {
     if (filter.kind === "eq") {
       return row[filter.column] === filter.value;
     }
 
-    return filter.values.includes(row[filter.column]);
+    if (filter.kind === "in") {
+      return filter.values.includes(row[filter.column]);
+    }
+
+    if (row[filter.column] === undefined || row[filter.column] === null) {
+      return false;
+    }
+
+    const comparison = compareValues(row[filter.column], filter.value);
+
+    switch (filter.kind) {
+      case "lt":
+        return comparison < 0;
+      case "gt":
+        return comparison > 0;
+      case "lte":
+        return comparison <= 0;
+      case "gte":
+        return comparison >= 0;
+    }
   });
 }
 
@@ -132,6 +170,26 @@ class FakeQuery implements PromiseLike<QueryResult> {
 
   in(column: string, values: unknown[]) {
     this.filters.push({ kind: "in", column, values });
+    return this;
+  }
+
+  lt(column: string, value: unknown) {
+    this.filters.push({ kind: "lt", column, value });
+    return this;
+  }
+
+  gt(column: string, value: unknown) {
+    this.filters.push({ kind: "gt", column, value });
+    return this;
+  }
+
+  lte(column: string, value: unknown) {
+    this.filters.push({ kind: "lte", column, value });
+    return this;
+  }
+
+  gte(column: string, value: unknown) {
+    this.filters.push({ kind: "gte", column, value });
     return this;
   }
 

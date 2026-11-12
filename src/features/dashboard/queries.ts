@@ -266,6 +266,41 @@ export async function getBarberServiceAssignments(barbershopId: string) {
   return data ?? [];
 }
 
+export async function getBusinessHours(barbershopId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("business_hours")
+    .select("id, weekday, opens_at, closes_at, is_active")
+    .eq("barbershop_id", barbershopId)
+    .order("weekday", { ascending: true })
+    .order("opens_at", { ascending: true });
+
+  return data ?? [];
+}
+
+export async function getBarberWorkingHours(barbershopId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("barber_working_hours")
+    .select("id, barber_id, weekday, starts_at, ends_at, is_active")
+    .eq("barbershop_id", barbershopId)
+    .order("weekday", { ascending: true })
+    .order("starts_at", { ascending: true });
+
+  return data ?? [];
+}
+
+export async function getBlockedSlots(barbershopId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("blocked_slots")
+    .select("id, barber_id, starts_at, ends_at, reason")
+    .eq("barbershop_id", barbershopId)
+    .order("starts_at", { ascending: true });
+
+  return data ?? [];
+}
+
 export async function getSubscription(barbershopId: string) {
   const supabase = await createClient();
 

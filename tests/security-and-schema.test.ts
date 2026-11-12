@@ -141,6 +141,24 @@ describe("migrações", () => {
       }
     }
   });
+
+  it("restringe escrita dos horários e bloqueios ao proprietário ou admin", () => {
+    for (const table of [
+      "business_hours",
+      "barber_working_hours",
+      "blocked_slots",
+    ]) {
+      expect(migrationSql).toContain(
+        `create policy ${table}_select_member_or_admin`,
+      );
+
+      for (const action of ["insert", "update", "delete"]) {
+        expect(migrationSql).toContain(
+          `create policy ${table}_${action}_owner_or_admin`,
+        );
+      }
+    }
+  });
 });
 
 describe("ambiente e segredos", () => {
@@ -199,10 +217,11 @@ describe("ambiente e segredos", () => {
 describe("ações de catálogo e equipe", () => {
   const servicesActions = read("src/features/services/actions.ts");
   const barbersActions = read("src/features/barbers/actions.ts");
+  const scheduleActions = read("src/features/schedule/actions.ts");
   const managementAuthorization = read("src/lib/auth/management.ts");
 
   it("marca as mutações como Server Actions e exige autorização de gestão", () => {
-    for (const source of [servicesActions, barbersActions]) {
+    for (const source of [servicesActions, barbersActions, scheduleActions]) {
       expect(source.startsWith('"use server";')).toBe(true);
       expect(source).toContain("authorizeShopManagement()");
       expect(source).toContain("authorization.context.active.barbershop_id");
@@ -220,7 +239,7 @@ describe("ações de catálogo e equipe", () => {
   });
 
   it("não aceita barbershop_id enviado pelo formulário", () => {
-    for (const source of [servicesActions, barbersActions]) {
+    for (const source of [servicesActions, barbersActions, scheduleActions]) {
       expect(source).not.toMatch(/parsed\.data\.barbershop/i);
       expect(source).not.toMatch(/values\.barbershop/i);
       expect(source).not.toMatch(/input\.barbershop/i);
@@ -231,5 +250,7 @@ describe("ações de catálogo e equipe", () => {
     expect(servicesActions).toContain('.eq("barbershop_id", barbershopId)');
     expect(barbersActions).toContain('.eq("barbershop_id", barbershopId)');
     expect(barbersActions).toContain("barbershop_id: barbershopId");
+    expect(scheduleActions).toContain('.eq("barbershop_id", barbershopId)');
+    expect(scheduleActions).toContain("barbershop_id: barbershopId");
   });
 });

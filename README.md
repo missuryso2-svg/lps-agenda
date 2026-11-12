@@ -4,7 +4,7 @@ Fundação técnica do **LPS Agenda**, um SaaS multi-tenant de agenda e gestão 
 
 A versão atual entrega a base de produto: identidade visual, site institucional, autenticação, onboarding, painel administrativo, página pública de demonstração, banco PostgreSQL versionado e políticas de isolamento por barbearia.
 
-> **Estado:** fundação `v0.1` com a Etapa 2.1 implementada. Serviços e profissionais têm CRUD conectado ao Supabase, com associação de serviços e isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, agendamento completo, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
+> **Estado:** fundação `v0.1` com as Etapas 2.1 e 2.2 implementadas. Serviços, profissionais, horários de funcionamento, jornadas individuais e bloqueios estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, agendamento completo, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
 
 ---
 
@@ -14,9 +14,10 @@ A versão atual entrega a base de produto: identidade visual, site institucional
 - Autenticação com Supabase: login, cadastro, confirmação de e-mail, recuperação e redefinição de senha.
 - Onboarding transacional: criação da barbearia e do vínculo `owner` na mesma operação.
 - Dashboard com troca de barbearia, navegação por papel, topbar, sidebar desktop, menu mobile e estados de carregamento/erro/vazio.
-- Páginas de visão geral, agenda, clientes, serviços, equipe, financeiro, plano e configurações.
+- Páginas de visão geral, agenda, clientes, serviços, equipe, horários, financeiro, plano e configurações.
 - **Serviços:** CRUD real, busca por nome, ativação/desativação, preço em centavos e duração validados com Zod no formulário e no servidor.
 - **Profissionais:** CRUD real, busca por nome, ativação/desativação, telefone, descrição e associação com os serviços da mesma barbearia.
+- **Horários e disponibilidade:** funcionamento semanal da barbearia, jornada individual dos profissionais e bloqueios por dia inteiro ou intervalo, com validação de fuso e sobreposição.
 - Página pública de demonstração `/barbearia/barbearia-aurora`, estática e claramente identificada como fictícia.
 - Páginas de termos, privacidade, 404, erro global e aviso de configuração obrigatória.
 - Migrações SQL versionadas para 17 tabelas, enums, funções, triggers, grants e RLS.
@@ -72,6 +73,64 @@ Os módulos de Serviços e Equipe agora persistem no Supabase e operam sobre a b
 - `tests/catalog-actions.test.ts` e `tests/helpers/fake-supabase.ts`
 
 Nenhuma migration nova foi necessária: as tabelas, FKs, PK composta, índices, grants e políticas já cobriam esta etapa.
+
+---
+
+## Etapa 2.2 — Horários e disponibilidade
+
+A rota `/dashboard/horarios` reúne três abas conectadas ao Supabase e à barbearia ativa da sessão.
+
+### Funcionamento da barbearia
+
+- Exibe os sete dias da semana com ativação/desativação, abertura e fechamento.
+- Dias fechados são persistidos em `business_hours` com `is_active = false`, preservando os horários digitados.
+- A aplicação mantém uma faixa ativa por dia, embora o schema aceite múltiplas faixas. Faixas duplicadas legadas são consolidadas ao salvar.
+- O fechamento precisa ser posterior à abertura, tanto no Zod do formulário quanto no servidor e no `check` do banco.
+- Ao reduzir o funcionamento, a action verifica as jornadas ativas existentes e bloqueia a alteração se algum profissional ficaria fora do novo horário.
+
+### Jornada dos profissionais
+
+- Seleção de um profissional da barbearia ativa e edição da semana completa.
+- Dias desmarcados representam folga e são gravados com `is_active = false`.
+- Cada dia ativo precisa estar integralmente coberto pelo funcionamento da barbearia naquele mesmo dia.
+- A action confirma que o profissional pertence ao `barbershop_id` da sessão antes de qualquer escrita; a FK composta `(barber_id, barbershop_id)` reforça a integridade no banco.
+- Assim como em `business_hours`, a aplicação consolida uma faixa por dia e remove duplicatas legadas.
+
+### Bloqueios e indisponibilidades
+
+- Bloqueio para um profissional ou para toda a barbearia (`barber_id = null`).
+- Dia inteiro ou intervalo de horário, com motivo opcional de até 500 caracteres.
+- Listagem separada entre períodos futuros/em andamento e encerrados, com edição e exclusão confirmada.
+- Datas e horários locais são convertidos para `timestamptz` usando o fuso da barbearia. O dia inteiro vira `00:00` local até `00:00` do dia seguinte.
+- A aplicação impede sobreposição entre bloqueios do mesmo profissional, entre bloqueio geral e qualquer profissional e entre um novo bloqueio geral e bloqueios existentes.
+- Edições ignoram o próprio registro na checagem de conflito.
+
+### Segurança
+
+- `barbershop_id` vem exclusivamente de `getActiveDashboardContext()`; nenhum formulário envia o tenant como fonte de autorização.
+- `owner` e `platform_admin` escrevem; `staff` consulta em modo somente leitura. Cada action repete a autorização no servidor e a RLS é a barreira final.
+- Todas as entradas passam por Zod no servidor, inclusive datas, horários, motivo e IDs.
+- Nenhuma action ou componente usa `SUPABASE_SERVICE_ROLE_KEY`.
+- Bloqueios gravam `created_by` com o usuário autenticado e sempre filtram leitura/escrita/exclusão por `barbershop_id`.
+- Erros de banco são traduzidos para mensagens seguras, sem expor SQL ou detalhes internos.
+
+### Limitações desta etapa
+
+- **Sobreposição de bloqueios validada na aplicação.** `blocked_slots` não possui constraint de exclusão no schema. Duas requisições simultâneas podem passar pela checagem antes de qualquer escrita; uma migration futura pode adicionar uma constraint com `tstzrange` e escopo por profissional/barbearia.
+- **Uma faixa por dia na interface.** O schema permite múltiplas faixas em `business_hours` e `barber_working_hours`, mas a edição atual consolida uma faixa por dia.
+- **Sem cálculo de disponibilidade ainda.** Os horários e bloqueios estão prontos para a próxima fase, mas o mecanismo de agendamento e a reserva pública não foram implementados.
+
+### Principais arquivos
+
+- `src/features/schedule/actions.ts`
+- `src/features/schedule/components/`
+- `src/lib/validation/schedule.ts`
+- `src/app/dashboard/horarios/page.tsx`
+- `src/features/dashboard/queries.ts`
+- `src/lib/format.ts`
+- `tests/schedule-actions.test.ts`
+
+Nenhuma migration nova foi necessária nesta etapa: `business_hours`, `barber_working_hours` e `blocked_slots` já tinham colunas, FKs, checks, índices, grants e políticas suficientes.
 
 ---
 
@@ -348,7 +407,7 @@ src/
     (auth)/                 login, cadastro, recuperar-senha, redefinir-senha
     auth/callback/          troca de code/token_hash por sessão
     dashboard/              visão geral, agenda, clientes, serviços, equipe,
-                            financeiro, plano e configurações
+                            horários, financeiro, plano e configurações
     onboarding/             criação transacional da barbearia
     barbearia/[slug]/       demonstração pública estática
     termos/, privacidade/   páginas legais
@@ -365,6 +424,7 @@ src/
     dashboard/              consultas do painel
     services/               actions e componentes do catálogo
     barbers/                actions e componentes da equipe de atendimento
+    schedule/               actions e componentes de horários e bloqueios
     settings/               formulário de configurações
     marketing/              landing page
     public-barbershop/      dados fictícios da demonstração
@@ -405,6 +465,7 @@ Decisões de implementação:
 | `/dashboard/clientes` | Base de clientes e busca |
 | `/dashboard/servicos` | Catálogo de serviços (CRUD, busca, status) |
 | `/dashboard/equipe` | Acessos, profissionais e associação de serviços |
+| `/dashboard/horarios` | Funcionamento, jornada dos profissionais e bloqueios |
 | `/dashboard/financeiro` | Indicadores financeiros (owner/admin) |
 | `/dashboard/plano` | Plano e assinatura (owner/admin) |
 | `/dashboard/configuracoes` | Dados da barbearia (owner/admin) |
@@ -434,7 +495,7 @@ Resultados da última verificação local:
 ```text
 npm run typecheck  ✅
 npm run lint       ✅
-npm test           ✅ 90 testes em 5 arquivos
+npm test           ✅ 130 testes em 6 arquivos
 npm run build      ✅
 ```
 
@@ -460,6 +521,15 @@ Os testes cobrem:
 - bloqueio de associação entre barbearias e de exclusão com agendamentos;
 - permissões de owner, staff e `platform_admin`, usuário não autenticado e dados inválidos;
 - normalização de preço em reais e de nome para duplicidade;
+- cadastro e edição dos horários semanais da barbearia, incluindo dias fechados;
+- consolidação de faixas duplicadas e validação de fechamento anterior à abertura;
+- cadastro e edição da jornada individual, incluindo folgas;
+- rejeição de jornada fora do funcionamento ou em dia fechado da barbearia;
+- criação, edição e exclusão de bloqueios de dia inteiro e por intervalo;
+- conversão de horários locais para `timestamptz` no fuso da barbearia;
+- detecção de sobreposição por profissional, bloqueio geral e edição do próprio registro;
+- isolamento de bloqueios e profissionais de outra barbearia;
+- bloqueio de escrita para `staff` nas três áreas;
 - validações de auth, barbearia, permissões e formatação.
 
 O que **não** foi testado:
@@ -468,7 +538,8 @@ O que **não** foi testado:
 - CRUD real com credenciais de teste no Supabase vinculado (não houve autorização para alterar dados remotos);
 - login, cadastro e recuperação com Supabase real;
 - políticas RLS com usuários de duas barbearias em banco real;
-- fluxos E2E de catálogo/equipe no navegador;
+- fluxos E2E de catálogo/equipe/horários no navegador;
+- concorrência real de bloqueios simultâneos no banco;
 - integração Asaas, webhooks, e-mails de produção e jobs;
 - upload de avatar (sem Storage configurado).
 
@@ -478,7 +549,7 @@ O que **não** foi testado:
 
 1. **Sem banco real nesta entrega.** Não havia Docker/PostgreSQL local, e o projeto Supabase vinculado não foi alterado. As migrações e os CRUDs precisam ser aplicados e validados em um ambiente de desenvolvimento com autorização.
 2. **Sem pagamentos.** As tabelas e a UI financeira são uma fundação; não há cobrança, assinatura ativa, boleto, Pix ou cartão.
-3. **Sem agendamento completo.** A agenda lê registros existentes; criação/edição/cancelamento e cálculo de disponibilidade ficam para a próxima etapa.
+3. **Sem agendamento completo.** A agenda lê registros existentes; a base de funcionamento, jornada e bloqueios está pronta, mas criação/edição/cancelamento e cálculo de disponibilidade ficam para a próxima etapa.
 4. **Sem convites.** Profissionais e vínculos de serviço já são gerenciados, mas não há fluxo de convite por e-mail, aceite ou reenvio para novos acessos ao painel.
 5. **Sem página pública real por tenant.** A demo é estática, com dados fictícios, e não reserva horários.
 6. **Sem uploads.** `logo_url`, `cover_url` e `avatar_url` existem no schema, mas não há bucket/políticas de Storage configurados; os profissionais usam iniciais.
@@ -488,6 +559,8 @@ O que **não** foi testado:
 10. **Dependência de PostgreSQL 15+.** O `on delete set null (appointment_id)` não funciona em versões anteriores.
 11. **Associações sem transação única.** A atualização de `barber_services` valida os serviços antes de escrever e segue uma ordem segura, mas upsert e remoção são chamadas separadas. Se a segunda falhar, a interface orienta salvar novamente.
 12. **Duplicidade de serviço validada na aplicação.** O schema não possui `unique` para nome normalizado; a checagem é feita no servidor e pode ser contornada apenas por escrita direta com privilégios de owner. Não há coluna gerada nem extensão `unaccent` aplicada nesta etapa.
+13. **Sobreposição de bloqueios sem constraint no banco.** `blocked_slots` não tem constraint de exclusão; a validação é feita na aplicação e duas requisições concorrentes podem gravar períodos sobrepostos. Uma migration futura pode adicionar `exclude using gist` com escopo por profissional e barbearia.
+14. **Uma faixa por dia na interface.** `business_hours` e `barber_working_hours` aceitam múltiplas faixas, mas a edição atual mantém uma faixa por dia e consolida duplicatas legadas ao salvar.
 
 ---
 

@@ -17,8 +17,17 @@ import { PrototypeAction } from "@/components/prototype-action";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getBarbers, getTeam } from "@/features/dashboard/queries";
-import { requireDashboardContext } from "@/lib/auth/dal";
+import { BarbersManager } from "@/features/barbers/components/barbers-manager";
+import {
+  getBarberServiceAssignments,
+  getBarbers,
+  getServices,
+  getTeam,
+} from "@/features/dashboard/queries";
+import {
+  isCurrentUserPlatformAdmin,
+  requireDashboardContext,
+} from "@/lib/auth/dal";
 import { canManageShop, roleLabels } from "@/lib/auth/permissions";
 import { formatDateBR, initialsFromName } from "@/lib/format";
 
@@ -31,12 +40,40 @@ export default async function TeamPage() {
   const shop = context.active.barbershop;
   const canManage =
     canManageShop(context.active.role) ||
-    context.user.app_metadata?.lps_role === "platform_admin";
+    isCurrentUserPlatformAdmin(context.user);
 
-  const [team, barbers] = await Promise.all([
+  const [team, barbers, services, assignments] = await Promise.all([
     getTeam(shop.id),
     getBarbers(shop.id),
+    getServices(shop.id),
+    getBarberServiceAssignments(shop.id),
   ]);
+
+  const servicesByBarber = new Map<string, string[]>();
+
+  for (const assignment of assignments) {
+    const current = servicesByBarber.get(assignment.barber_id) ?? [];
+    current.push(assignment.service_id);
+    servicesByBarber.set(assignment.barber_id, current);
+  }
+
+  const managedBarbers = barbers.map((barber) => ({
+    id: barber.id,
+    name: barber.name,
+    phone: barber.phone,
+    bio: barber.bio,
+    is_active: barber.is_active,
+    display_order: barber.display_order,
+    serviceIds: servicesByBarber.get(barber.id) ?? [],
+  }));
+
+  const catalogServices = services.map((service) => ({
+    id: service.id,
+    name: service.name,
+    price_cents: service.price_cents,
+    duration_minutes: service.duration_minutes,
+    is_active: service.is_active,
+  }));
 
   const activeMembers = team.filter((member) => member.is_active);
   const activeBarbers = barbers.filter((barber) => barber.is_active);
@@ -101,12 +138,20 @@ export default async function TeamPage() {
         />
         <StatCard
           label="Acesso de equipe"
-          value={String(activeMembers.filter((member) => member.role === "staff").length)}
+          value={String(
+            activeMembers.filter((member) => member.role === "staff").length,
+          )}
           hint="Papel operacional, sem gestão"
           icon={UserCheck}
           tone="muted"
         />
       </div>
+
+      <BarbersManager
+        barbers={managedBarbers}
+        services={catalogServices}
+        canManage={canManage}
+      />
 
       <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <Card>
@@ -186,97 +231,20 @@ export default async function TeamPage() {
         </Card>
 
         <div className="space-y-5">
-          <Card>
-            <CardHeader className="border-b border-border/70 pb-4">
-              <CardTitle>Profissionais de atendimento</CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Registros usados pela agenda. Podem ou não ter acesso ao painel.
-              </p>
-            </CardHeader>
-            <CardContent className="p-0">
-              {barbers.length > 0 ? (
-                <ul className="divide-y divide-border/70">
-                  {barbers.map((barber) => (
-                    <li
-                      key={barber.id}
-                      className="flex items-center gap-3 px-4 py-3"
-                    >
-                      <span className="grid size-8 shrink-0 place-items-center rounded-full border border-border/80 bg-muted/40 font-display text-[10px] font-semibold">
-                        {initialsFromName(barber.name)}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium">
-                          {barber.name}
-                        </p>
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {barber.bio ?? "Sem descrição profissional"}
-                        </p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={
-                          barber.is_active
-                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                            : "border-border bg-muted/50 text-muted-foreground"
-                        }
-                      >
-                        {barber.is_active ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="p-4">
-                  <DashboardEmpty
-                    className="border-0 bg-transparent py-6"
-                    icon={Scissors}
-                    title="Nenhum profissional cadastrado"
-                    description="Os profissionais são vinculados aos serviços e aos agendamentos."
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {canManage ? (
-            <PrototypeAction
-              triggerLabel="Adicionar profissional"
-              triggerVariant="outline"
-              triggerClassName="w-full"
-              title="Novo profissional"
-              description="O cadastro de profissionais será conectado na próxima etapa. Nenhum registro é criado por este modal."
-              steps={[
-                {
-                  title: "Perfil de atendimento",
-                  description:
-                    "Nome, bio, telefone e ordem de exibição.",
-                },
-                {
-                  title: "Jornada de trabalho",
-                  description:
-                    "Horários por dia da semana, usados no cálculo de disponibilidade.",
-                },
-                {
-                  title: "Serviços habilitados",
-                  description:
-                    "Relação entre o profissional e o catálogo da barbearia.",
-                },
-              ]}
-            />
-          ) : null}
+          <NoticeCard
+            icon={ShieldCheck}
+            title="Proteção contra autopromoção"
+            tone="gold"
+          >
+            Um usuário não pode alterar o próprio papel. Promoções e
+            transferências exigem proprietário ou administrador da plataforma,
+            com validação no banco.
+          </NoticeCard>
+          <NoticeCard icon={CalendarDays} title="Equipe e agenda conectadas">
+            Os profissionais cadastrados aqui serão a base para disponibilidade,
+            bloqueios e atribuição de agendamentos nas próximas etapas.
+          </NoticeCard>
         </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <NoticeCard icon={ShieldCheck} title="Proteção contra autopromoção" tone="gold">
-          Um usuário não pode alterar o próprio papel. Promoções e transferências
-          exigem proprietário ou administrador da plataforma, com validação no
-          banco.
-        </NoticeCard>
-        <NoticeCard icon={CalendarDays} title="Equipe e agenda conectadas">
-          Os profissionais cadastrados aqui serão a base para disponibilidade,
-          bloqueios e atribuição de agendamentos nas próximas etapas.
-        </NoticeCard>
       </div>
 
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">

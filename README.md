@@ -4,7 +4,7 @@ Fundação técnica do **LPS Agenda**, um SaaS multi-tenant de agenda e gestão 
 
 A versão atual entrega a base de produto: identidade visual, site institucional, autenticação, onboarding, painel administrativo, página pública de demonstração, banco PostgreSQL versionado e políticas de isolamento por barbearia.
 
-> **Estado:** fundação `v0.1`. A interface e o schema estão prontos para evoluir, mas cobrança, agendamento completo, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
+> **Estado:** fundação `v0.1` com a Etapa 2.1 implementada. Serviços e profissionais têm CRUD conectado ao Supabase, com associação de serviços e isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, agendamento completo, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
 
 ---
 
@@ -15,19 +15,63 @@ A versão atual entrega a base de produto: identidade visual, site institucional
 - Onboarding transacional: criação da barbearia e do vínculo `owner` na mesma operação.
 - Dashboard com troca de barbearia, navegação por papel, topbar, sidebar desktop, menu mobile e estados de carregamento/erro/vazio.
 - Páginas de visão geral, agenda, clientes, serviços, equipe, financeiro, plano e configurações.
+- **Serviços:** CRUD real, busca por nome, ativação/desativação, preço em centavos e duração validados com Zod no formulário e no servidor.
+- **Profissionais:** CRUD real, busca por nome, ativação/desativação, telefone, descrição e associação com os serviços da mesma barbearia.
 - Página pública de demonstração `/barbearia/barbearia-aurora`, estática e claramente identificada como fictícia.
 - Páginas de termos, privacidade, 404, erro global e aviso de configuração obrigatória.
 - Migrações SQL versionadas para 17 tabelas, enums, funções, triggers, grants e RLS.
-- Testes estáticos de schema, RLS, segredos, validações, permissões e formatação.
+- Testes estáticos de schema, RLS, segredos, validações, permissões, formatação e das Server Actions de catálogo/equipe.
 
 ## O que é protótipo ou está fora desta etapa
 
 - **Pagamentos:** não há chamada ao Asaas. As tabelas `plans`, `subscriptions`, `payments` e `webhook_events` existem, mas nenhuma cobrança é criada.
 - **Agendamento completo:** o painel lê agendamentos reais, porém criação, edição, cancelamento e cálculo de disponibilidade ainda não estão habilitados.
-- **Convites e gestão de equipe:** o schema suporta `owner` e `staff`, mas o fluxo de convite ainda não existe.
+- **Convites de equipe:** o cadastro de profissionais e os vínculos de `barber_services` já são reais; o fluxo de convite por e-mail para novos acessos ao painel ainda não existe.
 - **Página pública por tenant:** a única página pública é a demonstração estática da Barbearia Aurora. Ela não consulta o banco nem reserva horários.
 - **Notificações, uploads e webhooks:** as tabelas e colunas estão preparadas; não há envio, armazenamento ou processamento real.
 - **Administração global:** o papel `platform_admin` eleva o acesso dentro de uma barbearia, mas não existe um painel global separado.
+
+---
+
+## Etapa 2.1 — Serviços e profissionais
+
+Os módulos de Serviços e Equipe agora persistem no Supabase e operam sobre a barbearia ativa da sessão.
+
+### Serviços
+
+- Listagem, busca por nome, cadastro, edição, exclusão e ativação/desativação.
+- Nome, descrição, preço em reais convertido para centavos, duração inteira entre 5 e 600 minutos e status.
+- Validação Zod no formulário e novamente no servidor; o banco também aplica `check` de preço, duração e tamanho.
+- Nomes duplicados são bloqueados por comparação normalizada (ignora caixa, acentos e espaços repetidos) dentro da mesma barbearia.
+- A exclusão verifica agendamentos vinculados e orienta desativar o serviço quando o histórico impede a remoção.
+
+### Profissionais e associações
+
+- Listagem em cards, busca por nome, cadastro, edição, exclusão e ativação/desativação.
+- Nome, telefone opcional, descrição/especialidade opcional e status.
+- Seleção de serviços no formulário; todos os IDs são validados contra a barbearia ativa antes de qualquer escrita.
+- A edição insere os serviços novos, preserva os já vinculados e remove os desmarcados. A PK composta `(barber_id, service_id)` e as FKs compostas com `barbershop_id` impedem duplicidade e vínculo entre tenants.
+- A exclusão de profissional com agendamentos é bloqueada; os vínculos de `barber_services` são removidos em cascata pelo banco.
+- **Avatar:** não há upload porque o projeto não possui bucket nem políticas de Storage configuradas. Os cards usam as iniciais do nome.
+
+### Segurança
+
+- O `barbershop_id` é sempre obtido de `getActiveDashboardContext()` (sessão Supabase + vínculo ativo + cookie de barbearia validado na lista de memberships), nunca do corpo enviado pelo navegador.
+- `owner` e `platform_admin` podem escrever; `staff` consulta em modo somente leitura. A checagem é repetida em cada Server Action e a RLS de `barbers`, `services` e `barber_services` é a barreira final.
+- Nenhuma action ou componente usa `SUPABASE_SERVICE_ROLE_KEY`; os clientes administrativos continuam `server-only`.
+- Erros de banco são traduzidos para mensagens seguras, sem expor SQL, constraints ou detalhes internos.
+
+### Principais arquivos
+
+- `src/features/services/actions.ts` e `src/features/barbers/actions.ts`
+- `src/features/services/components/` e `src/features/barbers/components/`
+- `src/lib/validation/services.ts` e `src/lib/validation/barbers.ts`
+- `src/lib/auth/management.ts`
+- `src/components/dashboard/confirm-delete-dialog.tsx`
+- `src/app/dashboard/servicos/page.tsx` e `src/app/dashboard/equipe/page.tsx`
+- `tests/catalog-actions.test.ts` e `tests/helpers/fake-supabase.ts`
+
+Nenhuma migration nova foi necessária: as tabelas, FKs, PK composta, índices, grants e políticas já cobriam esta etapa.
 
 ---
 
@@ -202,7 +246,7 @@ npx supabase db push
 npx supabase status
 ```
 
-> **Validação:** neste ambiente não havia Docker, PostgreSQL nem projeto Supabase configurado. As migrações foram revisadas e validadas por testes estáticos, mas **não foram aplicadas em um banco real**. O primeiro passo da próxima etapa é rodar `supabase db reset` ou `db push` e testar as políticas com dois tenants distintos.
+> **Validação:** não havia Docker/PostgreSQL local neste ambiente e nenhuma alteração foi aplicada ao projeto Supabase vinculado. As migrações foram revisadas e validadas por testes estáticos, mas **não foram executadas em um banco real nesta entrega**. O primeiro passo da próxima etapa é rodar `supabase db reset` em um ambiente local ou `db push` com autorização e testar as políticas com dois tenants distintos.
 
 ---
 
@@ -319,6 +363,8 @@ src/
     barbershop/             actions de criação, troca e edição
     onboarding/             formulário de primeiro acesso
     dashboard/              consultas do painel
+    services/               actions e componentes do catálogo
+    barbers/                actions e componentes da equipe de atendimento
     settings/               formulário de configurações
     marketing/              landing page
     public-barbershop/      dados fictícios da demonstração
@@ -357,8 +403,8 @@ Decisões de implementação:
 | `/dashboard` | Visão geral da barbearia ativa |
 | `/dashboard/agenda` | Agenda do dia e próximos horários |
 | `/dashboard/clientes` | Base de clientes e busca |
-| `/dashboard/servicos` | Catálogo de serviços |
-| `/dashboard/equipe` | Membros e profissionais |
+| `/dashboard/servicos` | Catálogo de serviços (CRUD, busca, status) |
+| `/dashboard/equipe` | Acessos, profissionais e associação de serviços |
 | `/dashboard/financeiro` | Indicadores financeiros (owner/admin) |
 | `/dashboard/plano` | Plano e assinatura (owner/admin) |
 | `/dashboard/configuracoes` | Dados da barbearia (owner/admin) |
@@ -388,11 +434,11 @@ Resultados da última verificação local:
 ```text
 npm run typecheck  ✅
 npm run lint       ✅
-npm test           ✅ 42 testes em 4 arquivos
+npm test           ✅ 90 testes em 5 arquivos
 npm run build      ✅
 ```
 
-Também foram verificados manualmente no navegador: landing page, login em estado sem configuração, demonstração pública, página 404 e abertura do modal de protótipo. Não houve erros de console nas páginas válidas. Os headers de segurança foram confirmados na resposta HTTP do servidor local.
+Também foram verificadas manualmente no navegador as rotas públicas, `/login` e o redirecionamento de `/dashboard` sem sessão. Não houve erros de console nas páginas válidas. Os headers de segurança foram confirmados na resposta HTTP do servidor local.
 
 Os testes cobrem:
 
@@ -403,34 +449,45 @@ Os testes cobrem:
 - função de onboarding transacional;
 - restrição de sobreposição de agenda;
 - ausência de acesso anônimo às tabelas;
+- políticas de leitura para membros e escrita owner/admin em `barbers`, `services` e `barber_services`;
 - `.env.example` com exatamente seis variáveis vazias;
 - cliente administrativo marcado como `server-only`;
-- ausência de segredos em Client Components;
+- ausência de segredos em Client Components e nas Server Actions;
+- derivação de `barbershop_id` da sessão ativa, ignorando valores injetados no formulário;
+- cadastro, edição, exclusão e ativação/desativação de serviços;
+- cadastro, edição, exclusão e ativação/desativação de profissionais;
+- associação, substituição e deduplicação de `barber_services`;
+- bloqueio de associação entre barbearias e de exclusão com agendamentos;
+- permissões de owner, staff e `platform_admin`, usuário não autenticado e dados inválidos;
+- normalização de preço em reais e de nome para duplicidade;
 - validações de auth, barbearia, permissões e formatação.
 
 O que **não** foi testado:
 
 - aplicação real das migrações em PostgreSQL;
+- CRUD real com credenciais de teste no Supabase vinculado (não houve autorização para alterar dados remotos);
 - login, cadastro e recuperação com Supabase real;
-- políticas RLS com usuários de duas barbearias;
-- fluxos E2E no navegador;
-- integração Asaas, webhooks, e-mails de produção e jobs.
+- políticas RLS com usuários de duas barbearias em banco real;
+- fluxos E2E de catálogo/equipe no navegador;
+- integração Asaas, webhooks, e-mails de produção e jobs;
+- upload de avatar (sem Storage configurado).
 
 ---
 
 ## Limitações conhecidas
 
-1. **Sem banco real nesta entrega.** Não havia Docker, `psql` ou projeto Supabase configurado no ambiente. As migrações precisam ser aplicadas e validadas em um projeto de desenvolvimento.
+1. **Sem banco real nesta entrega.** Não havia Docker/PostgreSQL local, e o projeto Supabase vinculado não foi alterado. As migrações e os CRUDs precisam ser aplicados e validados em um ambiente de desenvolvimento com autorização.
 2. **Sem pagamentos.** As tabelas e a UI financeira são uma fundação; não há cobrança, assinatura ativa, boleto, Pix ou cartão.
 3. **Sem agendamento completo.** A agenda lê registros existentes; criação/edição/cancelamento e cálculo de disponibilidade ficam para a próxima etapa.
-4. **Sem convites.** A equipe pode ser lida, mas não há fluxo de convite, aceite ou reenvio.
+4. **Sem convites.** Profissionais e vínculos de serviço já são gerenciados, mas não há fluxo de convite por e-mail, aceite ou reenvio para novos acessos ao painel.
 5. **Sem página pública real por tenant.** A demo é estática, com dados fictícios, e não reserva horários.
-6. **Sem uploads.** `logo_url` e `cover_url` existem no schema, mas não há storage configurado.
+6. **Sem uploads.** `logo_url`, `cover_url` e `avatar_url` existem no schema, mas não há bucket/políticas de Storage configurados; os profissionais usam iniciais.
 7. **Sem notificações reais.** A tabela `notifications` existe; não há envio por e-mail, WhatsApp ou push.
 8. **Sem painel global de plataforma.** O `platform_admin` eleva o acesso dentro de uma barbearia; não há uma área separada para administrar todos os tenants.
 9. **Transferência de propriedade limitada.** Há um único owner ativo por barbearia; a troca exige intervenção administrativa/manual, e a exclusão do único owner é bloqueada pelo trigger de proteção.
 10. **Dependência de PostgreSQL 15+.** O `on delete set null (appointment_id)` não funciona em versões anteriores.
-11. **Sem versionamento Git.** O ambiente não tinha Git instalado; nenhum commit foi criado.
+11. **Associações sem transação única.** A atualização de `barber_services` valida os serviços antes de escrever e segue uma ordem segura, mas upsert e remoção são chamadas separadas. Se a segunda falhar, a interface orienta salvar novamente.
+12. **Duplicidade de serviço validada na aplicação.** O schema não possui `unique` para nome normalizado; a checagem é feita no servidor e pode ser contornada apenas por escrita direta com privilégios de owner. Não há coluna gerada nem extensão `unaccent` aplicada nesta etapa.
 
 ---
 
@@ -438,7 +495,7 @@ O que **não** foi testado:
 
 1. **Provisionar o Supabase** e aplicar as sete migrações em um projeto de desenvolvimento.
 2. **Testar RLS com dois tenants**: criar duas barbearias, dois owners e um staff; tentar leituras e escritas cruzadas via API.
-3. **Implementar convites e gestão de equipe**, incluindo aceite, reenvio e revogação.
+3. **Implementar convites de acesso ao painel**, incluindo aceite, reenvio e revogação; o cadastro de profissionais já está concluído.
 4. **Implementar o agendamento completo**, com disponibilidade por profissional, bloqueios, timezone e transições de status.
 5. **Conectar o Asaas no servidor**, com webhook idempotente, validação de token e registro em `webhook_events`.
 6. **Criar a página pública real por tenant**, com slug dinâmico, serviços, equipe e agendamento.

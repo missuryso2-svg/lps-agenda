@@ -256,6 +256,16 @@ export async function getBarbers(barbershopId: string) {
   return data ?? [];
 }
 
+export async function getBarberServiceAssignments(barbershopId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("barber_services")
+    .select("barber_id, service_id")
+    .eq("barbershop_id", barbershopId);
+
+  return data ?? [];
+}
+
 export async function getSubscription(barbershopId: string) {
   const supabase = await createClient();
 

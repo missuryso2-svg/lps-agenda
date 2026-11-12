@@ -127,6 +127,20 @@ describe("migrações", () => {
       "create policy payments_select_member_or_admin",
     );
   });
+
+  it("restringe escrita do catálogo e dos vínculos ao proprietário ou admin", () => {
+    for (const table of ["barbers", "services", "barber_services"]) {
+      expect(migrationSql).toContain(
+        `create policy ${table}_select_member_or_admin`,
+      );
+
+      for (const action of ["insert", "update", "delete"]) {
+        expect(migrationSql).toContain(
+          `create policy ${table}_${action}_owner_or_admin`,
+        );
+      }
+    }
+  });
 });
 
 describe("ambiente e segredos", () => {
@@ -179,5 +193,43 @@ describe("ambiente e segredos", () => {
     expect(browserClient).toContain("NEXT_PUBLIC_SUPABASE_ANON_KEY");
     expect(browserClient).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
     expect(browserClient).not.toContain("ASAAS_API_KEY");
+  });
+});
+
+describe("ações de catálogo e equipe", () => {
+  const servicesActions = read("src/features/services/actions.ts");
+  const barbersActions = read("src/features/barbers/actions.ts");
+  const managementAuthorization = read("src/lib/auth/management.ts");
+
+  it("marca as mutações como Server Actions e exige autorização de gestão", () => {
+    for (const source of [servicesActions, barbersActions]) {
+      expect(source.startsWith('"use server";')).toBe(true);
+      expect(source).toContain("authorizeShopManagement()");
+      expect(source).toContain("authorization.context.active.barbershop_id");
+      expect(source).not.toMatch(
+        /SUPABASE_SERVICE_ROLE_KEY|@\/lib\/supabase\/admin/,
+      );
+    }
+
+    expect(managementAuthorization).toContain("getActiveDashboardContext");
+    expect(managementAuthorization).toContain("canManageShop");
+    expect(managementAuthorization).toContain("isPlatformAdmin");
+    expect(managementAuthorization).not.toMatch(
+      /SUPABASE_SERVICE_ROLE_KEY|@\/lib\/supabase\/admin/,
+    );
+  });
+
+  it("não aceita barbershop_id enviado pelo formulário", () => {
+    for (const source of [servicesActions, barbersActions]) {
+      expect(source).not.toMatch(/parsed\.data\.barbershop/i);
+      expect(source).not.toMatch(/values\.barbershop/i);
+      expect(source).not.toMatch(/input\.barbershop/i);
+    }
+  });
+
+  it("filtra mutações e vínculos pela barbearia ativa", () => {
+    expect(servicesActions).toContain('.eq("barbershop_id", barbershopId)');
+    expect(barbersActions).toContain('.eq("barbershop_id", barbershopId)');
+    expect(barbersActions).toContain("barbershop_id: barbershopId");
   });
 });

@@ -78,3 +78,35 @@ export async function authorizeCustomerManagement(): Promise<ManagementAuthoriza
 
   return { context };
 }
+
+/**
+ * Autorização de servidor para a agenda e os agendamentos.
+ * A RLS de appointments permite leitura e escrita para owner e staff da
+ * barbearia; exclusão física continua restrita ao owner, mas esta fase não
+ * expõe exclusão. O barbershop_id vem apenas da sessão ativa.
+ */
+export async function authorizeAppointmentManagement(): Promise<ManagementAuthorization> {
+  const context = await getActiveDashboardContext();
+
+  if (!context) {
+    return {
+      error: actionError(
+        "Sua sessão expirou. Entre novamente para continuar.",
+      ),
+    };
+  }
+
+  const allowed =
+    canOperateShop(context.active.role) ||
+    isPlatformAdmin(context.user.app_metadata);
+
+  if (!allowed) {
+    return {
+      error: actionError(
+        "Você não tem permissão para gerenciar a agenda desta barbearia.",
+      ),
+    };
+  }
+
+  return { context };
+}

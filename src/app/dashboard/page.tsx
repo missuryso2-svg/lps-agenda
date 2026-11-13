@@ -20,7 +20,6 @@ import { DashboardEmpty } from "@/components/dashboard/dashboard-empty";
 import { NoticeCard } from "@/components/dashboard/notice-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { PrototypeAction } from "@/components/prototype-action";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,31 +88,12 @@ export default async function DashboardOverviewPage({
                 Abrir agenda
               </Link>
             </Button>
-            <PrototypeAction
-              triggerLabel="Novo agendamento"
-              triggerVariant="gold"
-              triggerSize="lg"
-              title="Novo agendamento"
-              description="O fluxo completo de criação de agendamento ainda não está habilitado nesta fundação."
-              steps={[
-                {
-                  title: "Cliente e serviço",
-                  description:
-                    "Seleção de cliente cadastrado, serviço e profissional habilitado.",
-                },
-                {
-                  title: "Horário com validação",
-                  description:
-                    "Verificação de expediente, bloqueios e conflito de horário no banco.",
-                },
-                {
-                  title: "Confirmação e histórico",
-                  description:
-                    "Gravação com status, preço e trilha de auditoria.",
-                },
-              ]}
-              footnote="Nenhum dado é criado ao abrir esta janela. A agenda abaixo lê apenas registros já existentes no Supabase."
-            />
+            <Button asChild variant="gold" size="lg">
+              <Link href="/dashboard/agenda?new=1">
+                <CalendarPlus className="size-4" />
+                Novo agendamento
+              </Link>
+            </Button>
           </>
         }
       />
@@ -230,32 +210,14 @@ export default async function DashboardOverviewPage({
               <DashboardEmpty
                 icon={CalendarPlus}
                 title="Nenhum agendamento para hoje"
-                description="Quando a agenda receber registros, eles aparecem aqui em ordem de horário, com serviço, profissional e status."
+                description="Crie o primeiro compromisso do dia; ele aparecerá aqui em ordem de horário, com serviço, profissional e status."
                 action={
-                  <PrototypeAction
-                    triggerLabel="Como será o agendamento"
-                    triggerVariant="outline"
-                    triggerSize="sm"
-                    title="Agenda em construção"
-                    description="A consulta já exibe agendamentos reais da barbearia. A criação pelo painel entra na próxima etapa."
-                    steps={[
-                      {
-                        title: "Disponibilidade",
-                        description:
-                          "Cruzamento entre expediente da barbearia e jornada do profissional.",
-                      },
-                      {
-                        title: "Sem conflito",
-                        description:
-                          "O banco usa uma restrição de exclusão para impedir sobreposição por profissional.",
-                      },
-                      {
-                        title: "Confirmação",
-                        description:
-                          "Status, preço e auditoria preservados no mesmo registro.",
-                      },
-                    ]}
-                  />
+                  <Button asChild variant="gold" size="sm">
+                    <Link href="/dashboard/agenda?new=1">
+                      <CalendarPlus className="size-4" />
+                      Novo agendamento
+                    </Link>
+                  </Button>
                 }
               />
             )}
@@ -343,8 +305,8 @@ export default async function DashboardOverviewPage({
 
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
         <Check className="size-3.5 text-gold" />
-        Fundação v0.1 · dados reais, cobrança inativa e agendamento completo na
-        próxima etapa.
+        Fundação v0.1 · dados reais, agenda interna ativa, cobrança e reserva
+        pública ainda inativas.
       </div>
     </div>
   );

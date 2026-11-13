@@ -4,6 +4,8 @@ export type FakeRow = Record<string, unknown>;
 
 type FakeError = { code: string; message: string };
 
+type FakeOperation = "select" | "insert" | "update" | "delete" | "upsert";
+
 type Filter =
   | { kind: "eq"; column: string; value: unknown }
   | { kind: "in"; column: string; values: unknown[] }
@@ -127,7 +129,10 @@ function matchesFilters(row: FakeRow, filters: Filter[]): boolean {
 
 export class FakeSupabase {
   private tables = new Map<string, FakeRow[]>();
-  private failures = new Map<string, FakeError>();
+  private failures = new Map<
+    string,
+    Array<{ error: FakeError; operation?: FakeOperation }>
+  >();
 
   constructor(seed: Record<string, FakeRow[]> = {}) {
     for (const [table, rows] of Object.entries(seed)) {
@@ -154,25 +159,50 @@ export class FakeSupabase {
     );
   }
 
-  failNext(table: string, code = "23503") {
-    this.failures.set(table, { code, message: "Falha simulada." });
+  failNext(
+    table: string,
+    code = "23503",
+    operation?: FakeOperation,
+  ) {
+    const queue = this.failures.get(table) ?? [];
+    queue.push({
+      error: { code, message: "Falha simulada." },
+      operation,
+    });
+    this.failures.set(table, queue);
   }
 
-  takeFailure(table: string): FakeError | null {
-    const failure = this.failures.get(table);
+  takeFailure(
+    table: string,
+    operation: FakeOperation,
+  ): FakeError | null {
+    const queue = this.failures.get(table);
 
-    if (!failure) {
+    if (!queue || queue.length === 0) {
       return null;
     }
 
-    this.failures.delete(table);
-    return failure;
+    const index = queue.findIndex(
+      (failure) =>
+        failure.operation === undefined || failure.operation === operation,
+    );
+
+    if (index < 0) {
+      return null;
+    }
+
+    const [failure] = queue.splice(index, 1);
+
+    if (queue.length === 0) {
+      this.failures.delete(table);
+    }
+
+    return failure?.error ?? null;
   }
 }
 
 class FakeQuery implements PromiseLike<QueryResult> {
-  private operation: "select" | "insert" | "update" | "delete" | "upsert" =
-    "select";
+  private operation: FakeOperation = "select";
   private payload: FakeRow[] = [];
   private filters: Filter[] = [];
   private orderings: Array<{ column: string; ascending: boolean }> = [];
@@ -379,7 +409,7 @@ class FakeQuery implements PromiseLike<QueryResult> {
   }
 
   private execute(): QueryResult {
-    const failure = this.db.takeFailure(this.table);
+    const failure = this.db.takeFailure(this.table, this.operation);
 
     if (failure) {
       return { data: null, error: failure, count: null };

@@ -335,3 +335,102 @@ describe("clientes, RLS e integridade", () => {
     expect(customersActions).not.toContain(".eq(\"is_active\", true)");
   });
 });
+
+describe("agenda e agendamentos", () => {
+  const schedulingActions = read("src/features/scheduling/actions.ts");
+  const schedulingQueries = read("src/features/scheduling/queries.ts");
+  const agendaPage = read("src/app/dashboard/agenda/page.tsx");
+  const managementAuthorization = read("src/lib/auth/management.ts");
+
+  it("mantém RLS de agenda para membros e exclusão restrita ao proprietário", () => {
+    for (const action of ["select", "insert", "update"]) {
+      expect(migrationSql).toContain(
+        `create policy appointments_${action}_member_or_admin`,
+      );
+    }
+
+    expect(migrationSql).toContain(
+      "create policy appointments_delete_owner_or_admin",
+    );
+    expect(migrationSql).not.toContain(
+      "create policy appointments_delete_member_or_admin",
+    );
+  });
+
+  it("protege a sobreposição apenas para status ativos no PostgreSQL", () => {
+    expect(migrationSql).toMatch(
+      /appointments_no_overlap[\s\S]*?exclude using gist \([\s\S]*?barber_id with =,[\s\S]*?tstzrange\(starts_at, ends_at, '\[\)'\) with &&[\s\S]*?where \(status in \('scheduled', 'confirmed', 'in_progress'\)\)/,
+    );
+  });
+
+  it("marca as mutações da agenda como Server Actions autorizadas", () => {
+    expect(schedulingActions.startsWith('"use server";')).toBe(true);
+    expect(schedulingActions).toContain("authorizeAppointmentManagement()");
+    expect(schedulingActions).toContain(
+      "authorization.context.active.barbershop_id",
+    );
+    expect(managementAuthorization).toContain(
+      "export async function authorizeAppointmentManagement",
+    );
+    expect(managementAuthorization).toContain("canOperateShop");
+    expect(schedulingActions).not.toMatch(
+      /SUPABASE_SERVICE_ROLE_KEY|@\/lib\/supabase\/admin/,
+    );
+  });
+
+  it("não aceita barbershop_id do navegador e filtra escrita pelo tenant", () => {
+    expect(schedulingActions).not.toMatch(/parsed\.data\.barbershop/i);
+    expect(schedulingActions).not.toMatch(/values\.barbershop/i);
+    expect(schedulingActions).toContain("barbershop_id: barbershopId");
+    expect(schedulingActions).toContain('.eq("barbershop_id", barbershopId)');
+  });
+
+  it("revalida a disponibilidade antes de criar e reagendar", () => {
+    expect(schedulingActions).toContain("loadAvailability({");
+    expect(schedulingActions).toContain("excludeAppointmentId");
+    expect(schedulingActions).toContain(
+      "price_cents: availability.data.priceCents",
+    );
+    expect(schedulingActions).toContain('status: "scheduled"');
+    expect(migrationSql).toContain("appointments_no_overlap");
+    expect(schedulingActions).toContain('case "23P01"');
+    expect(schedulingActions).toContain("acabou de ser reservado");
+  });
+
+  it("valida cliente, serviço e profissional dentro da barbearia ativa", () => {
+    const schedulingSql = `${schedulingActions}\n${schedulingQueries}`;
+
+    for (const table of ["customers", "services", "barbers"]) {
+      expect(schedulingSql).toContain(`.from("${table}")`);
+    }
+
+    expect(schedulingQueries).toContain('.eq("barbershop_id", barbershopId)');
+    expect(schedulingQueries).toContain('eq("service_id", serviceId)');
+    expect(schedulingQueries).toContain('eq("barber_id", barberId)');
+    expect(schedulingQueries).toContain(".eq(\"is_active\", true)");
+    expect(schedulingQueries).toContain(
+      '.in("status", activeAppointmentStatuses)',
+    );
+  });
+
+  it("carrega a agenda por período e profissional, sem varredura global", () => {
+    expect(schedulingQueries).toContain(
+      '.lt("starts_at", rangeEnd.toISOString())',
+    );
+    expect(schedulingQueries).toContain(
+      '.gt("ends_at", rangeStart.toISOString())',
+    );
+    expect(schedulingQueries).toContain(
+      'appointmentsQuery = appointmentsQuery.eq("barber_id", selectedBarberId)',
+    );
+    expect(agendaPage).toContain("getAgendaPageData");
+    expect(agendaPage).toContain("AgendaBoard");
+    expect(agendaPage).not.toContain("getAgendaForToday");
+    expect(agendaPage).not.toContain("PrototypeAction");
+  });
+
+  it("não expõe exclusão física de agendamentos nesta fase", () => {
+    expect(schedulingActions).not.toMatch(/\.delete\(\)/);
+    expect(schedulingActions).not.toContain("deleteAppointmentAction");
+  });
+});

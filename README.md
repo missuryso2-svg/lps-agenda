@@ -4,7 +4,7 @@ Fundação técnica do **LPS Agenda**, um SaaS multi-tenant de agenda e gestão 
 
 A versão atual entrega a base de produto: identidade visual, site institucional, autenticação, onboarding, painel administrativo, página pública de demonstração, banco PostgreSQL versionado e políticas de isolamento por barbearia.
 
-> **Estado:** fundação `v0.1` com as Etapas 2.1, 2.2 e 2.3 implementadas. Serviços, profissionais, horários de funcionamento, jornadas individuais, bloqueios e clientes estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, agendamento completo, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
+> **Estado:** fundação `v0.1` com as Etapas 2.1, 2.2, 2.3 e 3.1 implementadas. Serviços, profissionais, horários, jornadas, bloqueios, clientes e agendamentos estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, reserva pública, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
 
 ---
 
@@ -19,15 +19,16 @@ A versão atual entrega a base de produto: identidade visual, site institucional
 - **Profissionais:** CRUD real, busca por nome, ativação/desativação, telefone, descrição e associação com os serviços da mesma barbearia.
 - **Horários e disponibilidade:** funcionamento semanal da barbearia, jornada individual dos profissionais e bloqueios por dia inteiro ou intervalo, com validação de fuso e sobreposição.
 - **Clientes:** cadastro, listagem paginada, busca por nome/telefone/e-mail, filtros por situação, edição, detalhes e arquivamento reversível, com deduplicação dentro da barbearia.
+- **Agenda e agendamentos:** visão diária e semanal por profissional, cálculo de horários livres no servidor, criação, confirmação, início, conclusão, ausência, cancelamento com motivo e reagendamento, com proteção contra sobreposição no PostgreSQL.
 - Página pública de demonstração `/barbearia/barbearia-aurora`, estática e claramente identificada como fictícia.
 - Páginas de termos, privacidade, 404, erro global e aviso de configuração obrigatória.
 - Migrações SQL versionadas para 17 tabelas, enums, funções, triggers, grants e RLS.
-- Testes estáticos de schema, RLS, segredos, validações, permissões, formatação e das Server Actions de catálogo, equipe, horários e clientes.
+- Testes estáticos de schema, RLS, segredos, validações, permissões, formatação, do motor de disponibilidade e das Server Actions de catálogo, equipe, horários, clientes e agendamentos.
 
 ## O que é protótipo ou está fora desta etapa
 
 - **Pagamentos:** não há chamada ao Asaas. As tabelas `plans`, `subscriptions`, `payments` e `webhook_events` existem, mas nenhuma cobrança é criada.
-- **Agendamento completo:** o painel lê agendamentos reais, porém criação, edição, cancelamento e cálculo de disponibilidade ainda não estão habilitados.
+- **Reserva pública:** o painel já cria e gerencia agendamentos, mas a página pública não consulta disponibilidade nem reserva horários. Não há link de autoatendimento, WhatsApp, notificações ou pagamento.
 - **Convites de equipe:** o cadastro de profissionais e os vínculos de `barber_services` já são reais; o fluxo de convite por e-mail para novos acessos ao painel ainda não existe.
 - **Página pública por tenant:** a única página pública é a demonstração estática da Barbearia Aurora. Ela não consulta o banco nem reserva horários.
 - **Notificações, uploads e webhooks:** as tabelas e colunas estão preparadas; não há envio, armazenamento ou processamento real.
@@ -197,6 +198,78 @@ A rota `/dashboard/clientes` agora gerencia a base de clientes da barbearia ativ
 - `tests/customer-actions.test.ts` e `tests/helpers/fake-supabase.ts`
 
 Nenhuma migration nova foi necessária: a tabela `customers`, os índices `customers_shop_idx`/`customers_phone_idx`, a FK composta com `barbershops`, os checks, os grants e as políticas RLS já cobriam esta etapa.
+
+---
+
+## Etapa 3.1 — Agenda e agendamentos
+
+A rota `/dashboard/agenda` passou a operar a agenda real da barbearia ativa, em visão diária ou semanal, com criação e gerenciamento de agendamentos.
+
+### Visão diária e semanal
+
+- A visão diária mostra uma timeline por profissional ativo, com horários livres, agendamentos e bloqueios do dia.
+- A visão semanal carrega apenas os sete dias exibidos, com os compromissos agrupados por dia e contagem total do período.
+- Navegação por período anterior/próximo, botão “Hoje”, alternância dia/semana e filtro por profissional; o estado fica na URL (`date`, `view` e `barber`).
+- Status são diferenciados por cor e rótulo: agendado, confirmado, em atendimento, concluído, cancelado e não compareceu.
+- A página exibe indicadores do período (aguardando, em atendimento, cancelados/faltas e previsão de receita), além do fuso da barbearia.
+- A visão geral do dashboard aponta para a agenda e abre o diálogo de criação diretamente pelo parâmetro `?new=1`.
+
+### Motor de disponibilidade
+
+- Uma única função no servidor cruza funcionamento da barbearia, jornada individual, bloqueios gerais e por profissional, agendamentos ativos e a duração real do serviço.
+- O cálculo usa o fuso configurado em `barbershops.timezone` (fallback `America/Sao_Paulo`) e converte data/hora local para `timestamptz`.
+- Horários são oferecidos em passos de 15 minutos e somente quando o serviço cabe inteiro na janela livre.
+- Agendamentos com status `cancelled`, `completed` ou `no_show` não bloqueiam novos horários; `scheduled`, `confirmed` e `in_progress` bloqueiam.
+- Horários já passados são desconsiderados no momento da consulta e novamente no momento da gravação.
+- O serviço precisa estar associado ao profissional em `barber_services`, e ambos precisam estar ativos e pertencer à barbearia ativa.
+
+### Criação e reagendamento
+
+- O fluxo de criação tem quatro etapas: cliente, serviço/profissional habilitado, data/horário e confirmação com observações opcionais.
+- Cliente, serviço e profissional são revalidados no servidor contra o `barbershop_id` da sessão; nenhum preço ou duração enviado pelo navegador é aceito.
+- O preço é lido de `services.price_cents` no momento da criação e a duração vem do serviço; o horário final é calculado no servidor.
+- Imediatamente antes do `insert`/`update`, a disponibilidade é recalculada para reduzir a janela de corrida.
+- O reagendamento preserva cliente, serviço, profissional e status, e só é permitido para agendamentos `scheduled` ou `confirmed`; o próprio registro é excluído do cálculo.
+
+### Status, cancelamento e histórico
+
+- Transições permitidas: confirmar (`scheduled → confirmed`), iniciar (`scheduled/confirmed → in_progress`), concluir (`scheduled/confirmed/in_progress → completed`), registrar ausência (`scheduled/confirmed → no_show`) e cancelar (`scheduled/confirmed → cancelled`).
+- O cancelamento aceita motivo opcional de até 500 caracteres, libera o horário e mantém o registro no histórico.
+- Não há exclusão física de agendamentos nesta etapa.
+- Cada transição usa uma atualização condicionada ao status lido, evitando sobrescrever uma mudança feita por outro usuário.
+
+### Concorrência
+
+- A barreira final é a constraint existente `appointments_no_overlap`: `EXCLUDE USING GIST (barber_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&)` para os status ativos.
+- Se duas requisições passarem pela consulta de disponibilidade ao mesmo tempo, o PostgreSQL rejeita a segunda com o código `23P01`.
+- As actions traduzem esse código para “este horário acabou de ser reservado” e orientam atualizar a agenda, sem expor detalhes do banco.
+- **Nenhuma migration nova foi necessária** nesta etapa.
+
+### Segurança
+
+- `barbershop_id` vem exclusivamente de `getActiveDashboardContext()`; nenhum formulário envia o tenant como fonte de autorização.
+- `authorizeAppointmentManagement()` permite `owner`, `staff` e `platform_admin`, repetindo a checagem em cada action; a RLS de `appointments` continua sendo a barreira final.
+- Todas as entradas passam por Zod no servidor, incluindo IDs, data, horário, observações, motivo e busca de clientes.
+- Leitura, criação, reagendamento e transições filtram por `barbershop_id`; um agendamento de outra barbearia não é encontrado nem alterado.
+- A busca de clientes retorna somente cadastros ativos da barbearia ativa.
+- Nenhuma action ou componente usa `SUPABASE_SERVICE_ROLE_KEY`.
+
+### Limitações desta etapa
+
+- **Sem intervalo entre atendimentos.** O schema não possui buffer; um serviço pode começar exatamente quando o anterior termina.
+- **Agenda por barbearia, não por profissional logado.** A RLS atual permite que owner e staff operem todos os agendamentos da barbearia; não há restrição adicional para um staff ver apenas a própria coluna.
+- **Bloqueios continuam sem constraint de exclusão.** A proteção contra sobreposição de `blocked_slots` é feita na aplicação, como documentado na Etapa 2.2.
+- **Sem reserva pública, WhatsApp, notificações ou pagamentos.** Esta etapa cobre apenas a operação interna do painel.
+
+### Principais arquivos
+
+- `src/features/scheduling/actions.ts` e `src/features/scheduling/queries.ts`
+- `src/features/scheduling/availability.ts` e `src/features/scheduling/types.ts`
+- `src/features/scheduling/components/`
+- `src/lib/validation/appointments.ts`
+- `src/lib/auth/management.ts`
+- `src/app/dashboard/agenda/page.tsx` e `src/app/dashboard/agenda/loading.tsx`
+- `tests/availability.test.ts`, `tests/scheduling-actions.test.ts` e `tests/helpers/fake-supabase.ts`
 
 ---
 
@@ -492,6 +565,7 @@ src/
     barbers/                actions e componentes da equipe de atendimento
     schedule/               actions e componentes de horários e bloqueios
     customers/              actions e componentes da base de clientes
+    scheduling/             agenda, disponibilidade e agendamentos
     settings/               formulário de configurações
     marketing/              landing page
     public-barbershop/      dados fictícios da demonstração
@@ -528,7 +602,7 @@ Decisões de implementação:
 | `/redefinir-senha` | Definição de nova senha após recuperação |
 | `/onboarding` | Criação da primeira barbearia |
 | `/dashboard` | Visão geral da barbearia ativa |
-| `/dashboard/agenda` | Agenda do dia e próximos horários |
+| `/dashboard/agenda` | Agenda diária/semanal, disponibilidade e gestão de agendamentos |
 | `/dashboard/clientes` | Base de clientes (busca, filtros, paginação, CRUD e arquivamento) |
 | `/dashboard/servicos` | Catálogo de serviços (CRUD, busca, status) |
 | `/dashboard/equipe` | Acessos, profissionais e associação de serviços |
@@ -562,7 +636,7 @@ Resultados da última verificação local:
 ```text
 npm run typecheck  ✅
 npm run lint       ✅
-npm test           ✅ 178 testes em 7 arquivos
+npm test           ✅ 252 testes em 9 arquivos
 npm run build      ✅
 ```
 
@@ -606,7 +680,14 @@ Os testes cobrem:
 - listagem paginada, busca por nome, telefone e e-mail, filtros por situação e estatísticas por tenant;
 - erro de consulta sem inventar registros e página fora do intervalo corrigida;
 - políticas RLS de clientes e FK restritiva com agendamentos;
-- validações de auth, barbearia, clientes, permissões e formatação.
+- cálculo de disponibilidade por funcionamento, jornada, bloqueios, agendamentos ativos, duração, passo de 15 minutos e horário atual;
+- criação de agendamento com preço/duração lidos do banco e validação de cliente, serviço e profissional no tenant;
+- rejeição de sobreposição, bloqueio, dia fechado, jornada incompatível e data passada;
+- tradução de `23P01` na criação e no reagendamento, simulando a corrida após a consulta;
+- transições de status permitidas, cancelamento com motivo e liberação do horário;
+- reagendamento preservando serviço/profissional e recusando registros encerrados ou de outro tenant;
+- isolamento de agendamentos, clientes, serviços e profissionais entre barbearias;
+- validações de auth, barbearia, clientes, agendamentos, permissões e formatação.
 
 O que **não** foi testado:
 
@@ -614,9 +695,10 @@ O que **não** foi testado:
 - CRUD real com credenciais de teste no Supabase vinculado (não houve autorização para alterar dados remotos);
 - login, cadastro e recuperação com Supabase real;
 - políticas RLS com usuários de duas barbearias em banco real;
-- fluxos E2E de catálogo/equipe/horários/clientes no navegador;
+- fluxos E2E de catálogo/equipe/horários/clientes/agenda no navegador;
 - concorrência real de bloqueios simultâneos no banco;
 - concorrência real de cadastros duplicados de clientes no banco;
+- concorrência real de dois agendamentos simultâneos no PostgreSQL (a constraint existe, mas a corrida é simulada nos testes);
 - integração Asaas, webhooks, e-mails de produção e jobs;
 - upload de avatar (sem Storage configurado).
 
@@ -626,7 +708,7 @@ O que **não** foi testado:
 
 1. **Sem banco real nesta entrega.** Não havia Docker/PostgreSQL local, e o projeto Supabase vinculado não foi alterado. As migrações e os CRUDs precisam ser aplicados e validados em um ambiente de desenvolvimento com autorização.
 2. **Sem pagamentos.** As tabelas e a UI financeira são uma fundação; não há cobrança, assinatura ativa, boleto, Pix ou cartão.
-3. **Sem agendamento completo.** A agenda lê registros existentes; a base de funcionamento, jornada e bloqueios está pronta, mas criação/edição/cancelamento e cálculo de disponibilidade ficam para a próxima etapa.
+3. **Sem reserva pública.** A agenda interna já cria e gerencia agendamentos, mas não há autoatendimento público, link por tenant, WhatsApp, notificações ou pagamento.
 4. **Sem convites.** Profissionais e vínculos de serviço já são gerenciados, mas não há fluxo de convite por e-mail, aceite ou reenvio para novos acessos ao painel.
 5. **Sem página pública real por tenant.** A demo é estática, com dados fictícios, e não reserva horários.
 6. **Sem uploads.** `logo_url`, `cover_url` e `avatar_url` existem no schema, mas não há bucket/políticas de Storage configurados; os profissionais usam iniciais.
@@ -648,9 +730,9 @@ O que **não** foi testado:
 1. **Provisionar o Supabase** e aplicar as sete migrações em um projeto de desenvolvimento.
 2. **Testar RLS com dois tenants**: criar duas barbearias, dois owners e um staff; tentar leituras e escritas cruzadas via API.
 3. **Implementar convites de acesso ao painel**, incluindo aceite, reenvio e revogação; o cadastro de profissionais já está concluído.
-4. **Implementar o agendamento completo**, com disponibilidade por profissional, bloqueios, timezone e transições de status.
+4. **Validar a agenda com dados reais**, aplicando as migrações e testando criação, reagendamento e concorrência em PostgreSQL.
 5. **Conectar o Asaas no servidor**, com webhook idempotente, validação de token e registro em `webhook_events`.
-6. **Criar a página pública real por tenant**, com slug dinâmico, serviços, equipe e agendamento.
+6. **Criar a página pública real por tenant**, com slug dinâmico, serviços, equipe e reserva de horários sobre o mesmo motor de disponibilidade.
 7. **Adicionar testes E2E** (Playwright ou similar) e um pipeline de CI com typecheck, lint, testes e build.
 8. **Configurar observabilidade e limites**: logs, alertas, rate limiting, backup e política de retenção.
 

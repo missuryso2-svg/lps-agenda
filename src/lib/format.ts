@@ -121,6 +121,24 @@ export function weekdayLabel(weekday: number): string {
   return weekdayLabels[weekday] ?? "—";
 }
 
+/**
+ * Dia da semana (0 = domingo) de uma data civil YYYY-MM-DD, sem depender do
+ * fuso local do servidor.
+ */
+export function weekdayFromDateString(value: string): number {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+
+  if (!match) {
+    return Number.NaN;
+  }
+
+  const date = new Date(
+    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
+  );
+
+  return date.getUTCDay();
+}
+
 export function shortWeekdayLabel(weekday: number): string {
   return shortWeekdayLabels[weekday] ?? "—";
 }

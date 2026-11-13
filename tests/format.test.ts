@@ -14,6 +14,7 @@ import {
   localDateTimeToUtc,
   localTimeString,
   shortWeekdayLabel,
+  weekdayFromDateString,
   weekdayLabel,
 } from "@/lib/format";
 import { slugify } from "@/lib/slug";
@@ -116,6 +117,14 @@ describe("intervalos no fuso da barbearia", () => {
     expect(localDateString(instant, "America/Sao_Paulo")).toBe("2026-11-20");
     expect(localTimeString(instant, "America/Sao_Paulo")).toBe("09:30");
     expect(localDateString(instant, "UTC")).toBe("2026-11-20");
+  });
+
+  it("obtém o dia da semana de uma data civil sem deslocar o fuso", () => {
+    expect(weekdayFromDateString("2026-11-20")).toBe(5);
+    expect(weekdayFromDateString(" 2026-11-22 ")).toBe(0);
+    expect(weekdayFromDateString("2099-06-01")).toBe(1);
+    expect(weekdayFromDateString("2026-02-30")).toBe(1);
+    expect(weekdayFromDateString("data-inválida")).toBeNaN();
   });
 
   it("reconhece bloqueios de dia inteiro no fuso da barbearia", () => {

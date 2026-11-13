@@ -25,6 +25,13 @@ import {
   WEEKDAYS,
   weeklyBusinessHoursSchema,
 } from "@/lib/validation/schedule";
+import {
+  appointmentFormSchema,
+  availabilityQuerySchema,
+  cancelAppointmentSchema,
+  customerSearchQuerySchema,
+  rescheduleAppointmentSchema,
+} from "@/lib/validation/appointments";
 
 describe("validação de autenticação", () => {
   it("aceita um login com e-mail e senha preenchidos", () => {
@@ -398,5 +405,144 @@ describe("validação de clientes", () => {
   it("exige boolean no estado de arquivamento", () => {
     expect(customerActiveSchema.safeParse(true).success).toBe(true);
     expect(customerActiveSchema.safeParse("false").success).toBe(false);
+  });
+});
+
+describe("validação de agendamentos", () => {
+  const validAppointment = {
+    customerId: "11111111-1111-4111-8111-111111111111",
+    serviceId: "22222222-2222-4222-8222-222222222222",
+    barberId: "33333333-3333-4333-8333-333333333333",
+    date: " 2099-06-01 ",
+    time: " 09:30 ",
+    notes: "  Prefere máquina 2  ",
+  };
+
+  it("normaliza data, horário e observações do agendamento", () => {
+    const result = appointmentFormSchema.safeParse(validAppointment);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        customerId: validAppointment.customerId,
+        serviceId: validAppointment.serviceId,
+        barberId: validAppointment.barberId,
+        date: "2099-06-01",
+        time: "09:30",
+        notes: "Prefere máquina 2",
+      });
+    }
+  });
+
+  it("usa observações vazias como padrão", () => {
+    const result = appointmentFormSchema.safeParse({
+      ...validAppointment,
+      notes: undefined,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.notes).toBe("");
+    }
+  });
+
+  it.each(["not-a-uuid", "", "11111111-1111-4111-8111"])(
+    "rejeita identificador inválido %s",
+    (customerId) => {
+      expect(
+        appointmentFormSchema.safeParse({
+          ...validAppointment,
+          customerId,
+        }).success,
+      ).toBe(false);
+    },
+  );
+
+  it.each(["2026-02-30", "01/06/2099", "2099-6-1", ""])(
+    "rejeita data inválida %s",
+    (date) => {
+      expect(
+        appointmentFormSchema.safeParse({
+          ...validAppointment,
+          date,
+        }).success,
+      ).toBe(false);
+    },
+  );
+
+  it.each(["24:00", "9:30", "09:60", ""])(
+    "rejeita horário inválido %s",
+    (time) => {
+      expect(
+        appointmentFormSchema.safeParse({
+          ...validAppointment,
+          time,
+        }).success,
+      ).toBe(false);
+    },
+  );
+
+  it("rejeita observações acima de 2000 caracteres", () => {
+    expect(
+      appointmentFormSchema.safeParse({
+        ...validAppointment,
+        notes: "a".repeat(2001),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("valida o reagendamento com data e horário obrigatórios", () => {
+    expect(
+      rescheduleAppointmentSchema.safeParse({
+        date: "2099-06-02",
+        time: "10:15",
+      }).success,
+    ).toBe(true);
+    expect(
+      rescheduleAppointmentSchema.safeParse({
+        date: "2099-06-02",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("aceita motivo de cancelamento vazio e limita a 500 caracteres", () => {
+    const empty = cancelAppointmentSchema.safeParse({});
+    expect(empty.success).toBe(true);
+    if (empty.success) {
+      expect(empty.data.reason).toBe("");
+    }
+
+    expect(
+      cancelAppointmentSchema.safeParse({ reason: "   " }).success,
+    ).toBe(true);
+    expect(
+      cancelAppointmentSchema.safeParse({ reason: "a".repeat(501) }).success,
+    ).toBe(false);
+  });
+
+  it("valida a consulta de disponibilidade e o identificador excluído", () => {
+    expect(
+      availabilityQuerySchema.safeParse({
+        serviceId: validAppointment.serviceId,
+        barberId: validAppointment.barberId,
+        date: "2099-06-01",
+      }).success,
+    ).toBe(true);
+
+    expect(
+      availabilityQuerySchema.safeParse({
+        serviceId: validAppointment.serviceId,
+        barberId: validAppointment.barberId,
+        date: "2099-06-01",
+        excludeAppointmentId: "não-é-uuid",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("limita a busca de clientes a 80 caracteres", () => {
+    expect(customerSearchQuerySchema.safeParse("  Ana  ").success).toBe(true);
+    expect(customerSearchQuerySchema.safeParse("a".repeat(81)).success).toBe(
+      false,
+    );
   });
 });

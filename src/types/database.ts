@@ -391,6 +391,7 @@ export type Database = {
           price_cents: number;
           notes: string | null;
           cancel_reason: string | null;
+          public_token: string;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -407,6 +408,7 @@ export type Database = {
           price_cents: number;
           notes?: string | null;
           cancel_reason?: string | null;
+          public_token?: string;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -423,8 +425,30 @@ export type Database = {
           price_cents?: number;
           notes?: string | null;
           cancel_reason?: string | null;
+          public_token?: string;
           created_by?: string | null;
           created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      booking_rate_limits: {
+        Row: {
+          bucket: string;
+          window_start: string;
+          hits: number;
+          updated_at: string;
+        };
+        Insert: {
+          bucket: string;
+          window_start: string;
+          hits?: number;
+          updated_at?: string;
+        };
+        Update: {
+          bucket?: string;
+          window_start?: string;
+          hits?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -698,6 +722,23 @@ export type Database = {
           p_slug: string;
           p_phone?: string | null;
           p_timezone?: string;
+        };
+        Returns: string;
+      };
+      consume_booking_rate_limit: {
+        Args: {
+          p_bucket: string;
+          p_window_seconds: number;
+          p_limit: number;
+        };
+        Returns: boolean;
+      };
+      find_or_create_public_customer: {
+        Args: {
+          p_barbershop_id: string;
+          p_full_name: string;
+          p_phone: string;
+          p_email: string | null;
         };
         Returns: string;
       };

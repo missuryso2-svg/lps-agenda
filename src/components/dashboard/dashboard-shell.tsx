@@ -221,6 +221,16 @@ export function DashboardShell({
                 <Settings className="size-3.5" />
                 Dados da barbearia
               </DropdownMenuItem>
+              <DropdownMenuItem asChild className="gap-2 text-xs">
+                <Link
+                  href={`/agendar/${activeMembership.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink className="size-3.5" />
+                  Página pública
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
@@ -378,15 +388,18 @@ export function DashboardShell({
                     <Settings className="size-3.5" />
                     Configurações
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() =>
-                      router.push("/barbearia/barbearia-aurora")
-                    }
-                    className="gap-2"
-                  >
-                    <ExternalLink className="size-3.5" />
-                    Ver demonstração pública
-                  </DropdownMenuItem>
+                  {activeMembership ? (
+                    <DropdownMenuItem asChild className="gap-2">
+                      <Link
+                        href={`/agendar/${activeMembership.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <ExternalLink className="size-3.5" />
+                        Abrir página pública
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"

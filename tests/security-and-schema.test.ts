@@ -52,6 +52,7 @@ const allTables = [
   "plans",
   "webhook_events",
   "audit_logs",
+  "booking_rate_limits",
 ];
 
 describe("migrações", () => {
@@ -59,7 +60,7 @@ describe("migrações", () => {
     expect(migrationFiles.length).toBeGreaterThanOrEqual(7);
     expect(migrationFiles).toEqual([...migrationFiles].sort());
     expect(migrationFiles[0]).toMatch(/^20261108090000_/);
-    expect(migrationFiles.at(-1)).toMatch(/grants_and_hardening\.sql$/);
+    expect(migrationFiles.at(-1)).toMatch(/public_booking\.sql$/);
   });
 
   it("habilita RLS em todas as tabelas do schema public", () => {
@@ -432,5 +433,175 @@ describe("agenda e agendamentos", () => {
   it("não expõe exclusão física de agendamentos nesta fase", () => {
     expect(schedulingActions).not.toMatch(/\.delete\(\)/);
     expect(schedulingActions).not.toContain("deleteAppointmentAction");
+  });
+});
+
+describe("agendamento público, token e rate limiting", () => {
+  const publicMigration = read(
+    "supabase/migrations/20261113120000_public_booking.sql",
+  );
+  const publicActions = read("src/features/public-booking/actions.ts");
+  const publicQueries = read("src/features/public-booking/queries.ts");
+  const publicService = read("src/features/public-booking/service.ts");
+  const publicRateLimit = read("src/features/public-booking/rate-limit.ts");
+  const publicWizard = read(
+    "src/features/public-booking/components/booking-wizard.tsx",
+  );
+  const publicBookingPage = read("src/app/agendar/[slug]/page.tsx");
+  const reservationPage = read(
+    "src/app/agendar/[slug]/reserva/[token]/page.tsx",
+  );
+
+  it("cria token imprevisível e único para a reserva pública", () => {
+    expect(publicMigration).toContain(
+      "add column public_token uuid not null default gen_random_uuid()",
+    );
+    expect(publicMigration).toContain(
+      "create unique index appointments_public_token_key",
+    );
+    expect(publicService).toContain("randomUUID()");
+    expect(publicService).toContain("public_token: publicToken");
+    expect(publicService).toContain('error.code === "23505"');
+  });
+
+  it("consulta e cancela somente por slug e public_token, nunca por id", () => {
+    expect(publicQueries).toContain('.eq("public_token", token)');
+    expect(publicService).toContain('.eq("public_token", token)');
+    expect(publicService).toContain('.eq("barbershop_id", shop.id)');
+    expect(publicService).not.toContain('.eq("id", token)');
+    expect(publicService).not.toContain('.eq("id", slug)');
+    expect(reservationPage).toContain("publicTokenSchema");
+    expect(reservationPage).toContain("robots: { index: false, follow: false }");
+    expect(publicBookingPage).toContain('dynamic = "force-dynamic"');
+  });
+
+  it("mantém a página pública somente server-side com service role", () => {
+    expect(publicActions.startsWith('"use server";')).toBe(true);
+    expect(publicQueries).toContain('import "server-only"');
+    expect(publicService).toContain('import "server-only"');
+    expect(publicRateLimit).toContain('import "server-only"');
+    expect(publicQueries).toContain("createAdminClient");
+    expect(publicActions).toContain("createAdminClient");
+    expect(publicActions).not.toMatch(
+      /SUPABASE_SERVICE_ROLE_KEY|@\/lib\/env\/server/,
+    );
+    expect(publicWizard).not.toMatch(
+      /SUPABASE_SERVICE_ROLE_KEY|@\/lib\/supabase\/admin|@\/lib\/env\/server/,
+    );
+  });
+
+  it("não cria políticas RLS públicas para clientes, agenda ou rate limit", () => {
+    expect(publicMigration).not.toMatch(/create policy/i);
+    expect(publicMigration).not.toMatch(/to anon/i);
+    expect(publicMigration).not.toMatch(/grant [^;]+ to anon/i);
+    expect(publicMigration).not.toMatch(
+      /grant [^;]+ on (table )?public\.(appointments|customers)/i,
+    );
+    expect(publicMigration).toContain(
+      "alter table public.booking_rate_limits enable row level security;",
+    );
+    expect(publicMigration).toContain(
+      "revoke all on table public.booking_rate_limits from anon, authenticated;",
+    );
+    expect(publicMigration).toContain(
+      "grant all on table public.booking_rate_limits to service_role;",
+    );
+  });
+
+  it("restringe as funções internas ao service_role", () => {
+    for (const [name, signature] of [
+      ["consume_booking_rate_limit", "text, integer, integer"],
+      ["find_or_create_public_customer", "uuid, text, text, text"],
+    ]) {
+      expect(publicMigration).toContain(
+        `revoke all on function public.${name}(${signature})`,
+      );
+      expect(publicMigration).toContain(
+        `from public, anon, authenticated;`,
+      );
+      expect(publicMigration).toContain(
+        `grant execute on function public.${name}(${signature})`,
+      );
+      expect(publicMigration).toContain("to service_role;");
+    }
+
+    expect(publicMigration.match(/security definer/g)).toHaveLength(2);
+    expect(publicMigration.match(/set search_path = ''/g)).toHaveLength(2);
+    expect(publicMigration).toContain("pg_advisory_xact_lock");
+    expect(publicMigration).toContain("regexp_replace(coalesce(c.phone");
+    expect(publicMigration).toContain(
+      "customers_shop_phone_digits_idx",
+    );
+  });
+
+  it("aplica rate limit atômico com buckets hasheados e retenção curta", () => {
+    expect(publicMigration).toContain(
+      "on conflict (bucket, window_start)",
+    );
+    expect(publicMigration).toContain("hits = public.booking_rate_limits.hits + 1");
+    expect(publicMigration).toContain(
+      "delete from public.booking_rate_limits",
+    );
+    expect(publicRateLimit).toContain('createHash("sha256")');
+    expect(publicRateLimit).toContain("publicBookingRateLimits");
+    expect(publicActions).toContain("hashRateLimitKey");
+    expect(publicActions).not.toContain("p_bucket: ip");
+    expect(publicActions).not.toContain("p_bucket: phone");
+  });
+
+  it("falha fechado em escritas e aberto apenas na consulta de horários", () => {
+    expect(publicActions).toContain(
+      "rate limit unavailable (create ip)",
+    );
+    expect(publicActions).toContain("rate limit unavailable (cancel)");
+    expect(publicActions).toContain(
+      "rate limit unavailable (availability)",
+    );
+    const availabilityBlock =
+      publicActions.split("export async function createPublicBookingAction")[0];
+
+    expect(availabilityBlock).toContain(
+      "// Leitura não deve derrubar a página; a escrita continua protegida.",
+    );
+  });
+
+  it("não registra telefone, e-mail ou IP em logs", () => {
+    const logged = publicActions
+      .split("\n")
+      .filter((line) => line.includes("console."));
+
+    expect(logged.length).toBeGreaterThan(0);
+
+    for (const line of logged) {
+      expect(line).not.toMatch(/parsed\.data|ipHash|clientIp|\$\{/);
+    }
+  });
+
+  it("revalida disponibilidade e ignora preço, duração e tenant do navegador", () => {
+    expect(publicService).toContain("loadAvailability({");
+    expect(publicService).toContain("barbershopId: shop.id");
+    expect(publicService).toContain("price_cents: availability.data.priceCents");
+    expect(publicService).toContain("starts_at: slot.startsAt");
+    expect(publicService).toContain("ends_at: slot.endsAt");
+    expect(publicService).toContain('error?.code === "23P01"');
+    expect(publicService).not.toMatch(/input\.(priceCents|durationMinutes|barbershopId)/);
+    expect(publicService).not.toContain("appointments_no_overlap");
+    expect(migrationSql).toContain("appointments_no_overlap");
+  });
+
+  it("mantém o cancelamento condicionado ao status e ao início do atendimento", () => {
+    expect(publicService).toContain(
+      'appointment.status !== "scheduled"',
+    );
+    expect(publicService).toContain(
+      'appointment.status !== "confirmed"',
+    );
+    expect(publicService).toContain(
+      "new Date(appointment.starts_at).getTime() <= now.getTime()",
+    );
+    expect(publicService).toContain(
+      '.in("status", ["scheduled", "confirmed"])',
+    );
+    expect(publicService).not.toMatch(/\.delete\(\)/);
   });
 });

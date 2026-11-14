@@ -32,6 +32,13 @@ import {
   customerSearchQuerySchema,
   rescheduleAppointmentSchema,
 } from "@/lib/validation/appointments";
+import {
+  publicAvailabilityQuerySchema,
+  publicBookingSchema,
+  publicCancelSchema,
+  publicReservationLookupSchema,
+  publicTokenSchema,
+} from "@/lib/validation/public-booking";
 
 describe("validação de autenticação", () => {
   it("aceita um login com e-mail e senha preenchidos", () => {
@@ -544,5 +551,116 @@ describe("validação de agendamentos", () => {
     expect(customerSearchQuerySchema.safeParse("a".repeat(81)).success).toBe(
       false,
     );
+  });
+});
+
+describe("validação do agendamento público", () => {
+  const validPublicBooking = {
+    slug: "barbearia-teste",
+    serviceId: "22222222-2222-4222-8222-222222222222",
+    barberId: "33333333-3333-4333-8333-333333333333",
+    date: " 2099-06-01 ",
+    time: " 14:30 ",
+    fullName: "  Ana   Souza ",
+    phone: "+55 (11) 98765-4321",
+    email: " ANA@EXEMPLO.COM ",
+  };
+
+  it("normaliza nome, telefone, e-mail, data e horário", () => {
+    const result = publicBookingSchema.safeParse(validPublicBooking);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        slug: "barbearia-teste",
+        serviceId: validPublicBooking.serviceId,
+        barberId: validPublicBooking.barberId,
+        date: "2099-06-01",
+        time: "14:30",
+        fullName: "Ana Souza",
+        phone: "11987654321",
+        email: "ana@exemplo.com",
+      });
+    }
+  });
+
+  it("aceita e-mail vazio como opcional e remove campos desconhecidos", () => {
+    const result = publicBookingSchema.safeParse({
+      ...validPublicBooking,
+      email: "   ",
+      barbershopId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      priceCents: 1,
+      durationMinutes: 600,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBe("");
+      expect(result.data).not.toHaveProperty("barbershopId");
+      expect(result.data).not.toHaveProperty("priceCents");
+      expect(result.data).not.toHaveProperty("durationMinutes");
+    }
+  });
+
+  it.each([
+    { slug: "ab" },
+    { slug: "barbearia aurora" },
+    { serviceId: "nao-e-uuid" },
+    { barberId: "" },
+    { date: "2026-02-30" },
+    { date: "01/06/2099" },
+    { time: "24:00" },
+    { time: "9:30" },
+    { fullName: " A " },
+    { phone: "123" },
+    { phone: "(11) 18765-4321" },
+    { email: "sem-arroba" },
+    { fullName: "a".repeat(121) },
+  ])("rejeita dados inválidos: %o", (override) => {
+    expect(
+      publicBookingSchema.safeParse({
+        ...validPublicBooking,
+        ...override,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("valida a consulta pública de disponibilidade", () => {
+    expect(
+      publicAvailabilityQuerySchema.safeParse({
+        slug: "barbearia-teste",
+        serviceId: validPublicBooking.serviceId,
+        barberId: validPublicBooking.barberId,
+        date: "2099-06-01",
+      }).success,
+    ).toBe(true);
+
+    expect(
+      publicAvailabilityQuerySchema.safeParse({
+        slug: "barbearia-teste",
+        serviceId: validPublicBooking.serviceId,
+        barberId: validPublicBooking.barberId,
+        date: "",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("aceita apenas UUID na consulta e no cancelamento por token", () => {
+    const token = "0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f";
+
+    expect(publicTokenSchema.safeParse(token).success).toBe(true);
+    expect(publicTokenSchema.safeParse("token-invalido").success).toBe(false);
+    expect(
+      publicReservationLookupSchema.safeParse({
+        slug: "barbearia-teste",
+        token,
+      }).success,
+    ).toBe(true);
+    expect(
+      publicCancelSchema.safeParse({
+        slug: "barbearia-teste",
+        token: "123",
+      }).success,
+    ).toBe(false);
   });
 });

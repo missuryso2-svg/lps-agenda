@@ -447,7 +447,7 @@ export function getMonthRange(
   return { start, end };
 }
 
-export function todayInTimeZone(timeZone: string): string {
-  const parts = getZonedParts(new Date(), timeZone);
+export function todayInTimeZone(timeZone: string, now = new Date()): string {
+  const parts = getZonedParts(now, timeZone);
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
 }

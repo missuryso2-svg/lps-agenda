@@ -2,9 +2,9 @@
 
 Fundação técnica do **LPS Agenda**, um SaaS multi-tenant de agenda e gestão para barbearias, desenvolvido pela LPS Solutions.
 
-A versão atual entrega a base de produto: identidade visual, site institucional, autenticação, onboarding, painel administrativo, página pública de demonstração, banco PostgreSQL versionado e políticas de isolamento por barbearia.
+A versão atual entrega a base de produto: identidade visual, site institucional, autenticação, onboarding, painel administrativo, agendamento público por tenant, página de demonstração, banco PostgreSQL versionado e políticas de isolamento por barbearia.
 
-> **Estado:** fundação `v0.1` com as Etapas 2.1, 2.2, 2.3 e 3.1 implementadas. Serviços, profissionais, horários, jornadas, bloqueios, clientes e agendamentos estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, reserva pública, convites de equipe e página pública real por tenant ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
+> **Estado:** fundação `v0.1` com as Etapas 2.1, 2.2, 2.3, 3.1 e 3.2 implementadas. Serviços, profissionais, horários, jornadas, bloqueios, clientes, agendamentos e reserva pública estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. Cobrança, convites de equipe, notificações e pagamento antecipado ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
 
 ---
 
@@ -20,17 +20,18 @@ A versão atual entrega a base de produto: identidade visual, site institucional
 - **Horários e disponibilidade:** funcionamento semanal da barbearia, jornada individual dos profissionais e bloqueios por dia inteiro ou intervalo, com validação de fuso e sobreposição.
 - **Clientes:** cadastro, listagem paginada, busca por nome/telefone/e-mail, filtros por situação, edição, detalhes e arquivamento reversível, com deduplicação dentro da barbearia.
 - **Agenda e agendamentos:** visão diária e semanal por profissional, cálculo de horários livres no servidor, criação, confirmação, início, conclusão, ausência, cancelamento com motivo e reagendamento, com proteção contra sobreposição no PostgreSQL.
-- Página pública de demonstração `/barbearia/barbearia-aurora`, estática e claramente identificada como fictícia.
+- **Agendamento público:** página `/agendar/[slug]` sem login, com serviços, profissionais habilitados, horários reais, dados mínimos do cliente e link privado por token para consultar ou cancelar a reserva.
+- Página pública de demonstração `/barbearia/barbearia-aurora`, estática e claramente identificada como fictícia, separada do fluxo real por tenant.
 - Páginas de termos, privacidade, 404, erro global e aviso de configuração obrigatória.
-- Migrações SQL versionadas para 17 tabelas, enums, funções, triggers, grants e RLS.
-- Testes estáticos de schema, RLS, segredos, validações, permissões, formatação, do motor de disponibilidade e das Server Actions de catálogo, equipe, horários, clientes e agendamentos.
+- Migrações SQL versionadas para 18 tabelas, enums, funções, triggers, grants e RLS.
+- Testes estáticos de schema, RLS, segredos, validações, permissões, formatação, do motor de disponibilidade e das Server Actions de catálogo, equipe, horários, clientes, agendamentos e reserva pública.
 
 ## O que é protótipo ou está fora desta etapa
 
 - **Pagamentos:** não há chamada ao Asaas. As tabelas `plans`, `subscriptions`, `payments` e `webhook_events` existem, mas nenhuma cobrança é criada.
-- **Reserva pública:** o painel já cria e gerencia agendamentos, mas a página pública não consulta disponibilidade nem reserva horários. Não há link de autoatendimento, WhatsApp, notificações ou pagamento.
+- **Confirmação por e-mail/WhatsApp:** a reserva pública gera um link privado, mas ainda não envia e-mail transacional, SMS, WhatsApp ou push.
 - **Convites de equipe:** o cadastro de profissionais e os vínculos de `barber_services` já são reais; o fluxo de convite por e-mail para novos acessos ao painel ainda não existe.
-- **Página pública por tenant:** a única página pública é a demonstração estática da Barbearia Aurora. Ela não consulta o banco nem reserva horários.
+- **Demonstração pública:** `/barbearia/barbearia-aurora` continua estática e fictícia; a reserva real acontece em `/agendar/[slug]`.
 - **Notificações, uploads e webhooks:** as tabelas e colunas estão preparadas; não há envio, armazenamento ou processamento real.
 - **Administração global:** o papel `platform_admin` eleva o acesso dentro de uma barbearia, mas não existe um painel global separado.
 
@@ -120,7 +121,7 @@ A rota `/dashboard/horarios` reúne três abas conectadas ao Supabase e à barbe
 
 - **Sobreposição de bloqueios validada na aplicação.** `blocked_slots` não possui constraint de exclusão no schema. Duas requisições simultâneas podem passar pela checagem antes de qualquer escrita; uma migration futura pode adicionar uma constraint com `tstzrange` e escopo por profissional/barbearia.
 - **Uma faixa por dia na interface.** O schema permite múltiplas faixas em `business_hours` e `barber_working_hours`, mas a edição atual consolida uma faixa por dia.
-- **Sem cálculo de disponibilidade ainda.** Os horários e bloqueios estão prontos para a próxima fase, mas o mecanismo de agendamento e a reserva pública não foram implementados.
+- **Disponibilidade implementada depois.** Na Etapa 2.2 os horários e bloqueios eram apenas cadastro; o cálculo de horários livres chegou na Etapa 3.1 e é reutilizado pelo agendamento público na Etapa 3.2.
 
 ### Principais arquivos
 
@@ -175,7 +176,7 @@ A rota `/dashboard/clientes` agora gerencia a base de clientes da barbearia ativ
 - E-mail é comparado sem diferenciar maiúsculas de minúsculas.
 - O mesmo telefone ou e-mail pode ser cadastrado por outra barbearia; não há restrição global.
 - Na edição, o próprio registro é ignorado na checagem.
-- **Limitação:** não há índice único de telefone/e-mail normalizado no banco. Duas requisições simultâneas podem passar pela checagem antes da escrita; uma migration futura pode adicionar uma constraint compatível com multi-tenancy.
+- **Limitação:** não há índice único de telefone/e-mail normalizado no banco. Duas requisições simultâneas podem passar pela checagem antes da escrita; uma migration futura pode adicionar uma constraint compatível com multi-tenancy. A Etapa 3.2 adicionou um índice funcional **não único** para apoiar a deduplicação do fluxo público, que usa advisory lock; o CRUD autenticado continua com esta limitação.
 
 ### Segurança
 
@@ -259,7 +260,7 @@ A rota `/dashboard/agenda` passou a operar a agenda real da barbearia ativa, em 
 - **Sem intervalo entre atendimentos.** O schema não possui buffer; um serviço pode começar exatamente quando o anterior termina.
 - **Agenda por barbearia, não por profissional logado.** A RLS atual permite que owner e staff operem todos os agendamentos da barbearia; não há restrição adicional para um staff ver apenas a própria coluna.
 - **Bloqueios continuam sem constraint de exclusão.** A proteção contra sobreposição de `blocked_slots` é feita na aplicação, como documentado na Etapa 2.2.
-- **Sem reserva pública, WhatsApp, notificações ou pagamentos.** Esta etapa cobre apenas a operação interna do painel.
+- **Sem WhatsApp, notificações ou pagamentos.** O autoatendimento público é tratado na Etapa 3.2; esta etapa cobre a operação interna do painel.
 
 ### Principais arquivos
 
@@ -270,6 +271,69 @@ A rota `/dashboard/agenda` passou a operar a agenda real da barbearia ativa, em 
 - `src/lib/auth/management.ts`
 - `src/app/dashboard/agenda/page.tsx` e `src/app/dashboard/agenda/loading.tsx`
 - `tests/availability.test.ts`, `tests/scheduling-actions.test.ts` e `tests/helpers/fake-supabase.ts`
+
+---
+
+## Etapa 3.2 — Agendamento público
+
+A rota `/agendar/[slug]` permite que qualquer pessoa consulte a agenda real de uma barbearia e reserve um horário sem login. A página de resultado `/agendar/[slug]/reserva/[token]` usa um código opaco para consultar e cancelar a reserva.
+
+### Fluxo público
+
+- A página exibe nome, descrição, logo, endereço, telefone, horários de funcionamento, serviços ativos e profissionais ativos da barbearia.
+- O wizard tem quatro etapas: serviço, profissional habilitado, data/horário e dados do cliente.
+- São solicitados apenas nome, telefone e e-mail opcional. Não há conta, CPF ou endereço do cliente.
+- Serviços sem nenhum profissional ativo associado não entram no fluxo; o cliente vê somente profissionais que realizam o serviço escolhido.
+- Os horários são calculados no servidor pelo mesmo motor da Etapa 3.1, com passo de 15 minutos, duração real do serviço, funcionamento, jornada, bloqueios e agendamentos ativos.
+- A reserva é recalculada imediatamente antes do `insert`; preço e duração vêm de `services`, nunca do navegador.
+- A janela de reserva pública é de **60 dias** a partir do dia atual no fuso da barbearia.
+- Após confirmar, o cliente é levado para a página privada da reserva. O link funciona como segredo: quem o possuir consegue ver os dados e cancelar.
+- O cancelamento público é permitido para reservas `scheduled` ou `confirmed` até o horário de início do atendimento. O horário é liberado imediatamente após o cancelamento, sem exclusão física do registro.
+
+### Token e deduplicação
+
+- `appointments.public_token` é um `uuid not null default gen_random_uuid()`, com índice único. A aplicação também gera o token no servidor para poder testar e repetir a operação em caso de colisão.
+- A consulta e o cancelamento usam `barbershop_id + public_token`; o `id` interno do agendamento não aparece na URL nem na resposta pública.
+- Tokens inválidos ou de outra barbearia retornam “reserva não encontrada”, sem permitir enumeração por ID.
+- O cliente é localizado ou criado pela função `find_or_create_public_customer`, que normaliza o telefone e usa `pg_advisory_xact_lock` por `barbearia + telefone`. Nome e e-mail de um cliente existente não são sobrescritos.
+- A migration também cria um índice funcional de telefone normalizado em `customers` para apoiar a busca por tenant.
+
+### Rate limiting e abuso
+
+- A tabela `booking_rate_limits` guarda contadores por janela e a função `consume_booking_rate_limit` incrementa e decide na mesma transação com `on conflict`.
+- Os buckets usam SHA-256 de IP ou telefone; nem IP nem telefone são persistidos em texto puro.
+- Limites atuais: disponibilidade `60/5 min` por IP; criação `10/15 min` por IP e `5/hora` por telefone; cancelamento `10/10 min` por IP.
+- Janelas com mais de um dia são removidas pela própria função.
+- Escritas falham fechadas quando o rate limit está indisponível. A consulta de disponibilidade falha aberta e registra apenas uma mensagem genérica, para não derrubar a página por uma falha interna de proteção.
+- Logs não incluem nome, telefone, e-mail, IP ou token.
+
+### Segurança e RLS
+
+- Nenhuma política RLS é criada para `anon` em `customers`, `appointments` ou `booking_rate_limits`.
+- Todo o fluxo público usa `createAdminClient()`/service role **somente no servidor**. Client Components não importam o cliente administrativo nem leem a service role key.
+- `booking_rate_limits` tem RLS habilitado, sem políticas, e grants restritos a `service_role`.
+- As funções `consume_booking_rate_limit` e `find_or_create_public_customer` são `security definer`, com `search_path = ''`, e têm execução revogada de `public`, `anon` e `authenticated`.
+- A barreira de concorrência continua sendo `appointments_no_overlap`; o código `23P01` é traduzido para “este horário acabou de ser reservado”.
+- As Server Actions públicas revalidam schema Zod, tenant, vínculo serviço/profissional, disponibilidade e token. Nenhum `barbershop_id`, preço ou duração enviado pelo navegador é aceito.
+
+### Decisões e limitações
+
+- **Link é portador do acesso.** Não há segundo fator para consultar/cancelar; o cliente deve guardar o link e não compartilhá-lo publicamente.
+- **Cancelamento até o início.** Não foi criada uma antecedência mínima arbitrária porque o schema não possui essa configuração. Depois do início, o cliente deve falar diretamente com a barbearia.
+- **Sem confirmação por e-mail/WhatsApp.** O fluxo não envia notificações; a única confirmação é a página da reserva.
+- **Rate limit de aplicação não substitui borda.** Não há CAPTCHA nem WAF nesta etapa; em produção, combine os limites com proxy/edge e monitoramento.
+- **Service role obrigatória no servidor.** Sem `SUPABASE_SERVICE_ROLE_KEY`, a página pública mostra o aviso de configuração em vez de consultar o banco.
+- **Migration não aplicada em banco real nesta entrega.** A validação foi estática e por testes unitários; o comportamento de RLS, advisory lock e `on conflict` precisa ser confirmado em PostgreSQL local autorizado.
+
+### Principais arquivos
+
+- `supabase/migrations/20261113120000_public_booking.sql`
+- `src/app/agendar/[slug]/page.tsx` e `src/app/agendar/[slug]/reserva/[token]/page.tsx`
+- `src/features/public-booking/`
+- `src/lib/validation/public-booking.ts`
+- `src/features/scheduling/queries.ts` e `src/features/scheduling/availability.ts` (motor reutilizado)
+- `src/lib/supabase/admin.ts`
+- `tests/public-booking.test.ts` e `tests/helpers/fake-supabase.ts`
 
 ---
 
@@ -292,7 +356,7 @@ A rota `/dashboard/agenda` passou a operar a agenda real da barbearia ativa, em 
 - Docker Desktop apenas se for usar o Supabase local.
 - Projeto Supabase local ou na nuvem para testar autenticação e dados reais.
 
-Sem variáveis de ambiente, a landing, a demonstração, as páginas legais e o build continuam funcionando. Login, cadastro, onboarding e dashboard exibem uma tela de configuração obrigatória em vez de quebrar.
+Sem variáveis de ambiente, a landing, a demonstração, as páginas legais e o build continuam funcionando. Login, cadastro, onboarding, dashboard e agendamento público exibem uma tela de configuração obrigatória em vez de quebrar. O fluxo público também exige `SUPABASE_SERVICE_ROLE_KEY` no servidor.
 
 ---
 
@@ -404,7 +468,7 @@ Abra [http://localhost:3000](http://localhost:3000).
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Pública | URL do projeto Supabase usada no navegador e no servidor. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Pública | Chave `anon`; o acesso real é limitado pela RLS. |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Somente servidor** | Cliente administrativo, jobs e futuras rotas de webhook. Ignora RLS; nunca deve ir ao navegador. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Somente servidor** | Cliente administrativo do agendamento público, jobs e futuras rotas de webhook. Ignora RLS; nunca deve ir ao navegador. |
 | `ASAAS_API_KEY` | **Somente servidor** | Reservada para a futura integração de cobrança. Não é usada nesta versão. |
 | `ASAAS_WEBHOOK_TOKEN` | **Somente servidor** | Reservada para validação de webhooks futuros. Não é usada nesta versão. |
 | `NEXT_PUBLIC_APP_URL` | Pública | URL base para links de confirmação e recuperação de senha. |
@@ -412,7 +476,7 @@ Abra [http://localhost:3000](http://localhost:3000).
 Regras importantes:
 
 - Nunca crie uma variável `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` nem exponha chaves `SUPABASE_SERVICE_ROLE_KEY` ou `ASAAS_*` em Client Components.
-- O cliente administrativo fica em `src/lib/supabase/admin.ts`, marcado com `server-only`. Ele ainda não é chamado por nenhuma rota.
+- O cliente administrativo fica em `src/lib/supabase/admin.ts`, marcado com `server-only`. Ele é usado apenas pelo fluxo público de agendamento, sempre no servidor; nenhuma rota o expõe ao navegador.
 - A chave `anon` é pública por design; a proteção dos dados depende das políticas RLS.
 
 ---
@@ -430,6 +494,7 @@ As migrações estão em `supabase/migrations/` e foram escritas para um banco *
 | `20261108090400_functions_and_triggers.sql` | Helpers de autorização, criação automática de perfil, proteção de vínculos, auditoria, onboarding transacional e `updated_at`. |
 | `20261108090500_rls_policies.sql` | Habilitação de RLS e políticas por tabela. |
 | `20261108090600_grants_and_hardening.sql` | Grants explícitos, revogação de acesso anônimo e privilégios padrão restritivos. |
+| `20261113120000_public_booking.sql` | `public_token`, índice de telefone normalizado, `booking_rate_limits`, rate limit atômico e deduplicação de clientes com advisory lock. |
 
 Comandos úteis:
 
@@ -444,19 +509,20 @@ npx supabase db push
 npx supabase status
 ```
 
-> **Validação:** não havia Docker/PostgreSQL local neste ambiente e nenhuma alteração foi aplicada ao projeto Supabase vinculado. As migrações foram revisadas e validadas por testes estáticos, mas **não foram executadas em um banco real nesta entrega**. O primeiro passo da próxima etapa é rodar `supabase db reset` em um ambiente local ou `db push` com autorização e testar as políticas com dois tenants distintos.
+> **Validação:** não havia Docker/PostgreSQL local neste ambiente e nenhuma alteração foi aplicada ao projeto Supabase vinculado. As oito migrações foram revisadas e validadas por testes estáticos, mas **não foram executadas em um banco real nesta entrega**. O primeiro passo da próxima etapa é rodar `supabase db reset` em um ambiente local ou `db push` com autorização e testar as políticas com dois tenants distintos, incluindo o fluxo público com service role.
 
 ---
 
 ## Modelo de dados
 
-São 17 tabelas no schema `public`:
+São 18 tabelas no schema `public`:
 
 - **Identidade:** `profiles`.
 - **Tenant:** `barbershops`, `barbershop_members`.
 - **Equipe e catálogo:** `barbers`, `services`, `barber_services`.
 - **Horários:** `business_hours`, `barber_working_hours`, `blocked_slots`.
 - **Operação:** `customers`, `appointments`.
+- **Agendamento público:** `booking_rate_limits` (contadores efêmeros, sem dados pessoais em texto puro).
 - **Cobrança:** `plans`, `subscriptions`, `payments`, `webhook_events`.
 - **Comunicação e auditoria:** `notifications`, `audit_logs`.
 
@@ -467,6 +533,8 @@ Decisões relevantes:
 - Todo dado operacional referencia `barbershop_id`.
 - As FKs compostas incluem `barbershop_id` para impedir que um agendamento misture cliente, profissional e serviço de barbearias diferentes.
 - `appointments` usa uma restrição `exclude using gist` para bloquear sobreposição de horário do mesmo profissional nos status `scheduled`, `confirmed` e `in_progress`.
+- `appointments.public_token` é o segredo opaco da reserva pública, com índice único; o `id` continua sendo o identificador interno.
+- `customers` tem um índice funcional de telefone normalizado por `barbershop_id`, usado pela deduplicação do fluxo público.
 - `barbershop_members` tem índice único de proprietário ativo por barbearia e trigger que impede ficar sem owner.
 - `payments.appointment_id` usa `on delete set null (appointment_id)`, recurso do PostgreSQL 15+. O projeto local está configurado com PostgreSQL 17.
 
@@ -514,6 +582,7 @@ where email = 'admin@exemplo.com';
 | `plans` | Qualquer autenticado | Admin da plataforma |
 | `subscriptions`, `payments` | Owner ou admin | Admin da plataforma; service role para jobs |
 | `webhook_events` | Admin da plataforma | Service role |
+| `booking_rate_limits` | Sem acesso para `anon`/`authenticated` | Apenas `service_role`, via função interna do agendamento público |
 | `notifications` | Própria notificação ou admin | Própria notificação; inserção via service role |
 | `audit_logs` | Owner da barbearia ou admin | Apenas triggers internos; sem DML direto para usuários |
 
@@ -523,8 +592,9 @@ where email = 'admin@exemplo.com';
 - O trigger de vínculos impede mover membership entre barbearias, trocar o usuário e alterar o próprio papel.
 - Um trigger de constraint garante ao menos um `owner` ativo por barbearia.
 - Triggers de auditoria registram alterações em memberships, agendamentos e assinaturas.
-- `anon` não recebe acesso a nenhuma tabela de negócio. A demonstração pública é estática e não consulta o banco.
-- Grants são explícitos; privilégios padrão para tabelas, sequences e funções futuras foram revogados de `anon` e `authenticated`.
+- `anon` não recebe acesso a nenhuma tabela de negócio. O agendamento público lê e escreve somente no servidor, com service role; a demonstração `/barbearia/barbearia-aurora` continua estática.
+- Grants são explícitos; privilégios padrão para tabelas, sequences e funções futuras foram revogados de `anon` e `authenticated`. A migration 3.2 concede ao `service_role` apenas a tabela de rate limit e as duas funções internas.
+- O rate limiting do fluxo público usa buckets hasheados e uma função atômica; ele não é usado como autorização nem substitui a RLS das rotas autenticadas.
 - A política de recuperação de senha responde de forma genérica, evitando enumeração de e-mails.
 - O callback de autenticação aceita `code` e `token_hash`/`verifyOtp` e valida o caminho de retorno com `safeNextPath`.
 - Respostas HTTP enviam `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e `Permissions-Policy`; `Strict-Transport-Security` é adicionado em produção.
@@ -532,9 +602,9 @@ where email = 'admin@exemplo.com';
 ### Limitações de segurança conhecidas
 
 - `profiles` é compartilhado entre membros da mesma barbearia, incluindo e-mail e telefone quando preenchidos. Isso é intencional para a página de equipe, mas deve ser revisto se esses dados passarem a ser sensíveis.
-- O cliente administrativo com service role existe, mas não está conectado a nenhuma rota. Quando for usado em webhooks, valide assinatura/token, idempotência e origem antes de qualquer escrita.
-- Ainda não há rate limiting de aplicação para cadastro, login ou criação de barbearias. Configure limites no Supabase e/ou em um proxy de borda antes de produção.
-- Não há teste automatizado com banco real nem teste E2E de RLS. A validação atual é estática.
+- O cliente administrativo com service role está conectado apenas ao agendamento público, sempre no servidor. Quando for usado em webhooks, valide assinatura/token, idempotência e origem antes de qualquer escrita.
+- O rate limiting de aplicação cobre apenas o fluxo público. Cadastro, login, criação de barbearias e recuperação de senha continuam dependendo de limites no Supabase e/ou em um proxy de borda antes de produção.
+- Não há teste automatizado com banco real nem teste E2E de RLS. A validação atual é estática e unitária; concorrência real, advisory lock e RLS do fluxo público precisam ser confirmados em PostgreSQL.
 
 ---
 
@@ -548,6 +618,7 @@ src/
     dashboard/              visão geral, agenda, clientes, serviços, equipe,
                             horários, financeiro, plano e configurações
     onboarding/             criação transacional da barbearia
+    agendar/[slug]/         agendamento público por tenant e reserva por token
     barbearia/[slug]/       demonstração pública estática
     termos/, privacidade/   páginas legais
   components/
@@ -566,6 +637,7 @@ src/
     schedule/               actions e componentes de horários e bloqueios
     customers/              actions e componentes da base de clientes
     scheduling/             agenda, disponibilidade e agendamentos
+    public-booking/         páginas, actions, disponibilidade, token e rate limit
     settings/               formulário de configurações
     marketing/              landing page
     public-barbershop/      dados fictícios da demonstração
@@ -579,7 +651,7 @@ src/
   proxy.ts                  renovação de sessão e checagens otimistas
 supabase/
   config.toml
-  migrations/               sete migrações versionadas
+  migrations/               oito migrações versionadas
 tests/                      Vitest (schema, RLS, segredos, validações)
 ```
 
@@ -589,6 +661,7 @@ Decisões de implementação:
 - `src/proxy.ts` renova a sessão e faz checagens otimistas. A autorização real acontece na DAL (`requireDashboardContext`/`requireOwnerDashboardContext`), nas Server Actions e na RLS.
 - Páginas de autenticação, onboarding e dashboard usam `dynamic = "force-dynamic"` para não depender de sessão em build estático.
 - A demonstração pública usa `dynamicParams = false` e apenas o slug `barbearia-aurora`, com `robots: noindex`.
+- O agendamento público usa `dynamic = "force-dynamic"`, service role apenas no servidor e `robots: noindex` na página da reserva.
 - O botão de agendamento da demo e os recursos futuros usam o modal `PrototypeAction`, deixando explícito que nenhum dado é criado.
 
 ### Rotas
@@ -610,6 +683,8 @@ Decisões de implementação:
 | `/dashboard/financeiro` | Indicadores financeiros (owner/admin) |
 | `/dashboard/plano` | Plano e assinatura (owner/admin) |
 | `/dashboard/configuracoes` | Dados da barbearia (owner/admin) |
+| `/agendar/[slug]` | Agendamento público por tenant, sem login |
+| `/agendar/[slug]/reserva/[token]` | Consulta e cancelamento da reserva por token privado |
 | `/barbearia/barbearia-aurora` | Demonstração pública fictícia |
 | `/termos`, `/privacidade` | Páginas legais |
 
@@ -636,16 +711,16 @@ Resultados da última verificação local:
 ```text
 npm run typecheck  ✅
 npm run lint       ✅
-npm test           ✅ 252 testes em 9 arquivos
+npm test           ✅ 323 testes em 10 arquivos
 npm run build      ✅
 ```
 
-Também foram verificadas manualmente no navegador as rotas públicas, `/login` e o redirecionamento de `/dashboard` sem sessão. Não houve erros de console nas páginas válidas. Os headers de segurança foram confirmados na resposta HTTP do servidor local.
+Também foram verificadas manualmente no navegador as rotas institucionais, `/login` e o redirecionamento de `/dashboard` sem sessão. Não houve erros de console nas páginas válidas. Os headers de segurança foram confirmados na resposta HTTP do servidor local. O agendamento público foi validado por testes unitários; o E2E depende de banco real e da service role configurada.
 
 Os testes cobrem:
 
 - presença e ordem das migrações;
-- RLS habilitado em todas as 17 tabelas;
+- RLS habilitado em todas as 18 tabelas;
 - isolamento por `barbershop_id`;
 - reconhecimento de admin apenas via `app_metadata`;
 - função de onboarding transacional;
@@ -687,7 +762,19 @@ Os testes cobrem:
 - transições de status permitidas, cancelamento com motivo e liberação do horário;
 - reagendamento preservando serviço/profissional e recusando registros encerrados ou de outro tenant;
 - isolamento de agendamentos, clientes, serviços e profissionais entre barbearias;
-- validações de auth, barbearia, clientes, agendamentos, permissões e formatação.
+- slug inexistente, barbearia inativa e erro de leitura na página pública;
+- agregação de somente serviços/profissionais ativos e com vínculo;
+- janela pública de 60 dias para consulta e criação;
+- rejeição de serviço/profissional inativo ou de outro tenant;
+- remoção de horários bloqueados e ocupados da disponibilidade pública;
+- criação pública com preço/duração do banco, sem confiar em tenant, preço ou duração injetados;
+- deduplicação de cliente por telefone normalizado dentro do tenant, sem sobrescrever nome/e-mail e sem reutilizar cliente de outra barbearia;
+- colisão de token com retry e tradução de `23P01` na criação pública;
+- consulta e cancelamento por token, incluindo token de outra barbearia, status não cancelável e horário já iniciado;
+- cancelamento liberando o horário e mantendo o registro no histórico;
+- rate limiting com buckets SHA-256, limite por IP/telefone, falha fechada em escritas e falha aberta na consulta de disponibilidade;
+- ausência de telefone, e-mail, IP ou token em logs;
+- validações de auth, barbearia, clientes, agendamentos, públicos, permissões e formatação.
 
 O que **não** foi testado:
 
@@ -699,42 +786,47 @@ O que **não** foi testado:
 - concorrência real de bloqueios simultâneos no banco;
 - concorrência real de cadastros duplicados de clientes no banco;
 - concorrência real de dois agendamentos simultâneos no PostgreSQL (a constraint existe, mas a corrida é simulada nos testes);
-- integração Asaas, webhooks, e-mails de produção e jobs;
+- aplicação da migration 3.2 e execução real de `consume_booking_rate_limit`/`find_or_create_public_customer`;
+- fluxo público E2E com service role, rate limiting e dois tenants em banco real;
+- concorrência real do advisory lock de telefone e da constraint `appointments_no_overlap` no fluxo público;
+- envio de e-mail/WhatsApp, integração Asaas, webhooks, e-mails de produção e jobs;
 - upload de avatar (sem Storage configurado).
 
 ---
 
 ## Limitações conhecidas
 
-1. **Sem banco real nesta entrega.** Não havia Docker/PostgreSQL local, e o projeto Supabase vinculado não foi alterado. As migrações e os CRUDs precisam ser aplicados e validados em um ambiente de desenvolvimento com autorização.
+1. **Sem banco real nesta entrega.** Não havia Docker/PostgreSQL local, e o projeto Supabase vinculado não foi alterado. As oito migrações, os CRUDs, a RLS, o advisory lock e o rate limit precisam ser aplicados e validados em um ambiente de desenvolvimento com autorização.
 2. **Sem pagamentos.** As tabelas e a UI financeira são uma fundação; não há cobrança, assinatura ativa, boleto, Pix ou cartão.
-3. **Sem reserva pública.** A agenda interna já cria e gerencia agendamentos, mas não há autoatendimento público, link por tenant, WhatsApp, notificações ou pagamento.
-4. **Sem convites.** Profissionais e vínculos de serviço já são gerenciados, mas não há fluxo de convite por e-mail, aceite ou reenvio para novos acessos ao painel.
-5. **Sem página pública real por tenant.** A demo é estática, com dados fictícios, e não reserva horários.
-6. **Sem uploads.** `logo_url`, `cover_url` e `avatar_url` existem no schema, mas não há bucket/políticas de Storage configurados; os profissionais usam iniciais.
-7. **Sem notificações reais.** A tabela `notifications` existe; não há envio por e-mail, WhatsApp ou push.
-8. **Sem painel global de plataforma.** O `platform_admin` eleva o acesso dentro de uma barbearia; não há uma área separada para administrar todos os tenants.
-9. **Transferência de propriedade limitada.** Há um único owner ativo por barbearia; a troca exige intervenção administrativa/manual, e a exclusão do único owner é bloqueada pelo trigger de proteção.
-10. **Dependência de PostgreSQL 15+.** O `on delete set null (appointment_id)` não funciona em versões anteriores.
-11. **Associações sem transação única.** A atualização de `barber_services` valida os serviços antes de escrever e segue uma ordem segura, mas upsert e remoção são chamadas separadas. Se a segunda falhar, a interface orienta salvar novamente.
-12. **Duplicidade de serviço validada na aplicação.** O schema não possui `unique` para nome normalizado; a checagem é feita no servidor e pode ser contornada apenas por escrita direta com privilégios de owner. Não há coluna gerada nem extensão `unaccent` aplicada nesta etapa.
-13. **Sobreposição de bloqueios sem constraint no banco.** `blocked_slots` não tem constraint de exclusão; a validação é feita na aplicação e duas requisições concorrentes podem gravar períodos sobrepostos. Uma migration futura pode adicionar `exclude using gist` com escopo por profissional e barbearia.
-14. **Uma faixa por dia na interface.** `business_hours` e `barber_working_hours` aceitam múltiplas faixas, mas a edição atual mantém uma faixa por dia e consolida duplicatas legadas ao salvar.
-15. **Duplicidade de cliente validada na aplicação.** `customers` não possui índice único de telefone/e-mail normalizado. A checagem considera arquivados e variações de formatação, mas duas requisições concorrentes podem gravar duplicatas; uma migration futura pode adicionar índice funcional com escopo por `barbershop_id`.
-16. **Clientes não têm exclusão física na interface.** O arquivamento preserva histórico e relacionamentos. Atender a um pedido de eliminação da LGPD exige procedimento administrativo no banco, verificando antes se não há agendamentos vinculados.
+3. **O link da reserva é o segredo.** Não há segundo fator para consultar ou cancelar: quem tiver o `public_token` consegue ver os dados e cancelar a reserva. O cliente deve guardar o link e não compartilhá-lo publicamente.
+4. **Cancelamento público até o início.** A reserva pode ser cancelada enquanto estiver `scheduled` ou `confirmed` e antes de `starts_at`. Não existe antecedência mínima configurável no schema; depois do início, o cliente deve falar diretamente com a barbearia.
+5. **Sem notificações reais.** A tabela `notifications` existe, mas não há envio por e-mail, SMS, WhatsApp ou push. A única confirmação do agendamento público é a página da reserva.
+6. **Rate limit de aplicação não substitui borda.** Não há CAPTCHA nem WAF nesta entrega; os limites por IP/telefone reduzem abuso, mas devem ser combinados com proxy/edge e monitoramento em produção.
+7. **Sem convites.** Profissionais e vínculos de serviço já são gerenciados, mas não há fluxo de convite por e-mail, aceite ou reenvio para novos acessos ao painel.
+8. **Sem uploads.** `logo_url`, `cover_url` e `avatar_url` existem no schema, mas não há bucket/políticas de Storage configurados; os profissionais usam iniciais.
+9. **Sem painel global de plataforma.** O `platform_admin` eleva o acesso dentro de uma barbearia; não há uma área separada para administrar todos os tenants.
+10. **Transferência de propriedade limitada.** Há um único owner ativo por barbearia; a troca exige intervenção administrativa/manual, e a exclusão do único owner é bloqueada pelo trigger de proteção.
+11. **Dependência de PostgreSQL 15+.** O `on delete set null (appointment_id)` não funciona em versões anteriores.
+12. **Associações sem transação única.** A atualização de `barber_services` valida os serviços antes de escrever e segue uma ordem segura, mas upsert e remoção são chamadas separadas. Se a segunda falhar, a interface orienta salvar novamente.
+13. **Duplicidade de serviço validada na aplicação.** O schema não possui `unique` para nome normalizado; a checagem é feita no servidor e pode ser contornada apenas por escrita direta com privilégios de owner. Não há coluna gerada nem extensão `unaccent` aplicada nesta etapa.
+14. **Sobreposição de bloqueios sem constraint no banco.** `blocked_slots` não tem constraint de exclusão; a validação é feita na aplicação e duas requisições concorrentes podem gravar períodos sobrepostos. Uma migration futura pode adicionar `exclude using gist` com escopo por profissional e barbearia.
+15. **Uma faixa por dia na interface.** `business_hours` e `barber_working_hours` aceitam múltiplas faixas, mas a edição atual mantém uma faixa por dia e consolida duplicatas legadas ao salvar.
+16. **Duplicidade de cliente.** O fluxo público usa `find_or_create_public_customer` com `pg_advisory_xact_lock` por barbearia + telefone normalizado, mas o CRUD autenticado continua validando na aplicação. Como `customers` não tem índice único geral de telefone/e-mail, escritas internas concorrentes ainda podem gerar duplicatas; uma migration futura pode unificar essa garantia.
+17. **Clientes não têm exclusão física na interface.** O arquivamento preserva histórico e relacionamentos. Atender a um pedido de eliminação da LGPD exige procedimento administrativo no banco, verificando antes se não há agendamentos vinculados.
 
 ---
 
 ## Próximos passos recomendados
 
-1. **Provisionar o Supabase** e aplicar as sete migrações em um projeto de desenvolvimento.
+1. **Provisionar o Supabase** e aplicar as oito migrações em um projeto de desenvolvimento.
 2. **Testar RLS com dois tenants**: criar duas barbearias, dois owners e um staff; tentar leituras e escritas cruzadas via API.
-3. **Implementar convites de acesso ao painel**, incluindo aceite, reenvio e revogação; o cadastro de profissionais já está concluído.
-4. **Validar a agenda com dados reais**, aplicando as migrações e testando criação, reagendamento e concorrência em PostgreSQL.
-5. **Conectar o Asaas no servidor**, com webhook idempotente, validação de token e registro em `webhook_events`.
-6. **Criar a página pública real por tenant**, com slug dinâmico, serviços, equipe e reserva de horários sobre o mesmo motor de disponibilidade.
-7. **Adicionar testes E2E** (Playwright ou similar) e um pipeline de CI com typecheck, lint, testes e build.
-8. **Configurar observabilidade e limites**: logs, alertas, rate limiting, backup e política de retenção.
+3. **Testar o agendamento público em banco real**: aplicar a migration 3.2 e validar `consume_booking_rate_limit`, `find_or_create_public_customer`, o advisory lock de telefone, a constraint `appointments_no_overlap`, a tradução de `23P01`, o cancelamento e a consulta por token.
+4. **Implementar convites de acesso ao painel**, incluindo aceite, reenvio e revogação; o cadastro de profissionais já está concluído.
+5. **Validar a agenda com dados reais**, aplicando as migrações e testando criação, reagendamento e concorrência em PostgreSQL.
+6. **Conectar o Asaas no servidor**, com webhook idempotente, validação de token e registro em `webhook_events`.
+7. **Adicionar confirmação e lembretes** por e-mail ou WhatsApp usando o link com token, sem expor o `id` interno nem dados desnecessários.
+8. **Adicionar testes E2E** (Playwright ou similar) para a reserva pública e o painel, além de um pipeline de CI com typecheck, lint, testes e build.
+9. **Configurar observabilidade e limites de borda**: logs, alertas, CAPTCHA/WAF, backup e política de retenção.
 
 ---
 
@@ -743,6 +835,12 @@ O que **não** foi testado:
 | Sintoma | Causa provável | Ação |
 | --- | --- | --- |
 | “Supabase não configurado” | `.env.local` ausente ou incompleto | Preencha `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` e reinicie o dev server. |
+| `/agendar/[slug]` mostra configuração obrigatória | Service role ausente no servidor | Defina `SUPABASE_SERVICE_ROLE_KEY` em `.env.local`; ela nunca deve usar o prefixo `NEXT_PUBLIC_`. |
+| “Barbearia não encontrada” no agendamento público | Slug incorreto, barbearia inexistente ou inativa | Confira o slug em Configurações e o `status` da barbearia; a página não expõe dados de tenant inativo. |
+| “Muitas tentativas” | Rate limit de disponibilidade, criação ou cancelamento | Aguarde a janela indicada (5, 10 ou 15 minutos) e tente novamente; não contorne o limite no cliente. |
+| “Este horário acabou de ser reservado” | Outra reserva venceu a corrida e a constraint rejeitou a sobreposição | Escolha outro horário; o wizard recarrega os slots automaticamente. |
+| “Reserva não encontrada” | Token inválido, slug de outra barbearia ou link incompleto | Use o link completo gerado após a confirmação; tokens não são enumeráveis por ID. |
+| `consume_booking_rate_limit` ou `find_or_create_public_customer` não existe | Migration 3.2 não aplicada | Rode `npx supabase db reset` no ambiente local ou `db push` com autorização. |
 | Cadastro não envia e-mail | SMTP local/cloud não configurado | Local: abra o Inbucket em `http://127.0.0.1:54324`. Cloud: configure SMTP. |
 | Link de confirmação cai em erro | URL de callback fora da allow-list | Adicione `.../auth/callback` em Authentication → URL Configuration. |
 | `create_barbershop` não existe | Migrações não aplicadas | Rode `npx supabase db reset` ou `db push`. |

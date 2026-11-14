@@ -11,7 +11,7 @@ import Link from "next/link";
 
 import { NoticeCard } from "@/components/dashboard/notice-card";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { PrototypeBadge } from "@/components/dashboard/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarbershopSettingsForm } from "@/features/settings/components/barbershop-settings-form";
@@ -45,9 +45,9 @@ export default async function SettingsPage() {
         description="Os dados que identificam a barbearia no LPS Agenda. Alterações são validadas no servidor e gravadas conforme as permissões do banco."
         actions={
           <Button asChild variant="outline" size="lg">
-            <Link href="/barbearia/barbearia-aurora" target="_blank">
+            <Link href={`/agendar/${shop.slug}`} target="_blank">
               <ExternalLink className="size-4" />
-              Ver demonstração pública
+              Abrir página pública
             </Link>
           </Button>
         }
@@ -58,8 +58,8 @@ export default async function SettingsPage() {
           <CardHeader className="border-b border-border/70 pb-4">
             <CardTitle>Dados da barbearia</CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Nome, descrição e localização usados no painel e na futura página
-              pública.
+              Nome, descrição e localização usados no painel e na página pública
+              de agendamento.
             </p>
           </CardHeader>
           <CardContent className="pt-5">
@@ -90,7 +90,7 @@ export default async function SettingsPage() {
                   Identificador
                 </p>
                 <code className="mt-1 block overflow-x-auto rounded-lg border border-border/80 bg-muted/30 px-2.5 py-1.5 font-mono text-[11px]">
-                  /barbearia/{shop.slug}
+                  /agendar/{shop.slug}
                 </code>
               </div>
               <div>
@@ -117,12 +117,26 @@ export default async function SettingsPage() {
                 </p>
               </div>
               <div className="border-t border-border/70 pt-3">
-                <PrototypeBadge label="Página pública em breve" />
+                <Badge
+                  variant="outline"
+                  className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[9px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
+                >
+                  <ExternalLink className="size-2.5" />
+                  Agendamento online ativo
+                </Badge>
                 <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                  A página pública real por slug será conectada na próxima
-                  etapa. Hoje, a demonstração disponível é a Barbearia Aurora,
-                  com dados fictícios.
+                  A página pública consulta serviços, profissionais e horários
+                  reais. Cada reserva gera um link privado para o cliente
+                  consultar ou cancelar antes do atendimento.
                 </p>
+                <Link
+                  href={`/agendar/${shop.slug}`}
+                  target="_blank"
+                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium underline decoration-gold/50 underline-offset-4 hover:text-gold"
+                >
+                  Ver página pública
+                  <ExternalLink className="size-3" />
+                </Link>
               </div>
             </CardContent>
           </Card>

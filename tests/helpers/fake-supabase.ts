@@ -32,6 +32,13 @@ type UpsertOptions = {
   ignoreDuplicates?: boolean;
 };
 
+type RpcResult = {
+  data: unknown;
+  error: FakeError | null;
+};
+
+type RpcHandler = (args: FakeRow) => unknown;
+
 function compareValues(left: unknown, right: unknown): number {
   if (typeof left === "number" && typeof right === "number") {
     return left - right;
@@ -133,6 +140,9 @@ export class FakeSupabase {
     string,
     Array<{ error: FakeError; operation?: FakeOperation }>
   >();
+  private rpcHandlers = new Map<string, RpcHandler>();
+  private rpcFailures = new Map<string, FakeError[]>();
+  private rateLimitCounters = new Map<string, number>();
 
   constructor(seed: Record<string, FakeRow[]> = {}) {
     for (const [table, rows] of Object.entries(seed)) {
@@ -142,6 +152,104 @@ export class FakeSupabase {
 
   from(table: string) {
     return new FakeQuery(this, table);
+  }
+
+  rpc(name: string, args: FakeRow = {}) {
+    return new FakeRpc(this, name, args);
+  }
+
+  setRpcHandler(name: string, handler: RpcHandler) {
+    this.rpcHandlers.set(name, handler);
+  }
+
+  failNextRpc(name: string, code = "PGRST202") {
+    const queue = this.rpcFailures.get(name) ?? [];
+    queue.push({ code, message: "Falha simulada em RPC." });
+    this.rpcFailures.set(name, queue);
+  }
+
+  takeRpcFailure(name: string): FakeError | null {
+    const queue = this.rpcFailures.get(name);
+
+    if (!queue || queue.length === 0) {
+      return null;
+    }
+
+    const failure = queue.shift() ?? null;
+
+    if (queue.length === 0) {
+      this.rpcFailures.delete(name);
+    }
+
+    return failure;
+  }
+
+  getRpcHandler(name: string): RpcHandler | undefined {
+    return this.rpcHandlers.get(name);
+  }
+
+  /**
+   * Implementação em memória da função SQL atômica. Usa a mesma janela fixa
+   * para que os testes de limite não dependam de relógio real.
+   */
+  consumeFakeRateLimit(
+    bucket: string,
+    windowSeconds: number,
+    limit: number,
+  ): boolean {
+    if (!bucket || windowSeconds <= 0 || limit <= 0) {
+      return false;
+    }
+
+    const windowStart =
+      Math.floor(Date.now() / 1000 / windowSeconds) * windowSeconds;
+    const key = `${bucket}:${windowStart}`;
+    const hits = (this.rateLimitCounters.get(key) ?? 0) + 1;
+
+    this.rateLimitCounters.set(key, hits);
+
+    return hits <= limit;
+  }
+
+  /**
+   * Simula a função SQL de deduplicação. Compara apenas os dígitos do telefone
+   * e reaproveita o primeiro cliente encontrado, inclusive arquivado.
+   */
+  findOrCreateFakeCustomer(args: FakeRow): string {
+    const barbershopId = String(args.p_barbershop_id ?? "");
+    const phone = String(args.p_phone ?? "").replace(/\D/g, "");
+    const rows = this.hasTable("customers") ? this.getRows("customers") : [];
+
+    const existing = rows.find(
+      (row) =>
+        row.barbershop_id === barbershopId &&
+        String(row.phone ?? "").replace(/\D/g, "") === phone,
+    );
+
+    if (existing) {
+      return String(existing.id);
+    }
+
+    const id = randomUUID();
+    const email = String(args.p_email ?? "").trim();
+
+    this.setRows("customers", [
+      ...rows,
+      {
+        id,
+        barbershop_id: barbershopId,
+        full_name: String(args.p_full_name ?? ""),
+        phone,
+        email: email.length > 0 ? email : null,
+        birth_date: null,
+        notes: null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]);
+
+    return id;
   }
 
   hasTable(table: string): boolean {
@@ -498,5 +606,72 @@ class FakeQuery implements PromiseLike<QueryResult> {
     }
 
     return this.respond(written);
+  }
+}
+
+class FakeRpc implements PromiseLike<RpcResult> {
+  constructor(
+    private readonly db: FakeSupabase,
+    private readonly name: string,
+    private readonly args: FakeRow,
+  ) {}
+
+  then<TResult1 = RpcResult, TResult2 = never>(
+    onfulfilled?:
+      | ((value: RpcResult) => TResult1 | PromiseLike<TResult1>)
+      | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): Promise<TResult1 | TResult2> {
+    return Promise.resolve(this.execute()).then(onfulfilled, onrejected);
+  }
+
+  private execute(): RpcResult {
+    const failure = this.db.takeRpcFailure(this.name);
+
+    if (failure) {
+      return { data: null, error: failure };
+    }
+
+    const handler = this.db.getRpcHandler(this.name);
+
+    if (handler) {
+      try {
+        return { data: handler(this.args), error: null };
+      } catch (error) {
+        return {
+          data: null,
+          error: {
+            code: "P0001",
+            message: error instanceof Error ? error.message : "Falha simulada.",
+          },
+        };
+      }
+    }
+
+    if (this.name === "consume_booking_rate_limit") {
+      return {
+        data: this.db.consumeFakeRateLimit(
+          String(this.args.p_bucket ?? ""),
+          Number(this.args.p_window_seconds ?? 0),
+          Number(this.args.p_limit ?? 0),
+        ),
+        error: null,
+      };
+    }
+
+    if (this.name === "find_or_create_public_customer") {
+      return {
+        data: this.db.findOrCreateFakeCustomer(this.args),
+        error: null,
+      };
+    }
+
+    return {
+      data: null,
+      error: {
+        code: "PGRST202",
+        message: `Função não simulada: ${this.name}`,
+      },
+    };
   }
 }

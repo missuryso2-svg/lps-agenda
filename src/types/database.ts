@@ -464,6 +464,8 @@ export type Database = {
           features: Json;
           max_barbers: number | null;
           is_active: boolean;
+          currency: string;
+          trial_days: number;
           created_at: string;
           updated_at: string;
         };
@@ -477,6 +479,8 @@ export type Database = {
           features?: Json;
           max_barbers?: number | null;
           is_active?: boolean;
+          currency?: string;
+          trial_days?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -490,6 +494,50 @@ export type Database = {
           features?: Json;
           max_barbers?: number | null;
           is_active?: boolean;
+          currency?: string;
+          trial_days?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      billing_customers: {
+        Row: {
+          id: string;
+          barbershop_id: string;
+          gateway: string;
+          gateway_customer_id: string | null;
+          person_type: string;
+          document_digits: string;
+          holder_name: string;
+          email: string | null;
+          phone_digits: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          barbershop_id: string;
+          gateway?: string;
+          gateway_customer_id?: string | null;
+          person_type: string;
+          document_digits: string;
+          holder_name: string;
+          email?: string | null;
+          phone_digits?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          barbershop_id?: string;
+          gateway?: string;
+          gateway_customer_id?: string | null;
+          person_type?: string;
+          document_digits?: string;
+          holder_name?: string;
+          email?: string | null;
+          phone_digits?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -503,10 +551,27 @@ export type Database = {
           status: Database["public"]["Enums"]["subscription_status"];
           current_period_start: string | null;
           current_period_end: string | null;
+          trial_started_at: string | null;
           trial_ends_at: string | null;
+          contracted_price_cents: number | null;
+          contracted_currency: string | null;
+          contracted_interval:
+            | Database["public"]["Enums"]["billing_interval"]
+            | null;
+          trial_finalization_locked_at: string | null;
+          trial_finalization_attempted_at: string | null;
+          trial_finalization_attempts: number;
+          trial_finalization_error: string | null;
+          trial_finalized_at: string | null;
           cancel_at_period_end: boolean;
           gateway: string;
           gateway_subscription_id: string | null;
+          billing_type: Database["public"]["Enums"]["payment_method"] | null;
+          gateway_status: string;
+          external_reference: string;
+          next_due_date: string | null;
+          canceled_at: string | null;
+          cancel_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -517,10 +582,27 @@ export type Database = {
           status?: Database["public"]["Enums"]["subscription_status"];
           current_period_start?: string | null;
           current_period_end?: string | null;
+          trial_started_at?: string | null;
           trial_ends_at?: string | null;
+          contracted_price_cents?: number | null;
+          contracted_currency?: string | null;
+          contracted_interval?:
+            | Database["public"]["Enums"]["billing_interval"]
+            | null;
+          trial_finalization_locked_at?: string | null;
+          trial_finalization_attempted_at?: string | null;
+          trial_finalization_attempts?: number;
+          trial_finalization_error?: string | null;
+          trial_finalized_at?: string | null;
           cancel_at_period_end?: boolean;
           gateway?: string;
           gateway_subscription_id?: string | null;
+          billing_type?: Database["public"]["Enums"]["payment_method"] | null;
+          gateway_status?: string;
+          external_reference?: string;
+          next_due_date?: string | null;
+          canceled_at?: string | null;
+          cancel_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -531,10 +613,27 @@ export type Database = {
           status?: Database["public"]["Enums"]["subscription_status"];
           current_period_start?: string | null;
           current_period_end?: string | null;
+          trial_started_at?: string | null;
           trial_ends_at?: string | null;
+          contracted_price_cents?: number | null;
+          contracted_currency?: string | null;
+          contracted_interval?:
+            | Database["public"]["Enums"]["billing_interval"]
+            | null;
+          trial_finalization_locked_at?: string | null;
+          trial_finalization_attempted_at?: string | null;
+          trial_finalization_attempts?: number;
+          trial_finalization_error?: string | null;
+          trial_finalized_at?: string | null;
           cancel_at_period_end?: boolean;
           gateway?: string;
           gateway_subscription_id?: string | null;
+          billing_type?: Database["public"]["Enums"]["payment_method"] | null;
+          gateway_status?: string;
+          external_reference?: string;
+          next_due_date?: string | null;
+          canceled_at?: string | null;
+          cancel_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -549,6 +648,7 @@ export type Database = {
           amount_cents: number;
           status: Database["public"]["Enums"]["payment_status"];
           method: Database["public"]["Enums"]["payment_method"] | null;
+          scope: Database["public"]["Enums"]["payment_scope"];
           due_date: string | null;
           paid_at: string | null;
           gateway: string;
@@ -566,6 +666,7 @@ export type Database = {
           amount_cents: number;
           status?: Database["public"]["Enums"]["payment_status"];
           method?: Database["public"]["Enums"]["payment_method"] | null;
+          scope?: Database["public"]["Enums"]["payment_scope"];
           due_date?: string | null;
           paid_at?: string | null;
           gateway?: string;
@@ -583,6 +684,7 @@ export type Database = {
           amount_cents?: number;
           status?: Database["public"]["Enums"]["payment_status"];
           method?: Database["public"]["Enums"]["payment_method"] | null;
+          scope?: Database["public"]["Enums"]["payment_scope"];
           due_date?: string | null;
           paid_at?: string | null;
           gateway?: string;
@@ -753,13 +855,14 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_show";
-      subscription_status: "trialing" | "active" | "past_due" | "canceled" | "expired";
+      subscription_status: "pending" | "trialing" | "active" | "past_due" | "canceled" | "expired";
       billing_interval: "month" | "year";
-      payment_status: "pending" | "paid" | "failed" | "refunded" | "cancelled";
-      payment_method: "pix" | "credit_card" | "debit_card" | "cash" | "bank_transfer" | "other";
+      payment_status: "pending" | "overdue" | "paid" | "failed" | "refunded" | "cancelled";
+      payment_method: "boleto" | "pix" | "credit_card" | "debit_card" | "cash" | "bank_transfer" | "other";
+      payment_scope: "shop_service" | "platform_subscription";
       notification_channel: "in_app" | "email" | "whatsapp";
       notification_status: "pending" | "sent" | "failed" | "read";
-      webhook_status: "received" | "processed" | "failed" | "ignored";
+      webhook_status: "received" | "processing" | "processed" | "failed" | "ignored";
     };
     CompositeTypes: {
       [_ in never]: never;

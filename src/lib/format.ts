@@ -1,4 +1,6 @@
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+const currencyFormatters = new Map<string, Intl.NumberFormat>();
+
+const defaultCurrencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
@@ -15,8 +17,27 @@ const weekdayLabels = [
 
 const shortWeekdayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 
-export function formatCurrencyFromCents(cents: number): string {
-  return currencyFormatter.format(cents / 100);
+export function formatCurrencyFromCents(
+  cents: number,
+  currency = "BRL",
+): string {
+  const normalized = currency.trim().toUpperCase();
+
+  if (normalized === "BRL") {
+    return defaultCurrencyFormatter.format(cents / 100);
+  }
+
+  let formatter = currencyFormatters.get(normalized);
+
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: normalized,
+    });
+    currencyFormatters.set(normalized, formatter);
+  }
+
+  return formatter.format(cents / 100);
 }
 
 export function formatPhoneBR(value: string | null | undefined): string {

@@ -16,6 +16,7 @@ import {
   barberFormSchema,
   barberIdSchema,
 } from "@/lib/validation/barbers";
+import { barberLimitMessage, getPlanBarberLimit } from "./plan-limit";
 
 const configMissing =
   "Supabase não configurado neste ambiente. Preencha o .env e reinicie o servidor.";
@@ -42,6 +43,40 @@ function barberMutationMessage(error: { code?: string } | null): string {
     default:
       return genericError;
   }
+}
+
+async function validateBarberLimit(
+  supabase: Supabase,
+  barbershopId: string,
+  excludeBarberId?: string,
+): Promise<ActionState | null> {
+  const limit = await getPlanBarberLimit(supabase, barbershopId);
+
+  if (!limit || limit.maxBarbers === null) {
+    return null;
+  }
+
+  let query = supabase
+    .from("barbers")
+    .select("id", { count: "exact", head: true })
+    .eq("barbershop_id", barbershopId)
+    .eq("is_active", true);
+
+  if (excludeBarberId) {
+    query = query.neq("id", excludeBarberId);
+  }
+
+  const { count, error } = await query;
+
+  if (error) {
+    return actionError(genericError);
+  }
+
+  if ((count ?? 0) >= limit.maxBarbers) {
+    return actionError(barberLimitMessage(limit));
+  }
+
+  return null;
 }
 
 async function validateServiceIds(
@@ -165,6 +200,14 @@ export async function createBarberAction(
     return serviceValidation;
   }
 
+  if (parsed.data.isActive) {
+    const limitError = await validateBarberLimit(supabase, barbershopId);
+
+    if (limitError) {
+      return limitError;
+    }
+  }
+
   const { data: lastBarber, error: orderError } = await supabase
     .from("barbers")
     .select("display_order")
@@ -255,6 +298,33 @@ export async function updateBarberAction(
 
   if (serviceValidation) {
     return serviceValidation;
+  }
+
+  const { data: currentBarber, error: currentError } = await supabase
+    .from("barbers")
+    .select("is_active")
+    .eq("id", parsedId.data)
+    .eq("barbershop_id", barbershopId)
+    .maybeSingle();
+
+  if (currentError) {
+    return actionError(genericError);
+  }
+
+  if (!currentBarber) {
+    return actionError("Profissional não encontrado nesta barbearia.");
+  }
+
+  if (!currentBarber.is_active && parsed.data.isActive) {
+    const limitError = await validateBarberLimit(
+      supabase,
+      barbershopId,
+      parsedId.data,
+    );
+
+    if (limitError) {
+      return limitError;
+    }
   }
 
   const { data, error } = await supabase
@@ -376,6 +446,35 @@ export async function setBarberActiveAction(
 
   const barbershopId = authorization.context.active.barbershop_id;
   const supabase = await createClient();
+
+  if (parsedActive.data) {
+    const { data: currentBarber, error: currentError } = await supabase
+      .from("barbers")
+      .select("is_active")
+      .eq("id", parsedId.data)
+      .eq("barbershop_id", barbershopId)
+      .maybeSingle();
+
+    if (currentError) {
+      return actionError(genericError);
+    }
+
+    if (!currentBarber) {
+      return actionError("Profissional não encontrado nesta barbearia.");
+    }
+
+    if (!currentBarber.is_active) {
+      const limitError = await validateBarberLimit(
+        supabase,
+        barbershopId,
+        parsedId.data,
+      );
+
+      if (limitError) {
+        return limitError;
+      }
+    }
+  }
 
   const { data, error } = await supabase
     .from("barbers")

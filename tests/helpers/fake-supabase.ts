@@ -8,6 +8,8 @@ type FakeOperation = "select" | "insert" | "update" | "delete" | "upsert";
 
 type Filter =
   | { kind: "eq"; column: string; value: unknown }
+  | { kind: "neq"; column: string; value: unknown }
+  | { kind: "is"; column: string; value: unknown }
   | { kind: "in"; column: string; values: unknown[] }
   | { kind: "lt"; column: string; value: unknown }
   | { kind: "gt"; column: string; value: unknown }
@@ -91,6 +93,23 @@ function parseOrExpression(expression: string): Filter {
 
 function matchesFilter(row: FakeRow, filter: Filter): boolean {
   if (filter.kind === "eq") {
+    return row[filter.column] === filter.value;
+  }
+
+  if (filter.kind === "neq") {
+    // Equivalente ao `<>` do Postgres: linhas nulas não satisfazem a condição.
+    if (row[filter.column] === undefined || row[filter.column] === null) {
+      return false;
+    }
+
+    return row[filter.column] !== filter.value;
+  }
+
+  if (filter.kind === "is") {
+    if (filter.value === null) {
+      return row[filter.column] === undefined || row[filter.column] === null;
+    }
+
     return row[filter.column] === filter.value;
   }
 
@@ -358,6 +377,16 @@ class FakeQuery implements PromiseLike<QueryResult> {
 
   eq(column: string, value: unknown) {
     this.filters.push({ kind: "eq", column, value });
+    return this;
+  }
+
+  neq(column: string, value: unknown) {
+    this.filters.push({ kind: "neq", column, value });
+    return this;
+  }
+
+  is(column: string, value: unknown) {
+    this.filters.push({ kind: "is", column, value });
     return this;
   }
 

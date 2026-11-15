@@ -91,35 +91,44 @@ const steps = [
 
 const plans = [
   {
-    name: "Essencial",
-    description: "Para a barbearia que está organizando a base.",
+    name: "Básico",
+    description: "Entrada",
+    price: "R$ 49,90",
+    limit: "Até 1 profissional ativo",
+    trial: "Teste de 7 dias previsto no catálogo",
     features: [
-      "Agenda e clientes",
-      "Catálogo de serviços",
-      "Perfil público da barbearia",
-      "Um proprietário",
+      "Agenda online",
+      "Cadastro de clientes e serviços",
+      "Gestão de profissionais",
+      "Painel administrativo",
     ],
     highlighted: false,
   },
   {
     name: "Profissional",
-    description: "Para operações com equipe e rotina financeira.",
+    description: "Mais recomendado",
+    price: "R$ 79,90",
+    limit: "Até 5 profissionais ativos",
+    trial: "Teste de 7 dias previsto no catálogo",
     features: [
-      "Tudo do Essencial",
-      "Equipe com papéis",
-      "Financeiro e assinatura",
-      "Relatórios operacionais",
+      "Tudo do Básico",
+      "Relatórios financeiros",
+      "Histórico de agendamentos",
+      "Indicadores de desempenho",
     ],
     highlighted: true,
   },
   {
-    name: "Estúdios",
-    description: "Para estúdios e redes em expansão.",
+    name: "Premium",
+    description: "Completo",
+    price: "R$ 119,90",
+    limit: "Até 10 profissionais ativos",
+    trial: "Teste de 7 dias previsto no catálogo",
     features: [
       "Tudo do Profissional",
-      "Múltiplas unidades",
-      "Permissões avançadas",
-      "Acompanhamento dedicado",
+      "Relatórios avançados",
+      "Indicadores de crescimento",
+      "Prioridade no suporte",
     ],
     highlighted: false,
   },
@@ -139,7 +148,7 @@ const faq = [
   {
     question: "A cobrança de assinatura já está ativa?",
     answer:
-      "Não. A estrutura de planos, assinaturas, pagamentos e eventos de webhook está modelada, mas nenhuma integração real com gateway de pagamento foi conectada nesta etapa.",
+      "A integração com o Asaas está implementada em ambiente Sandbox, com boleto e Pix e confirmação por webhook. A cobrança real em produção ainda não foi habilitada. O catálogo registra o teste gratuito de 7 dias, mas a automação desse período ainda depende da evolução do fluxo de cobrança.",
   },
   {
     question: "O agendamento online do cliente já funciona?",
@@ -597,8 +606,8 @@ function PlansSection() {
             <span className="block text-muted-foreground">momento da barbearia.</span>
           </h2>
           <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-            Referências de produto para a próxima fase. A cobrança ainda não está
-            ativa nesta versão.
+            Três planos para acompanhar o momento da barbearia. Preços, limites e
+            recursos oficiais ficam no catálogo do painel.
           </p>
         </div>
 
@@ -614,7 +623,7 @@ function PlansSection() {
             >
               {plan.highlighted ? (
                 <span className="absolute -top-3 left-6 rounded-full bg-gold px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-gold-foreground">
-                  Mais indicado
+                  Mais recomendado
                 </span>
               ) : null}
 
@@ -625,12 +634,14 @@ function PlansSection() {
 
               <div className="mt-6 flex items-end gap-1.5">
                 <span className="font-display text-3xl tracking-tight">
-                  Sob consulta
+                  {plan.price}
                 </span>
+                <span className="pb-1 text-xs text-muted-foreground">/ mês</span>
               </div>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Valores definidos na etapa comercial.
+                {plan.limit}
               </p>
+              <p className="mt-0.5 text-[11px] text-gold">{plan.trial}</p>
 
               <Separator className="my-6" />
 
@@ -659,8 +670,8 @@ function PlansSection() {
         </div>
 
         <p className="mt-8 text-center text-[11px] text-muted-foreground">
-          O LPS Agenda não processa pagamentos nesta versão. Nenhuma cobrança será
-          realizada.
+          Preços e limites oficiais do catálogo. A contratação é feita pelo painel,
+          com boleto ou Pix.
         </p>
       </div>
     </section>

@@ -10,6 +10,9 @@ const SERVICE_B1 = "33333333-3333-4333-8333-333333333333";
 const BARBER_A1 = "44444444-4444-4444-8444-444444444444";
 const BARBER_B1 = "55555555-5555-4555-8555-555555555555";
 const APPOINTMENT_A1 = "66666666-6666-4666-8666-666666666666";
+const PLAN_ID = "99999999-9999-4999-8999-999999999999";
+const SUBSCRIPTION_ID = "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa";
+const BARBER_A2 = "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb";
 
 const state = vi.hoisted(() => ({
   context: null as unknown,
@@ -95,6 +98,34 @@ function barberRow(overrides: FakeRow = {}): FakeRow {
     avatar_url: null,
     is_active: true,
     display_order: 0,
+    ...overrides,
+  };
+}
+
+function planRow(overrides: FakeRow = {}): FakeRow {
+  return {
+    id: PLAN_ID,
+    code: "basico",
+    name: "Básico",
+    description: "Entrada",
+    price_cents: 4990,
+    interval: "month",
+    features: [],
+    max_barbers: 1,
+    is_active: true,
+    currency: "BRL",
+    trial_days: 7,
+    ...overrides,
+  };
+}
+
+function subscriptionRow(overrides: FakeRow = {}): FakeRow {
+  return {
+    id: SUBSCRIPTION_ID,
+    barbershop_id: SHOP_A,
+    plan_id: PLAN_ID,
+    status: "active",
+    created_at: "2026-11-01T12:00:00.000Z",
     ...overrides,
   };
 }
@@ -410,6 +441,158 @@ describe("CRUD de profissionais", () => {
     expect(result.status).toBe("error");
     expect(result.message).toContain("não encontrado");
     expect(db.getRows("barbers")[0].name).toBe("Rafael");
+  });
+});
+
+describe("limites de profissionais por plano", () => {
+  it("impede criar profissional ativo quando o plano atingiu o limite", async () => {
+    const db = useDb({
+      plans: [planRow({ max_barbers: 1 })],
+      subscriptions: [subscriptionRow()],
+      services: [serviceRow()],
+      barbers: [barberRow()],
+    });
+
+    const result = await createBarberAction(validBarber);
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("permite até 1");
+    expect(db.getRows("barbers")).toHaveLength(1);
+  });
+
+  it("permite cadastrar profissional inativo mesmo com o limite cheio", async () => {
+    const db = useDb({
+      plans: [planRow({ max_barbers: 1 })],
+      subscriptions: [subscriptionRow()],
+      services: [serviceRow()],
+      barbers: [barberRow()],
+    });
+
+    const result = await createBarberAction({
+      ...validBarber,
+      name: "Bruno",
+      isActive: false,
+    });
+
+    expect(result.status).toBe("success");
+    expect(db.getRows("barbers")).toHaveLength(2);
+    expect(db.getRows("barbers")[1]?.is_active).toBe(false);
+  });
+
+  it("impede reativar profissional quando todas as vagas estão ocupadas", async () => {
+    const db = useDb({
+      plans: [planRow({ max_barbers: 1 })],
+      subscriptions: [subscriptionRow()],
+      barbers: [
+        barberRow(),
+        barberRow({ id: BARBER_A2, name: "Bruno", is_active: false }),
+      ],
+    });
+
+    const result = await setBarberActiveAction(BARBER_A2, true);
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("permite até 1");
+    expect(
+      db.getRows("barbers").find((row) => row.id === BARBER_A2)?.is_active,
+    ).toBe(false);
+  });
+
+  it("impede editar um profissional inativo para ativo sem vaga", async () => {
+    const db = useDb({
+      plans: [planRow({ max_barbers: 1 })],
+      subscriptions: [subscriptionRow()],
+      services: [serviceRow()],
+      barbers: [
+        barberRow(),
+        barberRow({ id: BARBER_A2, name: "Bruno", is_active: false }),
+      ],
+    });
+
+    const result = await updateBarberAction(BARBER_A2, {
+      ...validBarber,
+      name: "Bruno",
+      isActive: true,
+    });
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("permite até 1");
+    expect(
+      db.getRows("barbers").find((row) => row.id === BARBER_A2)?.is_active,
+    ).toBe(false);
+  });
+
+  it("permite reativar quando o plano ainda tem vaga", async () => {
+    const db = useDb({
+      plans: [planRow({ name: "Profissional", max_barbers: 5 })],
+      subscriptions: [subscriptionRow()],
+      barbers: [
+        barberRow(),
+        barberRow({ id: BARBER_A2, name: "Bruno", is_active: false }),
+      ],
+    });
+
+    const result = await setBarberActiveAction(BARBER_A2, true);
+
+    expect(result.status).toBe("success");
+    expect(
+      db.getRows("barbers").find((row) => row.id === BARBER_A2)?.is_active,
+    ).toBe(true);
+  });
+
+  it("ignora limite injetado no formulário e usa o plano do banco", async () => {
+    const db = useDb({
+      plans: [planRow({ max_barbers: 1 })],
+      subscriptions: [subscriptionRow()],
+      services: [serviceRow()],
+      barbers: [barberRow()],
+    });
+
+    const result = await createBarberAction({
+      ...validBarber,
+      maxBarbers: 99,
+      max_barbers: 99,
+      planLimit: 99,
+    });
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("permite até 1");
+    expect(db.getRows("barbers")).toHaveLength(1);
+  });
+
+  it("mantém a operação sem limite quando não há assinatura vigente", async () => {
+    const db = useDb({
+      services: [serviceRow()],
+      barbers: [
+        barberRow(),
+        barberRow({ id: BARBER_A2, name: "Bruno" }),
+      ],
+    });
+
+    const result = await createBarberAction({
+      ...validBarber,
+      name: "Carlos",
+    });
+
+    expect(result.status).toBe("success");
+    expect(db.getRows("barbers")).toHaveLength(3);
+  });
+
+  it("não bloqueia quando o plano define max_barbers nulo", async () => {
+    const db = useDb({
+      plans: [planRow({ max_barbers: null })],
+      subscriptions: [subscriptionRow()],
+      services: [serviceRow()],
+      barbers: [barberRow()],
+    });
+
+    const result = await createBarberAction({
+      ...validBarber,
+      name: "Bruno",
+    });
+
+    expect(result.status).toBe("success");
+    expect(db.getRows("barbers")).toHaveLength(2);
   });
 });
 

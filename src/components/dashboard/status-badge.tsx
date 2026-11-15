@@ -31,6 +31,8 @@ const appointmentLabels: Record<AppointmentStatus, string> = {
 const paymentStyles: Record<PaymentStatus, string> = {
   pending:
     "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  overdue:
+    "border-amber-500/40 bg-amber-500/15 text-amber-800 dark:text-amber-200",
   paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   failed:
     "border-destructive/25 bg-destructive/10 text-destructive dark:text-red-300",
@@ -40,6 +42,7 @@ const paymentStyles: Record<PaymentStatus, string> = {
 
 const paymentLabels: Record<PaymentStatus, string> = {
   pending: "Pendente",
+  overdue: "Vencido",
   paid: "Pago",
   failed: "Falhou",
   refunded: "Estornado",
@@ -47,6 +50,8 @@ const paymentLabels: Record<PaymentStatus, string> = {
 };
 
 const subscriptionStyles: Record<SubscriptionStatus, string> = {
+  pending:
+    "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
   trialing: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
   active:
     "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
@@ -57,6 +62,7 @@ const subscriptionStyles: Record<SubscriptionStatus, string> = {
 };
 
 const subscriptionLabels: Record<SubscriptionStatus, string> = {
+  pending: "Aguardando pagamento",
   trialing: "Em teste",
   active: "Ativa",
   past_due: "Pagamento pendente",

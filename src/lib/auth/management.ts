@@ -110,3 +110,30 @@ export async function authorizeAppointmentManagement(): Promise<ManagementAuthor
 
   return { context };
 }
+
+/**
+ * Autorização de servidor para a assinatura do próprio LPS Agenda.
+ * Somente o proprietário da barbearia pode contratar, trocar ou cancelar.
+ * Não há bypass para admin da plataforma nesta fase: a regra é owner-only.
+ */
+export async function authorizeBillingOwner(): Promise<ManagementAuthorization> {
+  const context = await getActiveDashboardContext();
+
+  if (!context) {
+    return {
+      error: actionError(
+        "Sua sessão expirou. Entre novamente para continuar.",
+      ),
+    };
+  }
+
+  if (context.active.role !== "owner") {
+    return {
+      error: actionError(
+        "Somente o proprietário pode gerenciar a assinatura do LPS Agenda.",
+      ),
+    };
+  }
+
+  return { context };
+}

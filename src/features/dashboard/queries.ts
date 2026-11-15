@@ -143,6 +143,7 @@ export async function getDashboardOverview(
         .select("amount_cents")
         .eq("barbershop_id", barbershopId)
         .eq("status", "paid")
+        .is("subscription_id", null)
         .gte("paid_at", month.start.toISOString())
         .lt("paid_at", month.end.toISOString())
     : Promise.resolve({ data: [] });
@@ -434,7 +435,7 @@ export async function getSubscription(barbershopId: string) {
     .from("subscriptions")
     .select("*")
     .eq("barbershop_id", barbershopId)
-    .in("status", ["trialing", "active", "past_due"])
+    .in("status", ["pending", "trialing", "active", "past_due"])
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -458,6 +459,7 @@ export async function getRecentPayments(barbershopId: string) {
     .from("payments")
     .select("*")
     .eq("barbershop_id", barbershopId)
+    .is("subscription_id", null)
     .order("created_at", { ascending: false })
     .limit(10);
 
@@ -476,6 +478,7 @@ export async function getFinancialOverview(
       .from("payments")
       .select("amount_cents, status")
       .eq("barbershop_id", barbershopId)
+      .is("subscription_id", null)
       .gte("created_at", month.start.toISOString())
       .lt("created_at", month.end.toISOString()),
     getRecentPayments(barbershopId),
@@ -483,17 +486,18 @@ export async function getFinancialOverview(
   ]);
 
   const payments = monthResult.data ?? [];
+  const isPending = (status: string) =>
+    status === "pending" || status === "overdue";
 
   return {
     paidCents: payments
       .filter((payment) => payment.status === "paid")
       .reduce((total, payment) => total + payment.amount_cents, 0),
     pendingCents: payments
-      .filter((payment) => payment.status === "pending")
+      .filter((payment) => isPending(payment.status))
       .reduce((total, payment) => total + payment.amount_cents, 0),
     paidCount: payments.filter((payment) => payment.status === "paid").length,
-    pendingCount: payments.filter((payment) => payment.status === "pending")
-      .length,
+    pendingCount: payments.filter((payment) => isPending(payment.status)).length,
     recent,
     subscription,
     period: month,

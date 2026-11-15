@@ -8,6 +8,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { DashboardEmpty } from "@/components/dashboard/dashboard-empty";
 import { NoticeCard } from "@/components/dashboard/notice-card";
@@ -18,6 +19,7 @@ import {
 } from "@/components/dashboard/status-badge";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { PrototypeAction } from "@/components/prototype-action";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -44,6 +46,7 @@ const methodLabels: Record<
   Database["public"]["Enums"]["payment_method"],
   string
 > = {
+  boleto: "Boleto",
   pix: "Pix",
   credit_card: "Cartão de crédito",
   debit_card: "Cartão de débito",
@@ -63,7 +66,7 @@ export default async function FinancialPage() {
       <PageHeader
         eyebrow="Gestão"
         title="Financeiro"
-        description="Uma visão sóbria do mês da barbearia. Os valores vêm da tabela de pagamentos; nenhuma cobrança é executada por esta interface."
+        description="Uma visão sóbria do mês da barbearia. Os valores vêm dos pagamentos de serviços; a mensalidade do LPS Agenda é gerenciada em Plano e assinatura."
         actions={
           <PrototypeAction
             triggerLabel="Exportar relatório"
@@ -117,8 +120,8 @@ export default async function FinancialPage() {
           value={subscription?.plan?.name ?? "Sem plano"}
           hint={
             subscription
-              ? "Estrutura de assinatura vinculada"
-              : "Cobrança ainda não conectada"
+              ? "Mensalidade do LPS Agenda"
+              : "Sem plano contratado"
           }
           icon={CreditCard}
           tone="muted"
@@ -136,7 +139,7 @@ export default async function FinancialPage() {
                 {subscription.subscription.current_period_end
                   ? `Período atual até ${formatDateBR(subscription.subscription.current_period_end, shop.timezone)}.`
                   : "Período atual ainda não definido."}{" "}
-                Gateway planejado: Asaas.
+                Cobrança recorrente via Asaas Sandbox.
               </p>
             </div>
             <SubscriptionStatusBadge status={subscription.subscription.status} />
@@ -146,9 +149,10 @@ export default async function FinancialPage() {
 
       <Card>
         <CardHeader className="border-b border-border/70 pb-4">
-          <CardTitle>Recebimentos recentes</CardTitle>
+          <CardTitle>Recebimentos de serviços</CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Últimos dez registros da barbearia, independentemente do status.
+            Últimos dez pagamentos de serviços da barbearia. A mensalidade do LPS
+            Agenda não entra nesta lista.
           </p>
         </CardHeader>
         <CardContent className="px-0 pb-0">
@@ -199,33 +203,12 @@ export default async function FinancialPage() {
             <div className="px-4 pb-4">
               <DashboardEmpty
                 icon={ReceiptText}
-                title="Nenhum pagamento registrado"
-                description="A estrutura de pagamentos está pronta, mas a cobrança real ainda não está conectada. Nenhuma fatura foi gerada nesta versão."
+                title="Nenhum pagamento de serviço registrado"
+                description="A receita dos serviços da barbearia é registrada manualmente nesta fase. A mensalidade do LPS Agenda fica separada em Plano e assinatura."
                 action={
-                  <PrototypeAction
-                    triggerLabel="Ver estrutura financeira"
-                    triggerSize="sm"
-                    title="Cobrança na próxima etapa"
-                    description="As tabelas plans, subscriptions, payments e webhook_events já existem, mas sem integração com gateway."
-                    steps={[
-                      {
-                        title: "Plano e assinatura",
-                        description:
-                          "Vínculo da barbearia com um plano e status do período.",
-                      },
-                      {
-                        title: "Cobrança",
-                        description:
-                          "Criação de cobranças no servidor, sem expor chaves ao navegador.",
-                      },
-                      {
-                        title: "Webhook idempotente",
-                        description:
-                          "Processamento de eventos com controle de duplicidade.",
-                      },
-                    ]}
-                    footnote="Nenhuma chamada ao Asaas é feita nesta versão."
-                  />
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/dashboard/plano">Gerenciar assinatura</Link>
+                  </Button>
                 }
               />
             </div>
@@ -239,15 +222,16 @@ export default async function FinancialPage() {
           plataforma). A RLS limita a leitura dos pagamentos à barbearia ativa.
         </NoticeCard>
         <NoticeCard icon={LockKeyhole} title="Nenhuma chave no navegador">
-          A futura integração de cobrança usará exclusivamente variáveis de
-          servidor. `SUPABASE_SERVICE_ROLE_KEY` e `ASAAS_API_KEY` nunca serão
-          enviadas ao cliente.
+          A cobrança da assinatura usa exclusivamente variáveis de servidor.
+          Nenhuma chave do Asaas ou do Supabase administrativo é enviada ao
+          cliente.
         </NoticeCard>
       </div>
 
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
         <CheckCircle2 className="size-3.5 text-gold" />
-        Fundação financeira · estrutura pronta, integração de pagamentos inativa.
+        Financeiro da barbearia · mensalidade do LPS Agenda separada em Plano e
+        assinatura.
       </div>
     </div>
   );

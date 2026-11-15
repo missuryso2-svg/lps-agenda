@@ -60,7 +60,9 @@ describe("migrações", () => {
     expect(migrationFiles.length).toBeGreaterThanOrEqual(7);
     expect(migrationFiles).toEqual([...migrationFiles].sort());
     expect(migrationFiles[0]).toMatch(/^20261108090000_/);
-    expect(migrationFiles.at(-1)).toMatch(/public_booking\.sql$/);
+    expect(migrationFiles.at(-1)).toMatch(
+      /subscription_cancel_reason\.sql$/,
+    );
   });
 
   it("habilita RLS em todas as tabelas do schema public", () => {
@@ -163,16 +165,18 @@ describe("migrações", () => {
 });
 
 describe("ambiente e segredos", () => {
-  it("mantém exatamente as seis variáveis no .env.example, sem valores", () => {
+  it("mantém exatamente as oito variáveis no .env.example, sem valores", () => {
     const lines = read(".env.example").trim().split(/\r?\n/);
 
     expect(lines).toEqual([
       "NEXT_PUBLIC_SUPABASE_URL=",
       "NEXT_PUBLIC_SUPABASE_ANON_KEY=",
       "SUPABASE_SERVICE_ROLE_KEY=",
+      "ASAAS_ENV=sandbox",
       "ASAAS_API_KEY=",
       "ASAAS_WEBHOOK_TOKEN=",
       "NEXT_PUBLIC_APP_URL=",
+      "BILLING_CRON_SECRET=",
     ]);
   });
 
@@ -201,6 +205,8 @@ describe("ambiente e segredos", () => {
       expect(source, label).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
       expect(source, label).not.toContain("ASAAS_API_KEY");
       expect(source, label).not.toContain("ASAAS_WEBHOOK_TOKEN");
+      expect(source, label).not.toContain("BILLING_CRON_SECRET");
+      expect(source, label).not.toContain("CRON_SECRET");
       expect(source, label).not.toContain("@/lib/supabase/admin");
       expect(source, label).not.toContain("@/lib/env/server");
     }
@@ -603,5 +609,230 @@ describe("agendamento público, token e rate limiting", () => {
       '.in("status", ["scheduled", "confirmed"])',
     );
     expect(publicService).not.toMatch(/\.delete\(\)/);
+  });
+});
+
+describe("assinatura do SaaS via Asaas Sandbox", () => {
+  const enumMigration = read(
+    "supabase/migrations/20261114100000_billing_asaas_enums.sql",
+  );
+  const billingMigration = read(
+    "supabase/migrations/20261114100100_billing_asaas.sql",
+  );
+  const billingActions = read("src/features/billing/actions.ts");
+  const billingService = read("src/features/billing/service.ts");
+  const billingWebhook = read("src/features/billing/webhook.ts");
+  const webhookRoute = read("src/app/api/webhooks/asaas/route.ts");
+  const webhookVerification = read("src/lib/asaas/webhook.ts");
+  const asaasClient = read("src/lib/asaas/client.ts");
+  const serverEnv = read("src/lib/env/server.ts");
+  const managementAuthorization = read("src/lib/auth/management.ts");
+  const billingForm = read(
+    "src/features/billing/components/start-subscription-dialog.tsx",
+  );
+
+  it("adiciona apenas valores de enum e o escopo da mensalidade", () => {
+    expect(enumMigration).toContain(
+      "alter type public.subscription_status add value if not exists 'pending'",
+    );
+    expect(enumMigration).toContain(
+      "alter type public.payment_status add value if not exists 'overdue'",
+    );
+    expect(enumMigration).toContain(
+      "alter type public.payment_method add value if not exists 'boleto'",
+    );
+    expect(enumMigration).toContain(
+      "create type public.payment_scope as enum ('shop_service', 'platform_subscription')",
+    );
+  });
+
+  it("separa a mensalidade dos serviços da barbearia no banco", () => {
+    expect(billingMigration).toContain("create table public.billing_customers");
+    expect(billingMigration).toContain(
+      "add column scope public.payment_scope not null default 'shop_service'",
+    );
+    expect(billingMigration).toContain("payments_scope_subscription_check");
+    expect(billingMigration).toMatch(
+      /scope = 'shop_service' and subscription_id is null/,
+    );
+    expect(billingMigration).toMatch(
+      /scope = 'platform_subscription' and subscription_id is not null/,
+    );
+    expect(billingMigration).toContain(
+      "payments_subscription_idx",
+    );
+  });
+
+  it("mantém a assinatura pendente ocupando a vaga antes do gateway", () => {
+    expect(billingMigration).toContain(
+      "subscriptions_one_current_per_shop_idx",
+    );
+    expect(billingMigration).toMatch(
+      /subscriptions_one_current_per_shop_idx[\s\S]*?where status in \('pending', 'trialing', 'active', 'past_due'\)/,
+    );
+    expect(billingMigration).toContain(
+      "subscriptions_external_reference_key",
+    );
+    expect(billingMigration).toContain("gateway_status");
+    expect(billingMigration).toContain("pending_creation");
+  });
+
+  it("opera o trial localmente e preserva um único teste por barbearia", () => {
+    const trialMigration = read(
+      "supabase/migrations/20261114100400_trial_operation.sql",
+    );
+
+    expect(trialMigration).toContain(
+      "add column if not exists trial_started_at timestamptz",
+    );
+    expect(trialMigration).toContain("contracted_price_cents");
+    expect(trialMigration).toContain("contracted_currency");
+    expect(trialMigration).toContain("contracted_interval");
+    expect(trialMigration).toContain("trial_finalization_locked_at");
+    expect(trialMigration).toContain("trial_finalization_attempts");
+    expect(trialMigration).toContain(
+      "create unique index if not exists subscriptions_one_trial_per_shop_idx",
+    );
+    expect(trialMigration).toMatch(/where trial_ends_at is not null/);
+    expect(trialMigration).toContain("subscriptions_trial_due_idx");
+    expect(trialMigration).toContain("subscriptions_trial_retry_idx");
+  });
+
+  it("registra o motivo do cancelamento com o mesmo limite do agendamento", () => {
+    const cancelReasonMigration = read(
+      "supabase/migrations/20261115120000_subscription_cancel_reason.sql",
+    );
+
+    expect(cancelReasonMigration).toContain(
+      "add column if not exists cancel_reason text",
+    );
+    expect(cancelReasonMigration).toContain(
+      "subscriptions_cancel_reason_length_check",
+    );
+    expect(cancelReasonMigration).toMatch(/char_length\(cancel_reason\) <= 500/);
+    expect(cancelReasonMigration).toContain(
+      "comment on column public.subscriptions.cancel_reason",
+    );
+  });
+
+  it("protege o pagador com RLS owner-only e escrita por service role", () => {
+    expect(billingMigration).toContain(
+      "create policy billing_customers_select_owner_or_admin",
+    );
+    expect(billingMigration).toContain(
+      "revoke all on table public.billing_customers from anon, authenticated;",
+    );
+    expect(billingMigration).toContain(
+      "grant select on table public.billing_customers to authenticated;",
+    );
+    expect(billingMigration).toContain(
+      "grant all on table public.billing_customers to service_role;",
+    );
+    expect(billingMigration).not.toMatch(
+      /grant (insert|update|delete)[^;]*billing_customers[^;]*authenticated/i,
+    );
+  });
+
+  it("exige proprietário nas ações de cobrança, sem bypass de admin global", () => {
+    expect(billingActions.startsWith('"use server";')).toBe(true);
+    for (const action of [
+      "startSubscriptionAction",
+      "changePlanAction",
+      "cancelSubscriptionAction",
+    ]) {
+      expect(billingActions).toContain(`export async function ${action}`);
+    }
+
+    expect(billingActions).toContain("authorizeBillingOwner()");
+    expect(billingActions).toContain(
+      "authorization.context.active.barbershop_id",
+    );
+    expect(billingActions).not.toMatch(/parsed\.data\.barbershop/i);
+    expect(managementAuthorization).toContain(
+      "export async function authorizeBillingOwner",
+    );
+    expect(managementAuthorization).toMatch(
+      /authorizeBillingOwner[\s\S]*?context\.active\.role !== "owner"[\s\S]*?Somente o proprietário/,
+    );
+  });
+
+  it("usa service role somente no servidor, depois da autorização", () => {
+    expect(billingService.startsWith('import "server-only";')).toBe(true);
+    expect(billingService).toContain("createAdminClient");
+    expect(billingActions).not.toMatch(
+      /SUPABASE_SERVICE_ROLE_KEY|@\/lib\/supabase\/admin/,
+    );
+    expect(billingForm).not.toMatch(
+      /SUPABASE_SERVICE_ROLE_KEY|ASAAS_API_KEY|ASAAS_WEBHOOK_TOKEN|@\/lib\/supabase\/admin|@\/lib\/env\/server/,
+    );
+  });
+
+  it("restringe o ambiente ao Sandbox e mantém segredos no servidor", () => {
+    expect(serverEnv).toContain('import "server-only"');
+    expect(serverEnv).toContain('z.literal("sandbox")');
+    expect(serverEnv).not.toContain("api.asaas.com/v3");
+    expect(asaasClient).toContain('import "server-only"');
+    expect(asaasClient).toContain("https://api-sandbox.asaas.com/v3");
+    expect(asaasClient).not.toContain("https://api.asaas.com/v3");
+    expect(asaasClient).toContain("access_token");
+  });
+
+  it("valida o webhook pelo token dedicado, nunca pela API key", () => {
+    expect(webhookVerification).toContain("timingSafeEqual");
+    expect(webhookVerification).toContain("getAsaasEnv().webhookToken");
+    expect(webhookVerification).not.toContain("apiKey");
+    expect(webhookRoute).toContain('"asaas-access-token"');
+    expect(webhookRoute).toContain("verifyAsaasWebhookToken");
+    expect(webhookRoute).toContain('provider: "asaas"');
+    expect(webhookRoute).toContain('status: "processing"');
+  });
+
+  it("persiste o evento antes de processar e tolera duplicidade", () => {
+    expect(webhookRoute).toContain('from("webhook_events")');
+    expect(webhookRoute).toContain('!== "23505"');
+    expect(webhookRoute).toContain('record.status === "processed"');
+    expect(webhookRoute).toContain("staleProcessingMs");
+    expect(billingWebhook).toContain("processablePaymentEvents");
+    expect(billingWebhook).toContain("processableSubscriptionEvents");
+    expect(billingWebhook).toContain(
+      "// Eventos desconhecidos ou sem efeito financeiro são persistidos e ignorados.",
+    );
+  });
+
+  it("só ativa a assinatura em evento financeiro confirmado", () => {
+    expect(billingWebhook).toContain('case "PAYMENT_CONFIRMED"');
+    expect(billingWebhook).toContain('case "PAYMENT_RECEIVED"');
+    expect(billingWebhook).toMatch(
+      /if \(status === "paid"\)[\s\S]*?status: "active"/,
+    );
+    expect(billingWebhook).not.toMatch(
+      /SUBSCRIPTION_CREATED[\s\S]{0,200}status: "active"/,
+    );
+    expect(billingService).toContain(
+      '"Assinatura criada. O plano será ativado após a confirmação do primeiro pagamento."',
+    );
+  });
+
+  it("nunca regride pagamento confirmado ou estornado por evento atrasado", () => {
+    expect(billingWebhook).toMatch(
+      /nextStatus === "pending"[\s\S]*?nextStatus === "overdue"[\s\S]*?existing\.status === "paid"[\s\S]*?existing\.status === "refunded"/,
+    );
+    expect(billingWebhook).toContain("finalStatus = existing.status");
+  });
+
+  it("não coleta cartão e bloqueia cartão no banco e na validação", () => {
+    expect(billingForm).not.toMatch(/cardNumber|cardToken|securityCode|cvv/i);
+    expect(billingForm).toContain("BILLING_TYPES");
+    expect(enumMigration).toContain("'boleto'");
+    expect(billingMigration).toContain("subscriptions_billing_type_check");
+    expect(billingMigration).toMatch(
+      /billing_type in \('boleto', 'pix'\)/,
+    );
+  });
+
+  it("sanitiza dados de cartão antes de persistir o payload", () => {
+    expect(webhookVerification).toContain("sensitiveKeys");
+    expect(webhookVerification).toContain("sanitizeAsaasWebhookPayload");
+    expect(webhookRoute).toContain("sanitizeAsaasWebhookPayload(payload)");
   });
 });

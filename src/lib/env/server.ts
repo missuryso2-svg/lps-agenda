@@ -9,6 +9,30 @@ const serverEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url().optional(),
 });
 
+/**
+ * Nesta fase a integração só pode apontar para o Sandbox do Asaas.
+ * Qualquer outro valor falha fechado para evitar cobrança real.
+ */
+const asaasEnvSchema = z.object({
+  ASAAS_ENV: z.literal("sandbox").default("sandbox"),
+  ASAAS_API_KEY: z.string().trim().min(1),
+  ASAAS_WEBHOOK_TOKEN: z.string().trim().min(16),
+});
+
+export type AsaasServerEnv = {
+  environment: "sandbox";
+  apiKey: string;
+  webhookToken: string;
+};
+
+function readAsaasEnv() {
+  return {
+    ASAAS_ENV: process.env.ASAAS_ENV?.trim() || "sandbox",
+    ASAAS_API_KEY: process.env.ASAAS_API_KEY,
+    ASAAS_WEBHOOK_TOKEN: process.env.ASAAS_WEBHOOK_TOKEN,
+  };
+}
+
 export function getServiceRoleKey(): string {
   const parsed = serverEnvSchema.safeParse({
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -22,6 +46,26 @@ export function getServiceRoleKey(): string {
   }
 
   return parsed.data.SUPABASE_SERVICE_ROLE_KEY;
+}
+
+export function getAsaasEnv(): AsaasServerEnv {
+  const parsed = asaasEnvSchema.safeParse(readAsaasEnv());
+
+  if (!parsed.success) {
+    throw new Error(
+      "Asaas Sandbox não configurado. Defina ASAAS_ENV=sandbox, ASAAS_API_KEY e ASAAS_WEBHOOK_TOKEN no servidor.",
+    );
+  }
+
+  return {
+    environment: "sandbox",
+    apiKey: parsed.data.ASAAS_API_KEY,
+    webhookToken: parsed.data.ASAAS_WEBHOOK_TOKEN,
+  };
+}
+
+export function isAsaasConfigured(): boolean {
+  return asaasEnvSchema.safeParse(readAsaasEnv()).success;
 }
 
 export function getAppUrl(): string {

@@ -34,9 +34,11 @@ describe("slug", () => {
 });
 
 describe("formatação", () => {
-  it("formata moeda em real", () => {
+  it("formata moeda em real e respeita a moeda do catálogo", () => {
     expect(formatCurrencyFromCents(7000)).toContain("70,00");
     expect(formatCurrencyFromCents(0)).toContain("0,00");
+    expect(formatCurrencyFromCents(4990, "BRL")).toContain("49,90");
+    expect(formatCurrencyFromCents(100, "USD")).toContain("1,00");
   });
 
   it("formata telefone brasileiro", () => {

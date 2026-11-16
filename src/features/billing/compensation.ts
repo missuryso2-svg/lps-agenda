@@ -73,19 +73,47 @@ function isTerminalStatus(status: string): boolean {
 }
 
 /**
- * Enquanto um checkout pago estiver ativo, uma recorrência não adotada pode
- * ser a que a execução atual está prestes a vincular. Nesse caso o worker não
- * remove: agenda retry e deixa a execução terminar. Sem lease ativo, a
- * recorrência órfã da mesma referência pode ser removida com segurança.
+ * Enquanto checkout pago ou finalização de trial estiverem ativos, uma
+ * recorrência não adotada pode ser a que a execução atual está prestes a
+ * vincular. Nesse caso o worker não remove: agenda retry e deixa a execução
+ * terminar. Sem lease ativo, a recorrência órfã da mesma referência pode ser
+ * removida com segurança.
  */
-function hasActiveCheckout(subscription: SubscriptionRow, now: Date): boolean {
-  if (!subscription.checkout_locked_at) {
-    return false;
+function hasActiveLease(
+  lockedAtValue: string | null,
+  leaseToken: string | null,
+  now: Date,
+): boolean {
+  if (!lockedAtValue) {
+    // Um token sem timestamp é um estado inconsistente: falha fechado para
+    // não remover uma recorrência possivelmente em uso.
+    return Boolean(leaseToken);
   }
 
-  const lockedAt = new Date(subscription.checkout_locked_at).getTime();
+  const lockedAt = new Date(lockedAtValue).getTime();
 
-  return Number.isFinite(lockedAt) && now.getTime() - lockedAt < staleLeaseMs;
+  return (
+    !Number.isFinite(lockedAt) ||
+    now.getTime() - lockedAt < staleLeaseMs
+  );
+}
+
+function hasActiveSubscriptionMutation(
+  subscription: SubscriptionRow,
+  now: Date,
+): boolean {
+  return (
+    hasActiveLease(
+      subscription.checkout_locked_at,
+      subscription.checkout_lease_token,
+      now,
+    ) ||
+    hasActiveLease(
+      subscription.trial_finalization_locked_at,
+      subscription.trial_finalization_lease_token,
+      now,
+    )
+  );
 }
 
 function backoffMs(attempts: number): number {
@@ -548,16 +576,22 @@ async function processClaimedJob(
 
       const remote = await getAsaasSubscription(job.gateway_subscription_id);
 
+      if (remote.id !== job.gateway_subscription_id) {
+        return moveToManualReview(
+          supabase,
+          job,
+          token,
+          "O ID retornado pelo Asaas não corresponde ao ID solicitado.",
+        );
+      }
+
       if (remote.deleted) {
         return (await completeJob(supabase, job, token, now))
           ? "completed"
           : "failed";
       }
 
-      if (
-        remote.id !== job.gateway_subscription_id ||
-        !ownedRemoteMatches(remote, job.external_reference)
-      ) {
+      if (!ownedRemoteMatches(remote, job.external_reference)) {
         return moveToManualReview(
           supabase,
           job,
@@ -572,7 +606,7 @@ async function processClaimedJob(
           : "failed";
       }
 
-      if (!terminal && hasActiveCheckout(current, now)) {
+      if (!terminal && hasActiveSubscriptionMutation(current, now)) {
         return scheduleRetry(
           supabase,
           job,
@@ -623,7 +657,7 @@ async function processClaimedJob(
         : "failed";
     }
 
-    if (!terminal && hasActiveCheckout(current, now)) {
+    if (!terminal && hasActiveSubscriptionMutation(current, now)) {
       return scheduleRetry(
         supabase,
         job,

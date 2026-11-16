@@ -154,6 +154,18 @@ describe("cliente Asaas Sandbox", () => {
     );
   });
 
+  it.each([
+    ["deleted false", { deleted: false, id: "sub_123" }],
+    ["ID divergente", { deleted: true, id: "sub_other" }],
+    ["corpo sem confirmação", { id: "sub_123" }],
+  ])("não confirma DELETE com %s", async (_label, body) => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(body));
+
+    await expect(deleteAsaasSubscription("sub_123")).rejects.toMatchObject({
+      kind: "invalid_response",
+    });
+  });
+
   it("traduz erros HTTP sem expor a API key", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({ errors: [{ description: "Chave inválida" }] }, 401),

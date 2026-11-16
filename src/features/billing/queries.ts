@@ -19,6 +19,18 @@ const currentSubscriptionStatuses = [
   "past_due",
 ] as const;
 
+const checkoutLeaseMs = 5 * 60 * 1000;
+
+function leaseIsActive(lockedAt: string | null, token: string | null): boolean {
+  if (!lockedAt) {
+    return Boolean(token);
+  }
+
+  const timestamp = new Date(lockedAt).getTime();
+
+  return !Number.isFinite(timestamp) || Date.now() - timestamp < checkoutLeaseMs;
+}
+
 function toBillingType(
   value: Database["public"]["Enums"]["payment_method"] | null,
 ): BillingType | null {
@@ -104,6 +116,13 @@ export async function getBillingPageData(
       cancelAtPeriodEnd: row.cancel_at_period_end,
       canceledAt: row.canceled_at,
       hasRemoteSubscription: Boolean(row.gateway_subscription_id),
+      billingMutationInProgress:
+        leaseIsActive(row.checkout_locked_at, row.checkout_lease_token) ||
+        Boolean(
+          row.trial_finalization_locked_at ||
+            row.trial_finalization_lease_token,
+        ),
+      remoteCleanupPending: Boolean(row.remote_cleanup_pending),
       plan: (plan as BillingPlan | null) ?? null,
     };
   }

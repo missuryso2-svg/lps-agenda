@@ -64,6 +64,7 @@ function PlanCard({
   canManage,
   asaasConfigured,
   trialAvailable,
+  changeBlocked,
   onSelect,
 }: {
   plan: BillingPlan;
@@ -71,6 +72,7 @@ function PlanCard({
   canManage: boolean;
   asaasConfigured: boolean;
   trialAvailable: boolean;
+  changeBlocked: boolean;
   onSelect: (plan: BillingPlan) => void;
 }) {
   const isCurrent = subscription?.planId === plan.id;
@@ -81,6 +83,7 @@ function PlanCard({
     !canManage ||
     !canCharge ||
     isCurrent ||
+    (Boolean(subscription) && changeBlocked) ||
     (!willStartTrial && !asaasConfigured);
   const features = planFeatures(plan);
 
@@ -206,9 +209,15 @@ export function BillingManager({
     subscription?.status === "pending" && !subscription.hasRemoteSubscription;
   const isLocalTrial =
     subscription?.status === "trialing" && !subscription.hasRemoteSubscription;
+  const changeBlocked = Boolean(subscription?.billingMutationInProgress);
+  const remoteCleanupPending = Boolean(subscription?.remoteCleanupPending);
 
   const onSelectPlan = (plan: BillingPlan) => {
-    if (actionBlocked || plan.price_cents <= 0) {
+    if (
+      actionBlocked ||
+      plan.price_cents <= 0 ||
+      (subscription !== null && changeBlocked)
+    ) {
       return;
     }
 
@@ -428,6 +437,22 @@ export function BillingManager({
                   ) : null}
                 </div>
               ) : null}
+
+              {changeBlocked || remoteCleanupPending ? (
+                <NoticeCard
+                  icon={LockKeyhole}
+                  title={
+                    changeBlocked
+                      ? "Alteração de plano temporariamente bloqueada"
+                      : "Confirmação de limpeza remota pendente"
+                  }
+                  tone="warning"
+                >
+                  {changeBlocked
+                    ? "Outra operação de cobrança está em andamento. Aguarde a conclusão antes de trocar de plano."
+                    : "A fila de compensação será validada no servidor antes de qualquer troca. Uma limpeza realmente aberta bloqueia a alteração; um sinal desatualizado não impede a retomada."}
+                </NoticeCard>
+              ) : null}
             </div>
           ) : (
             <DashboardEmpty
@@ -463,6 +488,7 @@ export function BillingManager({
                 canManage={canManage}
                 asaasConfigured={asaasConfigured}
                 trialAvailable={trialAvailable}
+                changeBlocked={changeBlocked}
                 onSelect={onSelectPlan}
               />
             ))}

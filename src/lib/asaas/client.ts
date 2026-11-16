@@ -350,10 +350,24 @@ export async function deleteAsaasSubscription(
   subscriptionId: string,
   options?: { timeoutMs?: number },
 ): Promise<void> {
-  await asaasRequest<{ deleted: boolean; id: string }>(
+  const result = await asaasRequest<unknown>(
     `/subscriptions/${encodeURIComponent(subscriptionId)}`,
     { method: "DELETE", timeoutMs: options?.timeoutMs },
   );
+
+  if (
+    !result ||
+    typeof result !== "object" ||
+    !("deleted" in result) ||
+    (result as { deleted?: unknown }).deleted !== true ||
+    !("id" in result) ||
+    (result as { id?: unknown }).id !== subscriptionId
+  ) {
+    throw new AsaasError(
+      "invalid_response",
+      "O Asaas não confirmou a remoção da recorrência pelo ID solicitado.",
+    );
+  }
 }
 
 export async function listAsaasSubscriptionsByExternalReference(

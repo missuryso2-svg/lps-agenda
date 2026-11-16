@@ -34,11 +34,13 @@ vi.mock("@/lib/asaas/client", async () => {
 import { AsaasError } from "@/lib/asaas/client";
 import {
   cancelSubscription,
+  changePlan,
   startSubscription,
 } from "@/features/billing/service";
 
 const SHOP_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const PLAN_ID = "11111111-1111-4111-8111-111111111111";
+const OTHER_PLAN_ID = "22222222-2222-4222-8222-222222222222";
 const SUBSCRIPTION_ID = "33333333-3333-4333-8333-333333333333";
 const EXTERNAL_REFERENCE = "44444444-4444-4444-8444-444444444444";
 
@@ -109,7 +111,15 @@ function customerRow(overrides: FakeRow = {}): FakeRow {
 
 function createDb(seed: Record<string, FakeRow[]> = {}): FakeSupabase {
   const db = new FakeSupabase({
-    plans: [planRow()],
+    plans: [
+      planRow(),
+      planRow({
+        id: OTHER_PLAN_ID,
+        code: "basico",
+        name: "Básico",
+        price_cents: 4990,
+      }),
+    ],
     billing_customers: [customerRow()],
     ...seed,
   });
@@ -199,6 +209,74 @@ beforeEach(() => {
 });
 
 describe("fencing do checkout pago (P3-D)", () => {
+  it("serializa changePlan contra startSubscription usando o lease", async () => {
+    const db = createDb({ subscriptions: [paidPendingRow()] });
+    const creation = deferCreation();
+    const startOutcome = outcomeOf(startSubscription(startInput()));
+
+    await creation.started.promise;
+
+    const ownerToken = db.getRows("subscriptions")[0]?.checkout_lease_token;
+
+    await expect(
+      changePlan({ barbershopId: SHOP_ID, planId: OTHER_PLAN_ID }),
+    ).rejects.toMatchObject({ kind: "conflict" });
+
+    expect(asaas.updateAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      checkout_lease_token: ownerToken,
+      status: "pending",
+      gateway_subscription_id: null,
+    });
+
+    creation.release.resolve({ id: "sub_start" });
+    await expect(startOutcome).resolves.toMatchObject({ status: "fulfilled" });
+  });
+
+  it("bloqueia changePlan mesmo com a flag local desatualizada quando há job aberto", async () => {
+    const db = createDb({
+      subscriptions: [
+        paidPendingRow({
+          status: "active",
+          gateway_subscription_id: "sub_existing",
+          gateway_status: "active",
+        }),
+      ],
+      billing_remote_cleanup_jobs: [
+        {
+          id: "cleanup-job",
+          subscription_id: SUBSCRIPTION_ID,
+          barbershop_id: SHOP_ID,
+          provider: "asaas",
+          external_reference: EXTERNAL_REFERENCE,
+          gateway_subscription_id: "sub_orphan",
+          status: "manual_review",
+          attempts: 8,
+          locked_at: null,
+          lease_token: null,
+          next_attempt_at: new Date().toISOString(),
+          last_error: "revisão pendente",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          completed_at: null,
+        },
+      ],
+    });
+
+    await expect(
+      changePlan({ barbershopId: SHOP_ID, planId: OTHER_PLAN_ID }),
+    ).rejects.toMatchObject({ kind: "pending_confirmation" });
+
+    expect(asaas.updateAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      gateway_subscription_id: "sub_existing",
+      checkout_locked_at: null,
+      checkout_lease_token: null,
+      remote_cleanup_pending: false,
+    });
+  });
+
   it("grava um token UUID exclusivo no claim inicial", async () => {
     const db = createDb({ subscriptions: [paidPendingRow()] });
     const creation = deferCreation();
@@ -320,6 +398,49 @@ describe("fencing do checkout pago (P3-D)", () => {
     expect(asaas.deleteAsaasSubscription).not.toHaveBeenCalledWith("sub_b");
   });
 
+  it("expõe falha ao persistir compensação de recorrência órfã", async () => {
+    const db = createDb({ subscriptions: [paidPendingRow()] });
+    const first = deferCreation();
+    const firstOutcome = outcomeOf(startSubscription(startInput()));
+
+    await first.started.promise;
+    const tokenA = String(db.getRows("subscriptions")[0]?.checkout_lease_token);
+
+    await db
+      .from("subscriptions")
+      .update({
+        checkout_locked_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+      })
+      .eq("id", SUBSCRIPTION_ID);
+
+    const second = deferCreation();
+    const secondOutcome = outcomeOf(startSubscription(startInput()));
+    await second.started.promise;
+    const tokenB = String(db.getRows("subscriptions")[0]?.checkout_lease_token);
+
+    expect(tokenB).not.toBe(tokenA);
+    db.failNext("billing_remote_cleanup_jobs", "XX000", "insert");
+
+    first.release.resolve({ id: "sub_orphan" });
+    await expect(firstOutcome).resolves.toMatchObject({
+      status: "rejected",
+      reason: {
+        kind: "pending_confirmation",
+        message: expect.stringContaining("registrada de forma durável"),
+      },
+    });
+
+    expect(db.getRows("billing_remote_cleanup_jobs")).toHaveLength(0);
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      checkout_lease_token: tokenB,
+      checkout_locked_at: expect.any(String),
+      gateway_subscription_id: null,
+    });
+
+    second.release.resolve({ id: "sub_current" });
+    await expect(secondOutcome).resolves.toMatchObject({ status: "fulfilled" });
+  });
+
   it("impede a execução antiga de liberar o lease da execução atual", async () => {
     const db = createDb({ subscriptions: [paidPendingRow()] });
     const first = deferred<never>();
@@ -420,6 +541,9 @@ describe("fencing do checkout pago (P3-D)", () => {
         paidPendingRow({
           status: "expired",
           gateway_status: "expired",
+          trial_finalization_locked_at: "2026-11-10T12:00:00.000Z",
+          trial_finalization_lease_token:
+            "88888888-8888-4888-8888-888888888888",
           canceled_at: "2026-11-10T12:00:00.000Z",
         }),
       ],
@@ -434,7 +558,10 @@ describe("fencing do checkout pago (P3-D)", () => {
     expect(result.error).toBeNull();
     expect(db.getRows("subscriptions")[0]).toMatchObject({
       status: "expired",
-      gateway_status: "expired",
+      gateway_status: "inactive",
+      trial_finalization_locked_at: null,
+      trial_finalization_lease_token: null,
+      cancel_at_period_end: false,
       cancel_reason: "Plano encerrado",
     });
     expect(db.getRows("billing_remote_cleanup_jobs")).toHaveLength(0);

@@ -45,6 +45,8 @@ const PLAN_ID = "11111111-1111-4111-8111-111111111111";
 const OTHER_PLAN_ID = "22222222-2222-4222-8222-222222222222";
 const SUBSCRIPTION_ID = "33333333-3333-4333-8333-333333333333";
 const EXTERNAL_REFERENCE = "44444444-4444-4444-8444-444444444444";
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function planRow(overrides: FakeRow = {}): FakeRow {
   return {
@@ -96,6 +98,7 @@ function trialRow(overrides: FakeRow = {}): FakeRow {
     contracted_currency: "BRL",
     contracted_interval: "month",
     trial_finalization_locked_at: null,
+    trial_finalization_lease_token: null,
     trial_finalization_attempted_at: null,
     trial_finalization_attempts: 0,
     trial_finalization_error: null,
@@ -166,6 +169,17 @@ function expiredTrials(
     // cliente remoto e os demais reutilizam o vínculo já persistido.
     billing_customers: [customerRow()],
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  return { promise, resolve, reject };
 }
 
 function mockSuccessfulRemoteCreation(): void {
@@ -903,6 +917,220 @@ describe("finalização do trial", () => {
     expect(db.getRows("subscriptions")[0]).toMatchObject({
       status: "pending",
       gateway_subscription_id: "sub_once",
+    });
+  });
+
+  it("recupera lease expirado do trial e rotaciona o token", async () => {
+    const previousToken = "11111111-1111-4111-8111-111111111111";
+    const now = new Date("2026-11-22T12:00:00.000Z");
+    const db = useDb({
+      subscriptions: [
+        trialRow({
+          status: "pending",
+          trial_finalization_locked_at: "2026-11-22T11:50:00.000Z",
+          trial_finalization_lease_token: previousToken,
+          trial_finalization_attempts: 1,
+        }),
+      ],
+      billing_customers: [customerRow({ gateway_customer_id: "cus_shared" })],
+    });
+    const started = deferred<void>();
+    const remote = deferred<{
+      id: string;
+      status: "ACTIVE";
+      nextDueDate: string;
+      externalReference: string;
+    }>();
+
+    asaas.createAsaasSubscription.mockImplementation(() => {
+      started.resolve();
+      return remote.promise;
+    });
+
+    const processing = finalizeExpiredTrials({ now });
+    await started.promise;
+
+    const claimed = db.getRows("subscriptions")[0];
+    const newToken = String(claimed?.trial_finalization_lease_token);
+
+    expect(newToken).toMatch(uuidPattern);
+    expect(newToken).not.toBe(previousToken);
+    expect(claimed?.trial_finalization_locked_at).toBe(now.toISOString());
+
+    remote.resolve({
+      id: "sub_trial_recovered",
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+      externalReference: EXTERNAL_REFERENCE,
+    });
+
+    await expect(processing).resolves.toMatchObject({ created: 1, failed: 0 });
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      gateway_subscription_id: "sub_trial_recovered",
+      trial_finalized_at: now.toISOString(),
+      trial_finalization_locked_at: null,
+      trial_finalization_lease_token: null,
+    });
+  });
+
+  it("execução antiga não libera o lease renovado ao registrar falha", async () => {
+    const nowA = new Date("2026-11-22T12:00:00.000Z");
+    const nowB = new Date("2026-11-22T12:10:00.000Z");
+    const db = useDb({
+      subscriptions: [trialRow()],
+      billing_customers: [customerRow({ gateway_customer_id: "cus_shared" })],
+    });
+    const firstStarted = deferred<void>();
+    const secondStarted = deferred<void>();
+    const firstRemote = deferred<never>();
+    const secondRemote = deferred<{
+      id: string;
+      status: "ACTIVE";
+      nextDueDate: string;
+      externalReference: string;
+    }>();
+    let createCount = 0;
+
+    asaas.createAsaasSubscription.mockImplementation(() => {
+      createCount += 1;
+
+      if (createCount === 1) {
+        firstStarted.resolve();
+        return firstRemote.promise;
+      }
+
+      secondStarted.resolve();
+      return secondRemote.promise;
+    });
+
+    const first = finalizeExpiredTrials({ now: nowA });
+    await firstStarted.promise;
+    const tokenA = String(db.getRows("subscriptions")[0]?.trial_finalization_lease_token);
+
+    await db
+      .from("subscriptions")
+      .update({
+        trial_finalization_locked_at: new Date(
+          nowA.getTime() - 10 * 60 * 1000,
+        ).toISOString(),
+      })
+      .eq("id", SUBSCRIPTION_ID);
+
+    const second = finalizeExpiredTrials({ now: nowB });
+    await secondStarted.promise;
+    const tokenB = String(db.getRows("subscriptions")[0]?.trial_finalization_lease_token);
+
+    expect(tokenB).toMatch(uuidPattern);
+    expect(tokenB).not.toBe(tokenA);
+
+    firstRemote.reject(new AsaasError("unavailable", "Asaas indisponível."));
+    await expect(first).resolves.toMatchObject({ failed: 1 });
+
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      trial_finalization_locked_at: nowB.toISOString(),
+      trial_finalization_lease_token: tokenB,
+      trial_finalization_error: null,
+    });
+
+    secondRemote.resolve({
+      id: "sub_trial_current",
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+      externalReference: EXTERNAL_REFERENCE,
+    });
+    await expect(second).resolves.toMatchObject({ created: 1, failed: 0 });
+  });
+
+  it("recusa persistência remota com token antigo e preserva o lease atual", async () => {
+    const nowA = new Date("2026-11-22T12:00:00.000Z");
+    const nowB = new Date(nowA.getTime() + 10 * 60 * 1000);
+    const db = useDb({
+      subscriptions: [trialRow()],
+      billing_customers: [customerRow({ gateway_customer_id: "cus_shared" })],
+    });
+    const firstStarted = deferred<void>();
+    const secondStarted = deferred<void>();
+    const firstRemote = deferred<{
+      id: string;
+      status: "ACTIVE";
+      nextDueDate: string;
+      externalReference: string;
+    }>();
+    const secondRemote = deferred<{
+      id: string;
+      status: "ACTIVE";
+      nextDueDate: string;
+      externalReference: string;
+    }>();
+    let createCount = 0;
+
+    asaas.getAsaasSubscription.mockResolvedValue({
+      id: "sub_trial_old",
+      status: "ACTIVE",
+      externalReference: EXTERNAL_REFERENCE,
+    });
+    asaas.createAsaasSubscription.mockImplementation(() => {
+      createCount += 1;
+
+      if (createCount === 1) {
+        firstStarted.resolve();
+        return firstRemote.promise;
+      }
+
+      secondStarted.resolve();
+      return secondRemote.promise;
+    });
+
+    const first = finalizeExpiredTrials({ now: nowA });
+    await firstStarted.promise;
+    const tokenA = String(db.getRows("subscriptions")[0]?.trial_finalization_lease_token);
+
+    await db
+      .from("subscriptions")
+      .update({
+        trial_finalization_locked_at: new Date(
+          nowA.getTime() - 10 * 60 * 1000,
+        ).toISOString(),
+      })
+      .eq("id", SUBSCRIPTION_ID);
+
+    const second = finalizeExpiredTrials({ now: nowB });
+    await secondStarted.promise;
+    const tokenB = String(db.getRows("subscriptions")[0]?.trial_finalization_lease_token);
+
+    expect(tokenB).not.toBe(tokenA);
+
+    firstRemote.resolve({
+      id: "sub_trial_old",
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+      externalReference: EXTERNAL_REFERENCE,
+    });
+    await expect(first).resolves.toMatchObject({ failed: 1 });
+
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      gateway_subscription_id: null,
+      trial_finalization_lease_token: tokenB,
+      trial_finalization_locked_at: nowB.toISOString(),
+    });
+    expect(db.getRows("billing_remote_cleanup_jobs")[0]).toMatchObject({
+      status: "retry",
+      gateway_subscription_id: "sub_trial_old",
+    });
+    expect(asaas.deleteAsaasSubscription).not.toHaveBeenCalled();
+
+    secondRemote.resolve({
+      id: "sub_trial_current",
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+      externalReference: EXTERNAL_REFERENCE,
+    });
+    await expect(second).resolves.toMatchObject({ created: 1, failed: 0 });
+
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      gateway_subscription_id: "sub_trial_current",
+      trial_finalization_lease_token: null,
+      trial_finalization_locked_at: null,
     });
   });
 

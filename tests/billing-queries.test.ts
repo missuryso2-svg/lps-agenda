@@ -300,6 +300,27 @@ describe("consultas da página de cobrança", () => {
     });
   });
 
+  it("expõe apenas flags resumidas de lease e limpeza para a interface", async () => {
+    setup({
+      plans: [planRow(PLAN_BASIC_ID)],
+      subscriptions: [
+        subscriptionRow({
+          checkout_locked_at: new Date().toISOString(),
+          checkout_lease_token: "checkout-token",
+          remote_cleanup_pending: true,
+        }),
+      ],
+    });
+
+    const data = await getBillingPageData(SHOP_A);
+
+    expect(data.subscription).toMatchObject({
+      billingMutationInProgress: true,
+      remoteCleanupPending: true,
+    });
+    expect(state.adminCalls).toBe(0);
+  });
+
   it.each([
     ["pix", "pix"],
     ["boleto", "boleto"],

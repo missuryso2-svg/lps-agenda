@@ -34,11 +34,14 @@ type SubscriptionRow = Database["public"]["Tables"]["subscriptions"]["Row"];
 type PlanRow = Database["public"]["Tables"]["plans"]["Row"];
 
 /**
- * Fencing do checkout pago. O trial tem lease próprio
- * (trial_finalization_locked_at) e chama ensureRemoteSubscription sem este
- * contexto; o checkout pago sempre informa o token vigente.
+ * Cada fluxo passa o token do lease que possui. Checkout e finalização de trial
+ * usam colunas independentes, mas todas as persistências remotas validam o
+ * token indicado antes de alterar a assinatura local.
  */
-type CheckoutFencing = { token: string };
+type SubscriptionFencing = {
+  column: "checkout_lease_token" | "trial_finalization_lease_token";
+  token: string;
+};
 
 type CancelWithCleanupResult = {
   subscriptionId: string;
@@ -642,32 +645,39 @@ function remoteBelongsToLocal(
   );
 }
 
-async function registerCleanupBestEffort(
+async function registerCleanupAndSchedule(
   supabase: Supabase,
   input: Parameters<typeof registerRemoteCleanupCandidate>[1],
 ): Promise<void> {
+  let jobId: string | null;
+
   try {
-    const jobId = await registerRemoteCleanupCandidate(supabase, input);
-
-    if (!jobId) {
-      return;
-    }
-
-    // Tentativa imediata, sempre pela outbox. O worker verifica a propriedade
-    // remota e respeita o lease de checkout de outra execução. Se falhar, o
-    // job permanece para a próxima execução.
-    try {
-      await processRemoteCleanupJobs({
-        jobIds: [jobId],
-        limit: 1,
-        supabase,
-      });
-    } catch {
-      // A fonte durável foi gravada; a retomada é automática.
-    }
+    jobId = await registerRemoteCleanupCandidate(supabase, input);
   } catch {
-    // A exceção de negócio original continua sendo lançada. Quando o job já
-    // foi criado pela RPC de cancelamento, a fonte durável permanece intacta.
+    throw new BillingServiceError(
+      "pending_confirmation",
+      "A recorrência remota não pôde ser registrada de forma durável para limpeza. A contratação precisa de verificação antes de uma nova tentativa.",
+    );
+  }
+
+  if (!jobId) {
+    throw new BillingServiceError(
+      "pending_confirmation",
+      "A recorrência remota não pôde ser associada com segurança à fila de limpeza. A contratação precisa de revisão.",
+    );
+  }
+
+  // A tentativa imediata é apenas uma otimização. Se falhar, o job já está
+  // durável e será retomado pelo próximo ciclo do worker.
+  try {
+    await processRemoteCleanupJobs({
+      jobIds: [jobId],
+      limit: 1,
+      supabase,
+    });
+  } catch {
+    // Não suprime falha de persistência: somente falhas do processamento
+    // imediato são toleradas porque a outbox já foi gravada.
   }
 }
 
@@ -695,7 +705,7 @@ async function assertNoPendingRemoteCleanup(
   if (job) {
     throw new BillingServiceError(
       "pending_confirmation",
-      "Existe uma assinatura anterior com remoção no Asaas pendente. A nova contratação será liberada após a confirmação da limpeza.",
+      "Existe uma assinatura anterior com remoção no Asaas pendente. Novas contratações e trocas ficam bloqueadas até a confirmação da limpeza.",
     );
   }
 
@@ -745,7 +755,7 @@ async function assertNoPendingRemoteCleanup(
   if (legacy) {
     throw new BillingServiceError(
       "pending_confirmation",
-      "Existe uma assinatura anterior com remoção no Asaas pendente. A nova contratação será liberada após a confirmação da limpeza.",
+      "Existe uma assinatura anterior com remoção no Asaas pendente. Novas contratações e trocas ficam bloqueadas até a confirmação da limpeza.",
     );
   }
 
@@ -766,7 +776,7 @@ async function compensateTerminalRemote(
     ? "A contratação foi encerrada, mas a remoção da recorrência no Asaas ainda não foi confirmada."
     : "A recorrência remota retornada não pertence a esta contratação e não foi removida.";
 
-  await registerCleanupBestEffort(supabase, {
+  await registerCleanupAndSchedule(supabase, {
     subscriptionId: current.id,
     barbershopId: current.barbershop_id,
     externalReference: current.external_reference,
@@ -793,7 +803,7 @@ async function persistRemoteSubscription(
   local: SubscriptionRow,
   plan: PlanRow,
   remote: AsaasSubscription,
-  fencing?: CheckoutFencing,
+  fencing?: SubscriptionFencing,
 ): Promise<SubscriptionRow> {
   const gatewayStatus =
     mapGatewayStatus(remote.status) ??
@@ -823,11 +833,13 @@ async function persistRemoteSubscription(
       .eq("id", local.id)
       .in("status", [...currentSubscriptionStatuses]);
 
-    const { data, error } = await (
-      fencing
+    const fencedBase =
+      fencing?.column === "checkout_lease_token"
         ? base.eq("checkout_lease_token", fencing.token)
-        : base
-    )
+        : fencing
+          ? base.eq("trial_finalization_lease_token", fencing.token)
+          : base;
+    const { data, error } = await fencedBase
       .select("*")
       .maybeSingle();
 
@@ -855,7 +867,7 @@ async function persistRemoteSubscription(
       return compensateTerminalRemote(supabase, current, remote);
     }
 
-    if (fencing && current.checkout_lease_token !== fencing.token) {
+    if (fencing && current[fencing.column] !== fencing.token) {
       if (current.gateway_subscription_id === remote.id) {
         // A execução atual já adotou esta mesma recorrência. Não removê-la.
         throw new BillingServiceError(
@@ -872,7 +884,7 @@ async function persistRemoteSubscription(
         typeof remote.externalReference === "string" &&
         remote.externalReference === current.external_reference;
 
-      await registerCleanupBestEffort(supabase, {
+      await registerCleanupAndSchedule(supabase, {
         subscriptionId: current.id,
         barbershopId: current.barbershop_id,
         externalReference: current.external_reference,
@@ -900,7 +912,7 @@ async function clearRemoteSubscriptionLink(
   supabase: Supabase,
   local: SubscriptionRow,
   gatewaySubscriptionId: string,
-  fencing?: CheckoutFencing,
+  fencing?: SubscriptionFencing,
 ): Promise<SubscriptionRow> {
   const base = supabase
     .from("subscriptions")
@@ -912,9 +924,13 @@ async function clearRemoteSubscriptionLink(
     .eq("gateway_subscription_id", gatewaySubscriptionId)
     .in("status", [...currentSubscriptionStatuses]);
 
-  const { data, error } = await (
-    fencing ? base.eq("checkout_lease_token", fencing.token) : base
-  )
+  const fencedBase =
+    fencing?.column === "checkout_lease_token"
+      ? base.eq("checkout_lease_token", fencing.token)
+      : fencing
+        ? base.eq("trial_finalization_lease_token", fencing.token)
+        : base;
+  const { data, error } = await fencedBase
     .select("*")
     .maybeSingle();
 
@@ -935,7 +951,7 @@ async function clearRemoteSubscriptionLink(
       );
     }
 
-    if (fencing && current?.checkout_lease_token !== fencing.token) {
+    if (fencing && current?.[fencing.column] !== fencing.token) {
       throw new BillingServiceError(
         "conflict",
         "Outra execução assumiu a contratação durante a recuperação.",
@@ -956,7 +972,7 @@ export async function ensureRemoteSubscription(
   local: SubscriptionRow,
   plan: PlanRow,
   customerId: string,
-  fencing?: CheckoutFencing,
+  fencing?: SubscriptionFencing,
 ): Promise<SubscriptionRow> {
   let current = local;
   const existingGatewaySubscriptionId = current.gateway_subscription_id;
@@ -1084,7 +1100,7 @@ async function applyPlanToRemote(
   local: SubscriptionRow,
   plan: PlanRow,
   customerId: string,
-  fencing?: CheckoutFencing,
+  fencing?: SubscriptionFencing,
 ): Promise<SubscriptionRow> {
   if (!local.gateway_subscription_id) {
     return ensureRemoteSubscription(supabase, local, plan, customerId, fencing);
@@ -1116,9 +1132,13 @@ async function applyPlanToRemote(
         .eq("gateway_subscription_id", local.gateway_subscription_id)
         .in("status", [...currentSubscriptionStatuses]);
 
-      const { data: clearedRow, error: clearError } = await (
-        fencing ? base.eq("checkout_lease_token", fencing.token) : base
-      )
+      const fencedBase =
+        fencing?.column === "checkout_lease_token"
+          ? base.eq("checkout_lease_token", fencing.token)
+          : fencing
+            ? base.eq("trial_finalization_lease_token", fencing.token)
+            : base;
+      const { data: clearedRow, error: clearError } = await fencedBase
         .select("*")
         .maybeSingle();
 
@@ -1139,7 +1159,7 @@ async function applyPlanToRemote(
           );
         }
 
-        if (fencing && current?.checkout_lease_token !== fencing.token) {
+        if (fencing && current?.[fencing.column] !== fencing.token) {
           throw new BillingServiceError(
             "conflict",
             "Outra execução assumiu a contratação durante a recuperação.",
@@ -1212,12 +1232,70 @@ function assertChargeablePlan(plan: PlanRow) {
 }
 
 /**
- * Reivindica a contratação paga de forma atômica.
- *
- * A atualização condicional é a trava: só a execução que encontra a linha
- * pending sem lock (ou com lock abandonado) recebe o registro. A outra
- * execução recebe null e não chama o Asaas.
+ * Reivindica o lease por UPDATE condicional do snapshot observado. O banco
+ * decide o vencedor por status, plano, vínculo remoto e estado dos dois leases;
+ * apenas o dono recebe o token e pode persistir a operação.
  */
+async function claimCheckoutLease(
+  supabase: Supabase,
+  current: SubscriptionRow,
+  payload: Database["public"]["Tables"]["subscriptions"]["Update"],
+  now: Date,
+): Promise<SubscriptionRow | null> {
+  const staleCutoff = new Date(
+    now.getTime() - staleCheckoutLockMs,
+  ).toISOString();
+
+  const buildBaseQuery = () => {
+    let query = supabase
+      .from("subscriptions")
+      .update(payload)
+      .eq("id", current.id)
+      .eq("status", current.status)
+      .eq("plan_id", current.plan_id)
+      .in("status", [...currentSubscriptionStatuses])
+      .is("trial_finalization_locked_at", null)
+      .is("trial_finalization_lease_token", null);
+
+    query = current.gateway_subscription_id === null
+      ? query.is("gateway_subscription_id", null)
+      : query.eq("gateway_subscription_id", current.gateway_subscription_id);
+
+    return query;
+  };
+
+  const { data: unlocked, error: unlockedError } = await buildBaseQuery()
+    .is("checkout_locked_at", null)
+    .is("checkout_lease_token", null)
+    .select("*")
+    .maybeSingle();
+
+  if (unlockedError) {
+    throw new BillingServiceError(
+      "gateway",
+      "Não foi possível obter o controle da alteração da assinatura. Tente novamente.",
+    );
+  }
+
+  if (unlocked) {
+    return unlocked;
+  }
+
+  const { data: stale, error: staleError } = await buildBaseQuery()
+    .lt("checkout_locked_at", staleCutoff)
+    .select("*")
+    .maybeSingle();
+
+  if (staleError) {
+    throw new BillingServiceError(
+      "gateway",
+      "Não foi possível recuperar o controle da alteração da assinatura. Tente novamente.",
+    );
+  }
+
+  return stale ?? null;
+}
+
 async function claimPaidCheckout(
   supabase: Supabase,
   current: SubscriptionRow,
@@ -1226,9 +1304,6 @@ async function claimPaidCheckout(
   now: Date,
 ): Promise<SubscriptionRow | null> {
   const timestamp = now.toISOString();
-  const staleCutoff = new Date(
-    now.getTime() - staleCheckoutLockMs,
-  ).toISOString();
 
   const payload: Database["public"]["Tables"]["subscriptions"]["Update"] = {
     plan_id: plan.id,
@@ -1244,68 +1319,50 @@ async function claimPaidCheckout(
     checkout_error: null,
   };
 
-  const { data: unlocked, error: unlockedError } = await supabase
-    .from("subscriptions")
-    .update(payload)
-    .eq("id", current.id)
-    .eq("status", "pending")
-    .is("trial_ends_at", null)
-    .is("checkout_locked_at", null)
-    .select("*")
-    .maybeSingle();
-
-  if (unlockedError) {
-    throw new BillingServiceError(
-      "gateway",
-      "Não foi possível iniciar a contratação agora. Tente novamente.",
-    );
-  }
-
-  if (unlocked) {
-    return unlocked;
-  }
-
-  const { data: stale, error: staleError } = await supabase
-    .from("subscriptions")
-    .update(payload)
-    .eq("id", current.id)
-    .eq("status", "pending")
-    .is("trial_ends_at", null)
-    .lt("checkout_locked_at", staleCutoff)
-    .select("*")
-    .maybeSingle();
-
-  if (staleError) {
-    throw new BillingServiceError(
-      "gateway",
-      "Não foi possível iniciar a contratação agora. Tente novamente.",
-    );
-  }
-
-  return stale ?? null;
+  return claimCheckoutLease(supabase, current, payload, now);
 }
 
-async function releasePaidCheckout(
+async function claimPlanChangeLease(
+  supabase: Supabase,
+  current: SubscriptionRow,
+  now: Date,
+): Promise<SubscriptionRow | null> {
+  const payload: Database["public"]["Tables"]["subscriptions"]["Update"] = {
+    checkout_locked_at: now.toISOString(),
+    checkout_lease_token: randomUUID(),
+  };
+
+  return claimCheckoutLease(supabase, current, payload, now);
+}
+
+async function releaseCheckoutLease(
   supabase: Supabase,
   subscriptionId: string,
-  fencing: CheckoutFencing,
+  fencing: SubscriptionFencing,
   error?: unknown,
 ): Promise<boolean> {
   const payload: Database["public"]["Tables"]["subscriptions"]["Update"] = {
-    checkout_locked_at: null,
-    checkout_lease_token: null,
+    [fencing.column === "checkout_lease_token"
+      ? "checkout_locked_at"
+      : "trial_finalization_locked_at"]: null,
+    [fencing.column]: null,
   };
 
-  if (error !== undefined) {
+  if (error !== undefined && fencing.column === "checkout_lease_token") {
     payload.checkout_error = failureMessage(error);
   }
 
-  const { data, error: updateError } = await supabase
+  let query = supabase
     .from("subscriptions")
     .update(payload)
     .eq("id", subscriptionId)
-    .in("status", [...currentSubscriptionStatuses])
-    .eq("checkout_lease_token", fencing.token)
+    .in("status", [...currentSubscriptionStatuses]);
+
+  query = fencing.column === "checkout_lease_token"
+    ? query.eq("checkout_lease_token", fencing.token)
+    : query.eq("trial_finalization_lease_token", fencing.token);
+
+  const { data, error: updateError } = await query
     .select("id")
     .maybeSingle();
 
@@ -1434,9 +1491,8 @@ export async function startSubscription(input: {
   }
 
   if (
-    current &&
-    current.trial_ends_at &&
-    !current.gateway_subscription_id
+    current?.trial_ends_at &&
+    (!current.trial_finalized_at || !current.gateway_subscription_id)
   ) {
     throw new BillingServiceError(
       "conflict",
@@ -1445,12 +1501,13 @@ export async function startSubscription(input: {
   }
 
   let local: SubscriptionRow | null = null;
-  let checkoutFencing: CheckoutFencing | null = null;
+  let checkoutFencing: SubscriptionFencing | null = null;
 
-  // Contratação paga direta: reivindica a linha pending antes de qualquer
-  // chamada ao Asaas. Duas execuções concorrentes nunca chegam juntas ao
-  // gateway; a segunda recebe um conflito controlado.
-  if (current && current.trial_ends_at === null) {
+  // Toda alteração de uma assinatura pending reivindica a linha antes de
+  // qualquer chamada ao Asaas. Isso inclui retomada de checkout e assinatura
+  // originada de trial já finalizado; trials ainda em finalização foram
+  // recusados acima e mantêm seu lease independente.
+  if (current) {
     const now = new Date();
     local = await claimPaidCheckout(
       supabase,
@@ -1471,44 +1528,40 @@ export async function startSubscription(input: {
       );
     }
 
-    checkoutFencing = { token: local.checkout_lease_token };
+    checkoutFencing = {
+      column: "checkout_lease_token",
+      token: local.checkout_lease_token,
+    };
   }
 
   try {
+    // Revalida após o claim. A leitura inicial evita trabalho desnecessário; o
+    // lease condicional impede corrida com outro checkout e protege o worker.
+    await assertNoPendingRemoteCleanup(supabase, input.barbershopId);
     const customerId = await resolveBillingCustomer(supabase, input);
 
     if (!local) {
       if (current) {
-        // Linha pending originada de um trial já finalizado. Ela já possui
-        // vínculo remoto; a atualização continua condicional para não
-        // sobrescrever um cancelamento/expiração concorrente.
-        const { data, error } = await supabase
-          .from("subscriptions")
-          .update({
-            plan_id: plan.id,
-            billing_type: input.billingType,
-            contracted_price_cents: plan.price_cents,
-            contracted_currency: plan.currency,
-            contracted_interval: plan.interval,
-            next_due_date: current.next_due_date ?? tomorrowDateOnly(),
-          })
-          .eq("id", current.id)
-          .in("status", [...currentSubscriptionStatuses])
-          .select("*")
-          .maybeSingle();
+        // Defesa adicional para qualquer caminho futuro que chegue aqui com
+        // uma linha existente: nunca atualiza a assinatura sem primeiro
+        // adquirir o lease e propagar o token até a persistência remota.
+        const claimed = await claimPaidCheckout(
+          supabase,
+          current,
+          plan,
+          input.billingType,
+          new Date(),
+        );
 
-        if (error) {
-          throw new BillingServiceError(
-            "gateway",
-            "Não foi possível atualizar a contratação em andamento.",
-          );
-        }
-
-        if (!data) {
+        if (!claimed?.checkout_lease_token) {
           return throwCheckoutClaimConflict(supabase, current.id);
         }
 
-        local = data;
+        local = claimed;
+        checkoutFencing = {
+          column: "checkout_lease_token",
+          token: claimed.checkout_lease_token,
+        };
       } else {
         const lockTimestamp = new Date().toISOString();
         const leaseToken = randomUUID();
@@ -1556,7 +1609,10 @@ export async function startSubscription(input: {
         }
 
         local = data;
-        checkoutFencing = { token: leaseToken };
+        checkoutFencing = {
+          column: "checkout_lease_token",
+          token: leaseToken,
+        };
       }
     }
 
@@ -1569,7 +1625,7 @@ export async function startSubscription(input: {
     );
 
     if (checkoutFencing) {
-      const released = await releasePaidCheckout(
+      const released = await releaseCheckoutLease(
         supabase,
         local.id,
         checkoutFencing,
@@ -1591,7 +1647,7 @@ export async function startSubscription(input: {
     };
   } catch (error) {
     if (checkoutFencing && local) {
-      await releasePaidCheckout(supabase, local.id, checkoutFencing, error);
+      await releaseCheckoutLease(supabase, local.id, checkoutFencing, error);
     }
 
     throw error;
@@ -1623,6 +1679,8 @@ export async function changePlan(input: {
     );
   }
 
+  await assertNoPendingRemoteCleanup(supabase, input.barbershopId);
+
   if (
     current.status === "trialing" &&
     !current.gateway_subscription_id
@@ -1640,6 +1698,10 @@ export async function changePlan(input: {
       .eq("id", current.id)
       .eq("status", "trialing")
       .is("gateway_subscription_id", null)
+      .is("trial_finalization_locked_at", null)
+      .is("trial_finalization_lease_token", null)
+      .is("checkout_locked_at", null)
+      .is("checkout_lease_token", null)
       .select("id")
       .maybeSingle();
 
@@ -1663,19 +1725,60 @@ export async function changePlan(input: {
     };
   }
 
-  if (current.trial_ends_at && !current.gateway_subscription_id) {
+  if (current.trial_ends_at && !current.trial_finalized_at) {
     throw new BillingServiceError(
       "conflict",
       "O período de teste terminou e a primeira cobrança está sendo preparada. Tente novamente em instantes.",
     );
   }
 
-  const customerId = await resolveCustomerForExistingSubscription(
-    supabase,
-    input.barbershopId,
-  );
+  if (
+    current.trial_finalization_locked_at ||
+    current.trial_finalization_lease_token
+  ) {
+    throw new BillingServiceError(
+      "conflict",
+      "A finalização do teste gratuito ainda está em andamento. Tente novamente em instantes.",
+    );
+  }
 
-  await applyPlanToRemote(supabase, current, plan, customerId);
+  // A outbox é consultada novamente após o claim para reduzir a janela entre
+  // a validação inicial e a chamada remota.
+  const claimed = await claimPlanChangeLease(supabase, current, new Date());
+
+  if (!claimed?.checkout_lease_token) {
+    throw new BillingServiceError(
+      "conflict",
+      "A assinatura está sendo processada por outra operação. Atualize a página e tente novamente.",
+    );
+  }
+
+  const fencing: SubscriptionFencing = {
+    column: "checkout_lease_token",
+    token: claimed.checkout_lease_token,
+  };
+
+  try {
+    await assertNoPendingRemoteCleanup(supabase, input.barbershopId);
+    const customerId = await resolveCustomerForExistingSubscription(
+      supabase,
+      input.barbershopId,
+    );
+
+    await applyPlanToRemote(supabase, claimed, plan, customerId, fencing);
+  } catch (error) {
+    await releaseCheckoutLease(supabase, claimed.id, fencing, error);
+    throw error;
+  }
+
+  const released = await releaseCheckoutLease(supabase, claimed.id, fencing);
+
+  if (!released) {
+    throw new BillingServiceError(
+      "pending_confirmation",
+      "O plano foi enviado, mas o controle da alteração não pôde ser liberado. Atualize a página em instantes.",
+    );
+  }
 
   return {
     message:
@@ -1712,6 +1815,7 @@ export async function cancelSubscription(input: {
         canceled_at: new Date().toISOString(),
         cancel_reason: cancelReason,
         trial_finalization_locked_at: null,
+        trial_finalization_lease_token: null,
       })
       .eq("id", current.id)
       .eq("status", "trialing")

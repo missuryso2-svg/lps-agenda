@@ -29,6 +29,8 @@ export type BillingSubscriptionView = {
   cancelAtPeriodEnd: boolean;
   canceledAt: string | null;
   hasRemoteSubscription: boolean;
+  billingMutationInProgress: boolean;
+  remoteCleanupPending: boolean;
   plan: BillingPlan | null;
 };
 

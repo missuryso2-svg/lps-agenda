@@ -390,8 +390,12 @@ export class FakeSupabase {
     const updated: FakeRow = { ...subscription };
 
     if (terminal) {
+      updated.gateway_status = "inactive";
+      updated.cancel_at_period_end = false;
       updated.checkout_locked_at = null;
       updated.checkout_lease_token = null;
+      updated.trial_finalization_locked_at = null;
+      updated.trial_finalization_lease_token = null;
       updated.cancel_reason = updated.cancel_reason ?? reason;
       updated.remote_cleanup_pending = pending;
     } else {
@@ -402,6 +406,8 @@ export class FakeSupabase {
       updated.cancel_reason = updated.cancel_reason ?? reason;
       updated.checkout_locked_at = null;
       updated.checkout_lease_token = null;
+      updated.trial_finalization_locked_at = null;
+      updated.trial_finalization_lease_token = null;
       updated.remote_cleanup_pending = pending;
     }
 

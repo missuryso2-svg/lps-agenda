@@ -413,6 +413,30 @@ describe("outbox de compensação remota (P3-E)", () => {
     expect(db.getRows("subscriptions")[0]?.remote_cleanup_pending).toBe(false);
   });
 
+  it("mantém o job aberto quando o DELETE não confirma a remoção", async () => {
+    const db = createDb({
+      subscriptions: [subscriptionRow()],
+      billing_remote_cleanup_jobs: [jobRow()],
+    });
+
+    asaas.getAsaasSubscription.mockResolvedValue(remote());
+    asaas.deleteAsaasSubscription.mockRejectedValue(
+      new AsaasError(
+        "invalid_response",
+        "O Asaas não confirmou a remoção da recorrência.",
+      ),
+    );
+
+    const summary = await processRemoteCleanupJobs(processOptions(db));
+
+    expect(summary).toMatchObject({ claimed: 1, retry: 1, completed: 0 });
+    expect(db.getRows("billing_remote_cleanup_jobs")[0]).toMatchObject({
+      status: "retry",
+      completed_at: null,
+    });
+    expect(db.getRows("subscriptions")[0]?.remote_cleanup_pending).toBe(true);
+  });
+
   it.each([
     ["referência externa divergente", remote("sub_1", "outra-referencia")],
     ["referência externa ausente", { id: "sub_1", status: "ACTIVE" as const }],
@@ -441,6 +465,29 @@ describe("outbox de compensação remota (P3-E)", () => {
       expect(db.getRows("subscriptions")[0]?.remote_cleanup_pending).toBe(true);
     },
   );
+
+  it("não considera tombstone de outro ID como remoção confirmada", async () => {
+    const db = createDb({
+      subscriptions: [subscriptionRow()],
+      billing_remote_cleanup_jobs: [jobRow()],
+    });
+
+    asaas.getAsaasSubscription.mockResolvedValue({
+      id: "sub_other",
+      status: "INACTIVE",
+      externalReference: EXTERNAL_REFERENCE,
+      deleted: true,
+    });
+
+    const summary = await processRemoteCleanupJobs(processOptions(db));
+
+    expect(summary).toMatchObject({ claimed: 1, manualReview: 1, completed: 0 });
+    expect(asaas.deleteAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("billing_remote_cleanup_jobs")[0]).toMatchObject({
+      status: "manual_review",
+      completed_at: null,
+    });
+  });
 
   it("trata not_found do Asaas como remoção já confirmada", async () => {
     const db = createDb({

@@ -66,6 +66,13 @@ const paymentConfirmationEvents = new Set([
   "PAYMENT_RECEIVED",
 ]);
 
+const mutableSubscriptionStatuses = [
+  "pending",
+  "trialing",
+  "active",
+  "past_due",
+] as const;
+
 function toCents(value: number): number | null {
   const cents = Math.round(value * 100);
 
@@ -496,7 +503,8 @@ async function syncSubscriptionFromPayment(
             ? "active"
             : subscription.gateway_status,
       })
-      .eq("id", subscription.id);
+      .eq("id", subscription.id)
+      .in("status", [...mutableSubscriptionStatuses]);
 
     if (error) {
       throw new BillingWebhookError(
@@ -515,7 +523,8 @@ async function syncSubscriptionFromPayment(
       const { error } = await supabase
         .from("subscriptions")
         .update({ status: "past_due" })
-        .eq("id", subscription.id);
+        .eq("id", subscription.id)
+        .in("status", ["pending", "active"]);
 
       if (error) {
         throw new BillingWebhookError(
@@ -548,7 +557,8 @@ async function syncSubscriptionFromPayment(
     const { error } = await supabase
       .from("subscriptions")
       .update({ status: "past_due" })
-      .eq("id", subscription.id);
+      .eq("id", subscription.id)
+      .in("status", [...mutableSubscriptionStatuses]);
 
     if (error) {
       throw new BillingWebhookError(
@@ -566,7 +576,8 @@ async function syncSubscriptionFromPayment(
     const { error } = await supabase
       .from("subscriptions")
       .update({ status: "past_due" })
-      .eq("id", subscription.id);
+      .eq("id", subscription.id)
+      .in("status", ["active", "trialing"]);
 
     if (error) {
       throw new BillingWebhookError(
@@ -694,15 +705,30 @@ async function applySubscriptionEvent(
     return "ignored";
   }
 
-  const { error } = await supabase
+  let updateQuery = supabase
     .from("subscriptions")
     .update(updates)
     .eq("id", local.id);
+
+  // Um SUBSCRIPTION_DELETED pode concluir uma transição terminal já iniciada.
+  // Os demais eventos só podem alterar linhas ainda correntes; a condição no
+  // próprio UPDATE fecha a corrida entre a leitura acima e um cancelamento.
+  if (event !== "SUBSCRIPTION_DELETED") {
+    updateQuery = updateQuery.in("status", [...mutableSubscriptionStatuses]);
+  }
+
+  const { data: updated, error } = await updateQuery
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     throw new BillingWebhookError(
       "Não foi possível sincronizar a assinatura do evento.",
     );
+  }
+
+  if (!updated) {
+    return "ignored";
   }
 
   return "processed";

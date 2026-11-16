@@ -613,6 +613,7 @@ export type Database = {
             | Database["public"]["Enums"]["billing_interval"]
             | null;
           trial_finalization_locked_at: string | null;
+          trial_finalization_lease_token: string | null;
           trial_finalization_attempted_at: string | null;
           trial_finalization_attempts: number;
           trial_finalization_error: string | null;
@@ -650,6 +651,7 @@ export type Database = {
             | Database["public"]["Enums"]["billing_interval"]
             | null;
           trial_finalization_locked_at?: string | null;
+          trial_finalization_lease_token?: string | null;
           trial_finalization_attempted_at?: string | null;
           trial_finalization_attempts?: number;
           trial_finalization_error?: string | null;
@@ -687,6 +689,7 @@ export type Database = {
             | Database["public"]["Enums"]["billing_interval"]
             | null;
           trial_finalization_locked_at?: string | null;
+          trial_finalization_lease_token?: string | null;
           trial_finalization_attempted_at?: string | null;
           trial_finalization_attempts?: number;
           trial_finalization_error?: string | null;

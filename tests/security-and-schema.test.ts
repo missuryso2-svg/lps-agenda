@@ -65,7 +65,7 @@ describe("migrações", () => {
       "20261115120000_subscription_cancel_reason.sql",
     );
     expect(migrationFiles.at(-1)).toBe(
-      "20261115140000_billing_checkout_fencing_and_cleanup.sql",
+      "20261116100000_billing_concurrency_hardening.sql",
     );
   });
 
@@ -212,6 +212,30 @@ describe("migrações", () => {
     expect(migration).not.toMatch(/\bdelete\s+from\b/i);
     expect(migration).not.toMatch(/\bdrop\s+(table|index|column)\b/i);
     expect(migration).not.toContain("security invoker");
+  });
+
+  it("adiciona fencing próprio ao trial e invalida os leases no cancelamento", () => {
+    const migration = read(
+      "supabase/migrations/20261116100000_billing_concurrency_hardening.sql",
+    );
+
+    expect(migration).toContain(
+      "add column if not exists trial_finalization_lease_token uuid",
+    );
+    expect(migration).toContain(
+      "create or replace function public.cancel_subscription_with_cleanup(",
+    );
+    expect(migration).toContain("security definer");
+    expect(migration).toContain("set search_path = ''");
+    expect(migration).toContain("gateway_status = 'inactive'");
+    expect(migration).toContain("checkout_lease_token = null");
+    expect(migration).toContain("trial_finalization_lease_token = null");
+    expect(migration).toMatch(
+      /revoke all on function public\.cancel_subscription_with_cleanup\(uuid, uuid, text\)\s+from authenticated;/,
+    );
+    expect(migration).toMatch(
+      /grant execute on function public\.cancel_subscription_with_cleanup\(uuid, uuid, text\)\s+to service_role;/,
+    );
   });
 
   it("habilita RLS em todas as tabelas do schema public", () => {

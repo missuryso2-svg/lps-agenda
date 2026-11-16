@@ -28,6 +28,9 @@ function subscriptionRow(overrides: FakeRow = {}): FakeRow {
     current_period_start: null,
     current_period_end: null,
     trial_ends_at: null,
+    trial_finalization_locked_at: null,
+    trial_finalization_lease_token: null,
+    trial_finalized_at: null,
     cancel_at_period_end: false,
     gateway: "asaas",
     gateway_subscription_id: "sub_123",
@@ -36,6 +39,9 @@ function subscriptionRow(overrides: FakeRow = {}): FakeRow {
     external_reference: EXTERNAL_REFERENCE,
     next_due_date: "2026-11-15",
     canceled_at: null,
+    checkout_locked_at: null,
+    checkout_lease_token: null,
+    remote_cleanup_pending: false,
     created_at: "2026-11-14T12:00:00.000Z",
     updated_at: "2026-11-14T12:00:00.000Z",
     ...overrides,
@@ -101,6 +107,34 @@ function useDb(seed: Record<string, FakeRow[]> = {}) {
     subscriptions: [subscriptionRow()],
     ...seed,
   });
+}
+
+function patchSubscriptionAfterFirstRead(
+  db: FakeSupabase,
+  patch: FakeRow,
+): void {
+  const originalGetRows = db.getRows.bind(db);
+  let firstRead = true;
+
+  db.getRows = (table: string) => {
+    const rows = originalGetRows(table);
+
+    if (table !== "subscriptions" || !firstRead) {
+      return rows;
+    }
+
+    firstRead = false;
+    const snapshot = rows.map((row) => ({ ...row }));
+
+    db.setRows(
+      "subscriptions",
+      rows.map((row) =>
+        row.id === SUBSCRIPTION_ID ? { ...row, ...patch } : { ...row },
+      ),
+    );
+
+    return snapshot;
+  };
 }
 
 beforeEach(() => {
@@ -225,6 +259,89 @@ describe("processamento idempotente dos eventos", () => {
       current_period_end: "2026-12-15T12:00:00.000Z",
     });
   });
+
+  it("não reativa pending se o cancelamento vence após a leitura do webhook", async () => {
+    const cleanupJob = {
+      id: "cleanup-1",
+      subscription_id: SUBSCRIPTION_ID,
+      barbershop_id: SHOP_ID,
+      external_reference: EXTERNAL_REFERENCE,
+      gateway_subscription_id: "sub_123",
+      status: "pending",
+      attempts: 0,
+    };
+    const db = useDb({
+      subscriptions: [subscriptionRow({ status: "pending" })],
+      billing_remote_cleanup_jobs: [cleanupJob],
+    });
+
+    // O SELECT do webhook recebe pending, mas o estado com RPC/job muda antes
+    // do UPDATE. O filtro de status terminal precisa vencer a leitura antiga.
+    patchSubscriptionAfterFirstRead(db, {
+      status: "canceled",
+      gateway_status: "inactive",
+      remote_cleanup_pending: true,
+    });
+
+    await expect(
+      processAsaasEvent(
+        db as never,
+        paymentEvent("PAYMENT_CONFIRMED", { status: "CONFIRMED" }),
+      ),
+    ).resolves.toBe("processed");
+
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "canceled",
+      gateway_status: "inactive",
+      remote_cleanup_pending: true,
+    });
+    expect(db.getRows("billing_remote_cleanup_jobs")[0]).toMatchObject({
+      id: "cleanup-1",
+      status: "pending",
+      gateway_subscription_id: "sub_123",
+    });
+  });
+
+  it.each(["canceled", "expired"] as const)(
+    "não reativa uma assinatura %s por evento PAYMENT_CONFIRMED",
+    async (status) => {
+      const db = useDb({
+        subscriptions: [
+          subscriptionRow({
+            status,
+            gateway_status: "inactive",
+            remote_cleanup_pending: true,
+          }),
+        ],
+        billing_remote_cleanup_jobs: [
+          {
+            id: "cleanup-1",
+            subscription_id: SUBSCRIPTION_ID,
+            barbershop_id: SHOP_ID,
+            external_reference: EXTERNAL_REFERENCE,
+            gateway_subscription_id: "sub_123",
+            status: "retry",
+            attempts: 1,
+          },
+        ],
+      });
+
+      await processAsaasEvent(
+        db as never,
+        paymentEvent("PAYMENT_CONFIRMED", { status: "CONFIRMED" }),
+      );
+
+      expect(db.getRows("subscriptions")[0]).toMatchObject({
+        status,
+        gateway_status: "inactive",
+        remote_cleanup_pending: true,
+      });
+      expect(db.getRows("billing_remote_cleanup_jobs")[0]).toMatchObject({
+        id: "cleanup-1",
+        status: "retry",
+      });
+    },
+  );
 
   it("ignora PAYMENT_RECEIVED_IN_CASH e não ativa a assinatura", async () => {
     const db = useDb();

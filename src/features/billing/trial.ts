@@ -1,5 +1,7 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { deleteAsaasSubscription } from "@/lib/asaas/client";
@@ -121,6 +123,7 @@ function claimPayload(
     gateway_status: "pending_creation",
     next_due_date: dateOnlyInSaoPaulo(now),
     trial_finalization_locked_at: now.toISOString(),
+    trial_finalization_lease_token: randomUUID(),
     trial_finalization_attempted_at: now.toISOString(),
     trial_finalization_attempts:
       (candidate.trial_finalization_attempts ?? 0) + 1,
@@ -149,6 +152,9 @@ async function claimCandidate(
       .eq("id", candidate.id)
       .eq("status", "trialing")
       .lte("trial_ends_at", now.toISOString())
+      .is("trial_finalization_locked_at", null)
+      .is("checkout_locked_at", null)
+      .is("checkout_lease_token", null)
       .select("*")
       .maybeSingle();
 
@@ -171,6 +177,8 @@ async function claimCandidate(
     .eq("status", "pending")
     .is("trial_finalized_at", null)
     .is("trial_finalization_locked_at", null)
+    .is("checkout_locked_at", null)
+    .is("checkout_lease_token", null)
     .select("*")
     .maybeSingle();
 
@@ -194,6 +202,8 @@ async function claimCandidate(
     .eq("status", "pending")
     .is("trial_finalized_at", null)
     .lt("trial_finalization_locked_at", staleCutoff)
+    .is("checkout_locked_at", null)
+    .is("checkout_lease_token", null)
     .select("*")
     .maybeSingle();
 
@@ -274,6 +284,7 @@ async function markSuccess(
   supabase: Supabase,
   subscriptionId: string,
   gatewaySubscriptionId: string,
+  leaseToken: string,
   now: Date,
 ): Promise<void> {
   const { data, error } = await supabase
@@ -281,10 +292,13 @@ async function markSuccess(
     .update({
       trial_finalized_at: now.toISOString(),
       trial_finalization_locked_at: null,
+      trial_finalization_lease_token: null,
       trial_finalization_error: null,
     })
     .eq("id", subscriptionId)
     .eq("gateway_subscription_id", gatewaySubscriptionId)
+    .eq("trial_finalization_lease_token", leaseToken)
+    .in("status", ["pending", "active", "past_due"])
     .is("trial_finalized_at", null)
     .select("id")
     .maybeSingle();
@@ -300,15 +314,18 @@ async function markSuccess(
 async function markFailure(
   supabase: Supabase,
   subscriptionId: string,
+  leaseToken: string,
   error: unknown,
 ): Promise<void> {
   await supabase
     .from("subscriptions")
     .update({
       trial_finalization_locked_at: null,
+      trial_finalization_lease_token: null,
       trial_finalization_error: failureMessage(error).slice(0, 500),
     })
     .eq("id", subscriptionId)
+    .eq("trial_finalization_lease_token", leaseToken)
     .is("trial_finalized_at", null);
 }
 
@@ -321,6 +338,15 @@ async function finalizeCandidate(
     subscriptionId: claimed.id,
     barbershopId: claimed.barbershop_id,
   };
+  const leaseToken = claimed.trial_finalization_lease_token;
+
+  if (!leaseToken) {
+    return {
+      ...base,
+      outcome: "failed",
+      message: "O claim do teste não retornou um token de lease válido.",
+    };
+  }
 
   try {
     const plan = await loadPlan(supabase, claimed.plan_id);
@@ -341,6 +367,10 @@ async function finalizeCandidate(
       claimed,
       pricedPlan(plan, claimed),
       customerId,
+      {
+        column: "trial_finalization_lease_token",
+        token: leaseToken,
+      },
     );
 
     if (!updated.gateway_subscription_id) {
@@ -394,6 +424,7 @@ async function finalizeCandidate(
       await markFailure(
         supabase,
         claimed.id,
+        leaseToken,
         "Assinatura cancelada durante a finalização do teste.",
       );
 
@@ -408,12 +439,13 @@ async function finalizeCandidate(
       supabase,
       claimed.id,
       gatewaySubscriptionId,
+      leaseToken,
       now,
     );
 
     return { ...base, outcome: "created" };
   } catch (error) {
-    await markFailure(supabase, claimed.id, error);
+    await markFailure(supabase, claimed.id, leaseToken, error);
 
     return {
       ...base,

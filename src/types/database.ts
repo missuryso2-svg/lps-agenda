@@ -543,6 +543,60 @@ export type Database = {
         };
         Relationships: [];
       };
+      billing_remote_cleanup_jobs: {
+        Row: {
+          id: string;
+          subscription_id: string;
+          barbershop_id: string;
+          provider: string;
+          external_reference: string;
+          gateway_subscription_id: string | null;
+          status: "pending" | "processing" | "retry" | "completed" | "manual_review";
+          attempts: number;
+          locked_at: string | null;
+          lease_token: string | null;
+          next_attempt_at: string;
+          last_error: string | null;
+          created_at: string;
+          updated_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          subscription_id: string;
+          barbershop_id: string;
+          provider?: string;
+          external_reference: string;
+          gateway_subscription_id?: string | null;
+          status?: "pending" | "processing" | "retry" | "completed" | "manual_review";
+          attempts?: number;
+          locked_at?: string | null;
+          lease_token?: string | null;
+          next_attempt_at?: string;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          subscription_id?: string;
+          barbershop_id?: string;
+          provider?: string;
+          external_reference?: string;
+          gateway_subscription_id?: string | null;
+          status?: "pending" | "processing" | "retry" | "completed" | "manual_review";
+          attempts?: number;
+          locked_at?: string | null;
+          lease_token?: string | null;
+          next_attempt_at?: string;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
           id: string;
@@ -563,6 +617,12 @@ export type Database = {
           trial_finalization_attempts: number;
           trial_finalization_error: string | null;
           trial_finalized_at: string | null;
+          checkout_locked_at: string | null;
+          checkout_lease_token: string | null;
+          checkout_attempted_at: string | null;
+          checkout_attempts: number;
+          checkout_error: string | null;
+          remote_cleanup_pending: boolean;
           cancel_at_period_end: boolean;
           gateway: string;
           gateway_subscription_id: string | null;
@@ -594,6 +654,12 @@ export type Database = {
           trial_finalization_attempts?: number;
           trial_finalization_error?: string | null;
           trial_finalized_at?: string | null;
+          checkout_locked_at?: string | null;
+          checkout_lease_token?: string | null;
+          checkout_attempted_at?: string | null;
+          checkout_attempts?: number;
+          checkout_error?: string | null;
+          remote_cleanup_pending?: boolean;
           cancel_at_period_end?: boolean;
           gateway?: string;
           gateway_subscription_id?: string | null;
@@ -625,6 +691,12 @@ export type Database = {
           trial_finalization_attempts?: number;
           trial_finalization_error?: string | null;
           trial_finalized_at?: string | null;
+          checkout_locked_at?: string | null;
+          checkout_lease_token?: string | null;
+          checkout_attempted_at?: string | null;
+          checkout_attempts?: number;
+          checkout_error?: string | null;
+          remote_cleanup_pending?: boolean;
           cancel_at_period_end?: boolean;
           gateway?: string;
           gateway_subscription_id?: string | null;
@@ -843,6 +915,14 @@ export type Database = {
           p_email: string | null;
         };
         Returns: string;
+      };
+      cancel_subscription_with_cleanup: {
+        Args: {
+          p_subscription_id: string;
+          p_barbershop_id: string;
+          p_cancel_reason?: string | null;
+        };
+        Returns: Json;
       };
     };
     Enums: {

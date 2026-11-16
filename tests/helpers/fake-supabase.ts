@@ -34,6 +34,12 @@ type UpsertOptions = {
   ignoreDuplicates?: boolean;
 };
 
+type UniqueConstraint = {
+  table: string;
+  columns: string[];
+  predicate?: (row: FakeRow) => boolean;
+};
+
 type RpcResult = {
   data: unknown;
   error: FakeError | null;
@@ -159,9 +165,14 @@ export class FakeSupabase {
     string,
     Array<{ error: FakeError; operation?: FakeOperation }>
   >();
+  private updateFailures = new Map<
+    string,
+    Array<{ matches: (payload: FakeRow) => boolean; error: FakeError }>
+  >();
   private rpcHandlers = new Map<string, RpcHandler>();
   private rpcFailures = new Map<string, FakeError[]>();
   private rateLimitCounters = new Map<string, number>();
+  private uniqueConstraints: UniqueConstraint[] = [];
 
   constructor(seed: Record<string, FakeRow[]> = {}) {
     for (const [table, rows] of Object.entries(seed)) {
@@ -271,8 +282,199 @@ export class FakeSupabase {
     return id;
   }
 
+  /**
+   * Implementação em memória do contrato da RPC
+   * cancel_subscription_with_cleanup. O handler roda em um único turno do
+   * event loop, mas NÃO representa uma transação PostgreSQL real. Ele existe
+   * para testar o contrato (job + estado terminal + invalidação do lease) e a
+   * idempotência; a atomicidade real será validada em homologação.
+   */
+  cancelFakeSubscriptionWithCleanup(args: FakeRow): FakeRow {
+    const subscriptionId = String(args.p_subscription_id ?? "");
+    const barbershopId = String(args.p_barbershop_id ?? "");
+    const rawReason = args.p_cancel_reason;
+    const reason =
+      typeof rawReason === "string" && rawReason.trim().length > 0
+        ? rawReason.trim()
+        : null;
+
+    if (reason !== null && reason.length > 500) {
+      throw new Error(
+        "O motivo do cancelamento deve ter no máximo 500 caracteres.",
+      );
+    }
+
+    const subscriptions = this.getRows("subscriptions");
+    const subscription = subscriptions.find(
+      (row) => row.id === subscriptionId && row.barbershop_id === barbershopId,
+    );
+
+    if (!subscription) {
+      throw new Error("Assinatura não encontrada para esta barbearia.");
+    }
+
+    const now = new Date().toISOString();
+    const terminal =
+      subscription.status === "canceled" || subscription.status === "expired";
+    const jobs = this.getRows("billing_remote_cleanup_jobs");
+    const byCreatedAtDesc = (left: FakeRow, right: FakeRow) =>
+      String(right.created_at ?? "").localeCompare(
+        String(left.created_at ?? ""),
+      );
+    const openJob = jobs
+      .filter(
+        (row) =>
+          row.subscription_id === subscriptionId && row.status !== "completed",
+      )
+      .sort(byCreatedAtDesc)[0];
+    let jobId: string | null = null;
+
+    if (openJob) {
+      jobId = String(openJob.id);
+
+      if (
+        !openJob.gateway_subscription_id &&
+        subscription.gateway_subscription_id
+      ) {
+        openJob.gateway_subscription_id = subscription.gateway_subscription_id;
+        openJob.updated_at = now;
+        this.setRows("billing_remote_cleanup_jobs", jobs);
+      }
+    } else {
+      const completedJob = jobs
+        .filter(
+          (row) =>
+            row.subscription_id === subscriptionId &&
+            row.status === "completed",
+        )
+        .sort(byCreatedAtDesc)[0];
+      const currentGatewayId = subscription.gateway_subscription_id ?? null;
+      const completedGatewayId = completedJob?.gateway_subscription_id ?? null;
+      const needsJob =
+        !terminal ||
+        (currentGatewayId !== null &&
+          (completedJob === undefined ||
+            completedGatewayId !== currentGatewayId));
+
+      if (needsJob) {
+        const id = randomUUID();
+        const job: FakeRow = {
+          id,
+          subscription_id: subscriptionId,
+          barbershop_id: barbershopId,
+          provider: "asaas",
+          external_reference: String(subscription.external_reference ?? ""),
+          gateway_subscription_id: currentGatewayId,
+          status: "pending",
+          attempts: 0,
+          locked_at: null,
+          lease_token: null,
+          next_attempt_at: now,
+          last_error: null,
+          created_at: now,
+          updated_at: now,
+          completed_at: null,
+        };
+
+        this.setRows("billing_remote_cleanup_jobs", [...jobs, job]);
+        jobId = id;
+      }
+    }
+
+    const currentJobs = this.getRows("billing_remote_cleanup_jobs");
+    const pending =
+      jobId !== null &&
+      currentJobs.some(
+        (row) => row.id === jobId && row.status !== "completed",
+      );
+    const updated: FakeRow = { ...subscription };
+
+    if (terminal) {
+      updated.checkout_locked_at = null;
+      updated.checkout_lease_token = null;
+      updated.cancel_reason = updated.cancel_reason ?? reason;
+      updated.remote_cleanup_pending = pending;
+    } else {
+      updated.status = "canceled";
+      updated.gateway_status = "inactive";
+      updated.cancel_at_period_end = false;
+      updated.canceled_at = updated.canceled_at ?? now;
+      updated.cancel_reason = updated.cancel_reason ?? reason;
+      updated.checkout_locked_at = null;
+      updated.checkout_lease_token = null;
+      updated.remote_cleanup_pending = pending;
+    }
+
+    updated.updated_at = now;
+
+    this.setRows(
+      "subscriptions",
+      subscriptions.map((row) =>
+        row.id === subscriptionId ? updated : row,
+      ),
+    );
+
+    return {
+      subscription_id: subscriptionId,
+      job_id: jobId,
+      status: updated.status,
+      gateway_subscription_id: updated.gateway_subscription_id ?? null,
+      remote_cleanup_pending: updated.remote_cleanup_pending,
+      already_terminal: terminal,
+    };
+  }
+
   hasTable(table: string): boolean {
     return this.tables.has(table);
+  }
+
+  /**
+   * Registra uma restrição unique (inclusive parcial) para que inserts e
+   * updates do fake se comportem como o PostgreSQL nos cenários de corrida.
+   * O fake não aplica as restrições sobre o seed nem sobre upserts.
+   */
+  addUniqueConstraint(
+    table: string,
+    columns: string[],
+    predicate?: (row: FakeRow) => boolean,
+  ) {
+    this.uniqueConstraints.push({ table, columns, predicate });
+  }
+
+  uniqueViolation(table: string, rows: FakeRow[]): FakeError | null {
+    for (const constraint of this.uniqueConstraints) {
+      if (constraint.table !== table) {
+        continue;
+      }
+
+      const seen = new Set<string>();
+
+      for (const row of rows) {
+        if (constraint.predicate && !constraint.predicate(row)) {
+          continue;
+        }
+
+        const values = constraint.columns.map((column) => row[column]);
+
+        // O PostgreSQL permite múltiplos NULLs em índices unique.
+        if (values.some((value) => value === undefined || value === null)) {
+          continue;
+        }
+
+        const key = JSON.stringify(values);
+
+        if (seen.has(key)) {
+          return {
+            code: "23505",
+            message: `Violação de unicidade simulada em ${table} (${constraint.columns.join(", ")}).`,
+          };
+        }
+
+        seen.add(key);
+      }
+    }
+
+    return null;
   }
 
   getRows(table: string): FakeRow[] {
@@ -297,6 +499,46 @@ export class FakeSupabase {
       operation,
     });
     this.failures.set(table, queue);
+  }
+
+  /**
+   * Falha apenas a próxima atualização cujo payload satisfaça o predicado.
+   * Permite simular uma falha depois do claim, mas antes de persistir o ID
+   * remoto ou antes de concluir a finalização.
+   */
+  failNextUpdateMatching(
+    table: string,
+    matches: (payload: FakeRow) => boolean,
+    code = "40001",
+  ) {
+    const queue = this.updateFailures.get(table) ?? [];
+    queue.push({
+      matches,
+      error: { code, message: "Falha simulada." },
+    });
+    this.updateFailures.set(table, queue);
+  }
+
+  takeUpdateFailure(table: string, payload: FakeRow): FakeError | null {
+    const queue = this.updateFailures.get(table);
+
+    if (!queue || queue.length === 0) {
+      return null;
+    }
+
+    const index = queue.findIndex((failure) => failure.matches(payload));
+
+    if (index < 0) {
+      return null;
+    }
+
+    const [failure] = queue.splice(index, 1);
+
+    if (queue.length === 0) {
+      this.updateFailures.delete(table);
+    }
+
+    return failure?.error ?? null;
   }
 
   takeFailure(
@@ -577,13 +819,41 @@ class FakeQuery implements PromiseLike<QueryResult> {
     if (this.operation === "insert") {
       const rows = this.mutableRows();
       const inserted = this.payload.map((row) => this.withId(row));
+      const violation = this.db.uniqueViolation(this.table, [
+        ...rows,
+        ...inserted,
+      ]);
+
+      if (violation) {
+        return { data: null, error: violation, count: null };
+      }
+
       rows.push(...inserted);
       return this.respond(inserted);
     }
 
     if (this.operation === "update") {
+      const updateFailure = this.db.takeUpdateFailure(
+        this.table,
+        this.payload[0] ?? {},
+      );
+
+      if (updateFailure) {
+        return { data: null, error: updateFailure, count: null };
+      }
+
       const rows = this.mutableRows();
       const matching = rows.filter((row) => matchesFilters(row, this.filters));
+      const proposed = rows.map((row) =>
+        matching.includes(row)
+          ? { ...row, ...(this.payload[0] ?? {}) }
+          : row,
+      );
+      const violation = this.db.uniqueViolation(this.table, proposed);
+
+      if (violation) {
+        return { data: null, error: violation, count: null };
+      }
 
       for (const row of matching) {
         Object.assign(row, this.payload[0]);
@@ -691,6 +961,13 @@ class FakeRpc implements PromiseLike<RpcResult> {
     if (this.name === "find_or_create_public_customer") {
       return {
         data: this.db.findOrCreateFakeCustomer(this.args),
+        error: null,
+      };
+    }
+
+    if (this.name === "cancel_subscription_with_cleanup") {
+      return {
+        data: this.db.cancelFakeSubscriptionWithCleanup(this.args),
         error: null,
       };
     }

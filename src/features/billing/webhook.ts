@@ -58,6 +58,14 @@ const processableSubscriptionEvents = new Set([
   "SUBSCRIPTION_DELETED",
 ]);
 
+// Somente estes eventos podem confirmar o pagamento e ativar o plano. Eventos
+// genéricos como PAYMENT_UPDATED podem carregar status "pago" no objeto de
+// pagamento, mas não são confirmação financeira suficiente para ativar.
+const paymentConfirmationEvents = new Set([
+  "PAYMENT_CONFIRMED",
+  "PAYMENT_RECEIVED",
+]);
+
 function toCents(value: number): number | null {
   const cents = Math.round(value * 100);
 
@@ -164,6 +172,16 @@ function statusFromEvent(event: string): PaymentStatus | null {
     default:
       return null;
   }
+}
+
+function canConfirmPayment(
+  event: string,
+  payment: AsaasWebhookPayment,
+): boolean {
+  return (
+    paymentConfirmationEvents.has(event) &&
+    payment.status.toUpperCase() !== "RECEIVED_IN_CASH"
+  );
 }
 
 function methodFromBillingType(
@@ -281,6 +299,7 @@ async function upsertPayment(
   event: string,
   subscription: SubscriptionRow,
   payment: AsaasWebhookPayment,
+  canConfirm: boolean,
 ): Promise<{ nextStatus: PaymentStatus; row: PaymentRow }> {
   const amountCents = toCents(payment.value);
 
@@ -288,10 +307,8 @@ async function upsertPayment(
     throw new BillingWebhookError("O evento trouxe um valor de pagamento inválido.");
   }
 
-  const nextStatus =
-    statusFromAsaasPayment(payment.status) ??
-    statusFromEvent(event) ??
-    "pending";
+  const paymentStatus = statusFromAsaasPayment(payment.status);
+  const eventStatus = statusFromEvent(event);
 
   const { data: existing, error } = await supabase
     .from("payments")
@@ -304,6 +321,20 @@ async function upsertPayment(
     throw new BillingWebhookError(
       "Não foi possível consultar o pagamento do evento.",
     );
+  }
+
+  let nextStatus = paymentStatus ?? eventStatus ?? "pending";
+
+  if (nextStatus === "paid" && !canConfirm) {
+    // Preserva estornos, cancelamentos e atrasos do próprio evento. Para os
+    // demais casos, mantém o estado existente e nunca promove a pago fora dos
+    // eventos de confirmação.
+    nextStatus =
+      eventStatus &&
+      eventStatus !== "paid" &&
+      eventStatus !== "pending"
+        ? eventStatus
+        : (existing?.status ?? "pending");
   }
 
   const dueDate = normalizedDate(payment.dueDate);
@@ -413,12 +444,17 @@ async function syncSubscriptionFromPayment(
   subscription: SubscriptionRow,
   payment: AsaasWebhookPayment,
   status: PaymentStatus,
+  canConfirm: boolean,
 ): Promise<void> {
   if (subscription.status === "canceled" || subscription.status === "expired") {
     return;
   }
 
   if (status === "paid") {
+    if (!canConfirm) {
+      return;
+    }
+
     const dueDate = normalizedDate(payment.dueDate);
     const { data: plan } = await supabase
       .from("plans")
@@ -561,11 +597,13 @@ async function applyPaymentEvent(
     return "ignored";
   }
 
+  const canConfirm = canConfirmPayment(event, payment);
   const { nextStatus } = await upsertPayment(
     supabase,
     event,
     subscription,
     payment,
+    canConfirm,
   );
 
   await syncSubscriptionFromPayment(
@@ -573,6 +611,7 @@ async function applyPaymentEvent(
     subscription,
     payment,
     nextStatus,
+    canConfirm,
   );
 
   return "processed";

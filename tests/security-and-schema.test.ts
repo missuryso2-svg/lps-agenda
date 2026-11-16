@@ -43,6 +43,7 @@ const tenantTables = [
   "subscriptions",
   "payments",
   "notifications",
+  "billing_remote_cleanup_jobs",
 ];
 
 const allTables = [
@@ -60,9 +61,157 @@ describe("migrações", () => {
     expect(migrationFiles.length).toBeGreaterThanOrEqual(7);
     expect(migrationFiles).toEqual([...migrationFiles].sort());
     expect(migrationFiles[0]).toMatch(/^20261108090000_/);
-    expect(migrationFiles.at(-1)).toMatch(
-      /subscription_cancel_reason\.sql$/,
+    expect(migrationFiles).toContain(
+      "20261115120000_subscription_cancel_reason.sql",
     );
+    expect(migrationFiles.at(-1)).toBe(
+      "20261115140000_billing_checkout_fencing_and_cleanup.sql",
+    );
+  });
+
+  it("mantém a migration de concorrência aditiva e sem índice redundante", () => {
+    const migration = read(
+      "supabase/migrations/20261115130000_subscription_checkout_concurrency.sql",
+    );
+    const billingAsaasMigration = read(
+      "supabase/migrations/20261114100100_billing_asaas.sql",
+    );
+
+    for (const column of [
+      "checkout_locked_at",
+      "checkout_attempted_at",
+      "checkout_attempts",
+      "checkout_error",
+      "remote_cleanup_pending",
+    ]) {
+      expect(migration).toContain(`add column if not exists ${column}`);
+    }
+
+    expect(migration).toContain("subscriptions_checkout_attempts_check");
+    expect(migration).toContain("subscriptions_checkout_error_length_check");
+    expect(migration).toContain("duplicated_shops");
+    expect(migration).toContain("raise exception");
+    expect(migration).toMatch(/transa[çc][ãa]o/i);
+    expect(migration).not.toContain(
+      "subscriptions_one_paid_pending_per_shop_idx",
+    );
+    expect(migration).not.toMatch(/\bcreate\s+(unique\s+)?index\b/i);
+    expect(migration).not.toMatch(/\bdelete\s+from\b/i);
+    expect(migration).not.toMatch(/\bdrop\s+(table|index)\b/i);
+
+    const alteredTables = Array.from(
+      migration.matchAll(/alter\s+table\s+public\.(\w+)/gi),
+      (match) => match[1],
+    );
+
+    expect(new Set(alteredTables)).toEqual(new Set(["subscriptions"]));
+    expect(billingAsaasMigration).toContain(
+      "where status in ('pending', 'trialing', 'active', 'past_due');",
+    );
+
+    for (const previous of [
+      "20261114100100_billing_asaas.sql",
+      "20261114100400_trial_operation.sql",
+      "20261115120000_subscription_cancel_reason.sql",
+    ]) {
+      expect(migrationFiles).toContain(previous);
+    }
+  });
+
+  it("adiciona fencing do checkout e outbox durável de compensação", () => {
+    const migration = read(
+      "supabase/migrations/20261115140000_billing_checkout_fencing_and_cleanup.sql",
+    );
+
+    expect(migration).toContain(
+      "add column if not exists checkout_lease_token uuid",
+    );
+    expect(migration).toContain(
+      "create table public.billing_remote_cleanup_jobs",
+    );
+
+    for (const column of [
+      "subscription_id",
+      "barbershop_id",
+      "provider",
+      "external_reference",
+      "gateway_subscription_id",
+      "status",
+      "attempts",
+      "locked_at",
+      "lease_token",
+      "next_attempt_at",
+      "last_error",
+      "created_at",
+      "updated_at",
+      "completed_at",
+    ]) {
+      expect(migration).toMatch(new RegExp(`^\\s+${column}\\b`, "m"));
+    }
+
+    for (const status of [
+      "pending",
+      "processing",
+      "retry",
+      "completed",
+      "manual_review",
+    ]) {
+      expect(migration).toContain(`'${status}'`);
+    }
+
+    expect(migration).toContain("billing_remote_cleanup_jobs_lease_check");
+    expect(migration).toContain("billing_remote_cleanup_jobs_completion_check");
+    expect(migration).toContain("billing_remote_cleanup_jobs_processing_check");
+    expect(migration).toContain(
+      "billing_remote_cleanup_jobs_one_open_per_subscription_idx",
+    );
+    expect(migration).toContain("where status <> 'completed'");
+    expect(migration).toContain("billing_remote_cleanup_jobs_due_idx");
+    expect(migration).toContain("billing_remote_cleanup_jobs_stale_idx");
+    expect(migration).toContain("billing_remote_cleanup_jobs_shop_idx");
+
+    expect(migration).toContain(
+      "alter table public.billing_remote_cleanup_jobs enable row level security;",
+    );
+    expect(migration).toContain(
+      "revoke all on table public.billing_remote_cleanup_jobs from authenticated;",
+    );
+    expect(migration).toContain(
+      "revoke all on table public.billing_remote_cleanup_jobs from anon;",
+    );
+    expect(migration).toMatch(
+      /grant select, insert, update, delete\s+on public\.billing_remote_cleanup_jobs to service_role;/,
+    );
+
+    expect(migration).toContain(
+      "create or replace function public.cancel_subscription_with_cleanup(",
+    );
+    expect(migration).toContain("security definer");
+    expect(migration).toContain("set search_path = ''");
+    expect(migration).toContain("from public.subscriptions s");
+    expect(migration).toContain(
+      "from public.billing_remote_cleanup_jobs j",
+    );
+    expect(migration).toContain("for update;");
+    expect(migration).toContain("when unique_violation then");
+    expect(migration).toContain("checkout_lease_token = null");
+    expect(migration).toContain("remote_cleanup_pending = v_pending");
+
+    expect(migration).toMatch(
+      /revoke all on function public\.cancel_subscription_with_cleanup\(uuid, uuid, text\)\s+from authenticated;/,
+    );
+    expect(migration).toMatch(
+      /grant execute on function public\.cancel_subscription_with_cleanup\(uuid, uuid, text\)\s+to service_role;/,
+    );
+
+    // O backfill converte sinais legados em jobs duráveis, sem remover dados.
+    expect(migration).toMatch(
+      /insert into public\.billing_remote_cleanup_jobs[\s\S]*where s\.remote_cleanup_pending = true/,
+    );
+
+    expect(migration).not.toMatch(/\bdelete\s+from\b/i);
+    expect(migration).not.toMatch(/\bdrop\s+(table|index|column)\b/i);
+    expect(migration).not.toContain("security invoker");
   });
 
   it("habilita RLS em todas as tabelas do schema public", () => {

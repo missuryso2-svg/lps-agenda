@@ -24,7 +24,8 @@ const fetchMock = vi.fn<typeof fetch>();
 beforeEach(() => {
   process.env.ASAAS_ENV = "sandbox";
   process.env.ASAAS_API_KEY = "sandbox-api-key";
-  process.env.ASAAS_WEBHOOK_TOKEN = "webhook-token-with-16-chars";
+  process.env.ASAAS_WEBHOOK_TOKEN =
+    "webhook-token-with-at-least-32-characters-9f3a";
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
 });

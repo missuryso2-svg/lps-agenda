@@ -17,9 +17,31 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+const isDevelopment = process.env.NODE_ENV === "development";
+
+function readTunnelHost(): string | undefined {
+  const value = process.env.CLOUDFLARE_TUNNEL_HOST?.trim().toLowerCase();
+
+  if (
+    !value ||
+    value.includes("*") ||
+    value.includes("/") ||
+    value.includes(":")
+  ) {
+    return undefined;
+  }
+
+  return value;
+}
+
+const tunnelHost = readTunnelHost();
+const devTunnelOrigins =
+  isDevelopment && tunnelHost ? [tunnelHost] : undefined;
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  ...(devTunnelOrigins ? { allowedDevOrigins: devTunnelOrigins } : {}),
   async headers() {
     return [
       {
@@ -36,6 +58,15 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  ...(devTunnelOrigins
+    ? {
+        experimental: {
+          serverActions: {
+            allowedOrigins: devTunnelOrigins,
+          },
+        },
+      }
+    : {}),
 };
 
 export default nextConfig;

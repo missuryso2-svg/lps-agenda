@@ -132,6 +132,12 @@ function useDb(seed: Record<string, FakeRow[]> = {}): FakeSupabase {
     ...seed,
   });
 
+  db.addUniqueConstraint(
+    "billing_remote_cleanup_jobs",
+    ["subscription_id"],
+    (row) => row.status !== "completed",
+  );
+
   state.db = db;
   return db;
 }
@@ -141,6 +147,41 @@ function useDb(seed: Record<string, FakeRow[]> = {}): FakeSupabase {
  * da leitura inicial do fluxo de cancelamento/troca, mas antes da atualização
  * condicional. A primeira leitura recebe um snapshot do estado antigo.
  */
+function expiredTrials(
+  count: number,
+  overrides: (index: number) => FakeRow = () => ({}),
+): { subscriptions: FakeRow[]; billing_customers: FakeRow[] } {
+  const base = new Date("2026-11-01T12:00:00.000Z").getTime();
+
+  return {
+    subscriptions: Array.from({ length: count }, (_, index) =>
+      trialRow({
+        id: `sub_${index}`,
+        external_reference: `ref_${index}`,
+        trial_ends_at: new Date(base + index * 60_000).toISOString(),
+        ...overrides(index),
+      }),
+    ),
+    // Todos os candidatos compartilham o mesmo pagador; o primeiro cria o
+    // cliente remoto e os demais reutilizam o vínculo já persistido.
+    billing_customers: [customerRow()],
+  };
+}
+
+function mockSuccessfulRemoteCreation(): void {
+  let counter = 0;
+
+  asaas.createAsaasSubscription.mockImplementation(async () => {
+    counter += 1;
+
+    return {
+      id: `sub_remote_${counter}`,
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+    };
+  });
+}
+
 function patchSubscriptionsAfterFirstRead(
   db: FakeSupabase,
   patch: FakeRow,
@@ -369,12 +410,24 @@ describe("início e operação do trial", () => {
       trial_finalization_locked_at: null,
     });
 
+    asaas.getAsaasSubscription.mockResolvedValue({
+      id: "sub_race",
+      status: "ACTIVE",
+      externalReference: EXTERNAL_REFERENCE,
+    });
+
     const result = await cancelSubscription({ barbershopId: SHOP_ID });
 
+    expect(asaas.getAsaasSubscription).toHaveBeenCalledWith("sub_race");
     expect(asaas.deleteAsaasSubscription).toHaveBeenCalledWith("sub_race");
     expect(db.getRows("subscriptions")[0]).toMatchObject({
       status: "canceled",
       gateway_status: "inactive",
+      remote_cleanup_pending: false,
+    });
+    expect(db.getRows("billing_remote_cleanup_jobs")[0]).toMatchObject({
+      status: "completed",
+      gateway_subscription_id: "sub_race",
     });
     expect(result.message).toContain("Assinatura cancelada");
   });
@@ -539,6 +592,243 @@ describe("finalização do trial", () => {
     });
   });
 
+  it("retoma finalização incompleta quando o ID remoto já foi persistido", async () => {
+    const db = useDb({
+      subscriptions: [
+        trialRow({
+          status: "pending",
+          trial_ends_at: "2026-11-21T12:00:00.000Z",
+          gateway_subscription_id: "sub_existing",
+          gateway_status: "active",
+          next_due_date: "2026-11-21",
+          trial_finalization_attempts: 1,
+        }),
+      ],
+      billing_customers: [customerRow({ gateway_customer_id: "cus_existing" })],
+    });
+
+    asaas.getAsaasSubscription.mockResolvedValue({
+      id: "sub_existing",
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+      externalReference: EXTERNAL_REFERENCE,
+    });
+
+    const summary = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 1,
+      claimed: 1,
+      created: 1,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(asaas.getAsaasSubscription).toHaveBeenCalledWith("sub_existing");
+    expect(asaas.listAsaasSubscriptionsByExternalReference).not.toHaveBeenCalled();
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "pending",
+      gateway_subscription_id: "sub_existing",
+      gateway_status: "active",
+      trial_finalized_at: "2026-11-22T12:00:00.000Z",
+      trial_finalization_attempts: 2,
+      trial_finalization_error: null,
+      trial_finalization_locked_at: null,
+    });
+  });
+
+  it("recupera por external_reference quando a criação remota venceu, mas o ID não foi salvo", async () => {
+    const db = useDb({
+      subscriptions: [trialRow()],
+      billing_customers: [customerRow()],
+    });
+
+    asaas.createAsaasSubscription.mockResolvedValue({
+      id: "sub_orphan",
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+    });
+    db.failNextUpdateMatching(
+      "subscriptions",
+      (payload) => payload.gateway_subscription_id === "sub_orphan",
+    );
+
+    const first = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(first).toMatchObject({
+      candidates: 1,
+      claimed: 1,
+      created: 0,
+      failed: 1,
+    });
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "pending",
+      gateway_subscription_id: null,
+      trial_finalized_at: null,
+      trial_finalization_locked_at: null,
+    });
+    expect(db.getRows("subscriptions")[0]?.trial_finalization_error).toContain(
+      "banco",
+    );
+
+    asaas.listAsaasSubscriptionsByExternalReference.mockResolvedValue([
+      {
+        id: "sub_orphan",
+        status: "ACTIVE",
+        nextDueDate: "2026-11-22",
+        externalReference: EXTERNAL_REFERENCE,
+      },
+    ]);
+
+    const second = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:01:00.000Z"),
+    });
+
+    expect(second).toMatchObject({ claimed: 1, created: 1, failed: 0 });
+    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(1);
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      gateway_subscription_id: "sub_orphan",
+      gateway_status: "active",
+      trial_finalized_at: "2026-11-22T12:01:00.000Z",
+      trial_finalization_attempts: 2,
+    });
+  });
+
+  it("retoma sem nova criação quando o ID remoto foi salvo e a conclusão local falhou", async () => {
+    const db = useDb({
+      subscriptions: [trialRow()],
+      billing_customers: [customerRow()],
+    });
+
+    asaas.createAsaasSubscription.mockResolvedValue({
+      id: "sub_saved",
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+    });
+    db.failNextUpdateMatching(
+      "subscriptions",
+      (payload) => typeof payload.trial_finalized_at === "string",
+    );
+
+    const first = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(first).toMatchObject({
+      candidates: 1,
+      claimed: 1,
+      created: 0,
+      failed: 1,
+    });
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "pending",
+      gateway_subscription_id: "sub_saved",
+      trial_finalized_at: null,
+      trial_finalization_locked_at: null,
+    });
+    expect(db.getRows("subscriptions")[0]?.trial_finalization_error).toContain(
+      "registrar a finalização",
+    );
+
+    asaas.getAsaasSubscription.mockResolvedValue({
+      id: "sub_saved",
+      status: "ACTIVE",
+      nextDueDate: "2026-11-22",
+      externalReference: EXTERNAL_REFERENCE,
+    });
+
+    const second = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:01:00.000Z"),
+    });
+
+    expect(second).toMatchObject({ claimed: 1, created: 1, failed: 0 });
+    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(1);
+    expect(asaas.getAsaasSubscription).toHaveBeenCalledWith("sub_saved");
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      gateway_subscription_id: "sub_saved",
+      gateway_status: "active",
+      trial_finalized_at: "2026-11-22T12:01:00.000Z",
+      trial_finalization_attempts: 2,
+      trial_finalization_error: null,
+    });
+  });
+
+  it("não conclui a finalização se a assinatura remota existente não puder ser confirmada", async () => {
+    const db = useDb({
+      subscriptions: [
+        trialRow({
+          status: "pending",
+          gateway_subscription_id: "sub_unverified",
+          gateway_status: "active",
+          trial_finalization_attempts: 1,
+        }),
+      ],
+      billing_customers: [customerRow({ gateway_customer_id: "cus_existing" })],
+    });
+
+    asaas.getAsaasSubscription.mockRejectedValue(
+      new AsaasError("timeout", "Tempo esgotado."),
+    );
+
+    const summary = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({ claimed: 1, created: 0, failed: 1 });
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(asaas.listAsaasSubscriptionsByExternalReference).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      gateway_subscription_id: "sub_unverified",
+      trial_finalized_at: null,
+      trial_finalization_locked_at: null,
+    });
+    expect(db.getRows("subscriptions")[0]?.trial_finalization_error).toContain(
+      "confirmar a assinatura existente",
+    );
+  });
+
+  it("adota a assinatura recuperada por external_reference quando o ID antigo não existe mais", async () => {
+    const db = useDb({
+      subscriptions: [
+        trialRow({
+          status: "pending",
+          gateway_subscription_id: "sub_stale",
+          gateway_status: "active",
+          trial_finalization_attempts: 1,
+        }),
+      ],
+      billing_customers: [customerRow({ gateway_customer_id: "cus_existing" })],
+    });
+
+    asaas.getAsaasSubscription.mockRejectedValue(
+      new AsaasError("not_found", "Assinatura não encontrada.", 404),
+    );
+    asaas.listAsaasSubscriptionsByExternalReference.mockResolvedValue([
+      {
+        id: "sub_current",
+        status: "ACTIVE",
+        nextDueDate: "2026-11-22",
+        externalReference: EXTERNAL_REFERENCE,
+      },
+    ]);
+
+    const summary = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({ claimed: 1, created: 1, failed: 0 });
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      gateway_subscription_id: "sub_current",
+      gateway_status: "active",
+      trial_finalized_at: "2026-11-22T12:00:00.000Z",
+    });
+  });
+
   it("registra falha temporária e reprocessa sem duplicar a cobrança", async () => {
     const db = useDb({
       subscriptions: [trialRow()],
@@ -653,5 +943,275 @@ describe("finalização do trial", () => {
 
     expect(asaas.deleteAsaasSubscription).not.toHaveBeenCalled();
     expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("ignora assinatura pending sem trial_ends_at", async () => {
+    const db = useDb({
+      subscriptions: [
+        trialRow({
+          status: "pending",
+          trial_started_at: null,
+          trial_ends_at: null,
+        }),
+      ],
+    });
+
+    const summary = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 0,
+      claimed: 0,
+      created: 0,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "pending",
+      trial_ends_at: null,
+      trial_finalized_at: null,
+      trial_finalization_attempts: 0,
+    });
+  });
+
+  it("ignora assinatura trialing sem trial_ends_at", async () => {
+    const db = useDb({
+      subscriptions: [
+        trialRow({
+          status: "trialing",
+          trial_started_at: null,
+          trial_ends_at: null,
+        }),
+      ],
+    });
+
+    const summary = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 0,
+      claimed: 0,
+      created: 0,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "trialing",
+      trial_ends_at: null,
+      trial_finalized_at: null,
+      trial_finalization_attempts: 0,
+    });
+  });
+
+  it("não reprocessa assinatura pending já finalizada", async () => {
+    const finalizedAt = "2026-11-21T12:00:00.000Z";
+    const db = useDb({
+      subscriptions: [
+        trialRow({
+          status: "pending",
+          trial_finalized_at: finalizedAt,
+          trial_finalization_attempts: 1,
+        }),
+      ],
+    });
+
+    const summary = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 0,
+      claimed: 0,
+      created: 0,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "pending",
+      trial_finalized_at: finalizedAt,
+      trial_finalization_attempts: 1,
+    });
+  });
+
+  it("usa 20 como limite padrão de candidatos", async () => {
+    const db = useDb(expiredTrials(25));
+
+    mockSuccessfulRemoteCreation();
+
+    const summary = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 20,
+      claimed: 20,
+      created: 20,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(summary.items).toHaveLength(20);
+    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(20);
+    expect(
+      db
+        .getRows("subscriptions")
+        .filter((row) => row.status === "trialing"),
+    ).toHaveLength(5);
+  });
+
+  it("respeita um limite explícito menor que o padrão", async () => {
+    const db = useDb(expiredTrials(10));
+
+    mockSuccessfulRemoteCreation();
+
+    const summary = await finalizeExpiredTrials({
+      limit: 3,
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 3,
+      claimed: 3,
+      created: 3,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(3);
+    expect(
+      db
+        .getRows("subscriptions")
+        .filter((row) => row.status === "trialing"),
+    ).toHaveLength(7);
+  });
+
+  it("eleva o limite mínimo para 1", async () => {
+    const db = useDb(expiredTrials(5));
+
+    mockSuccessfulRemoteCreation();
+
+    const summary = await finalizeExpiredTrials({
+      limit: 0,
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 1,
+      claimed: 1,
+      created: 1,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(1);
+    expect(
+      db
+        .getRows("subscriptions")
+        .filter((row) => row.status === "trialing"),
+    ).toHaveLength(4);
+  });
+
+  it("limita o lote máximo a 50 candidatos", async () => {
+    const db = useDb(expiredTrials(55));
+
+    mockSuccessfulRemoteCreation();
+
+    const summary = await finalizeExpiredTrials({
+      limit: 100,
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 50,
+      claimed: 50,
+      created: 50,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(50);
+    expect(
+      db
+        .getRows("subscriptions")
+        .filter((row) => row.status === "trialing"),
+    ).toHaveLength(5);
+  });
+
+  it("processa os candidatos em ordem crescente de trial_ends_at", async () => {
+    const db = useDb({
+      subscriptions: [
+        trialRow({
+          id: "sub_late",
+          external_reference: "ref_late",
+          trial_ends_at: "2026-11-21T12:00:00.000Z",
+        }),
+        trialRow({
+          id: "sub_early",
+          external_reference: "ref_early",
+          trial_ends_at: "2026-11-19T12:00:00.000Z",
+        }),
+        trialRow({
+          id: "sub_middle",
+          external_reference: "ref_middle",
+          trial_ends_at: "2026-11-20T12:00:00.000Z",
+        }),
+      ],
+      billing_customers: [customerRow()],
+    });
+
+    mockSuccessfulRemoteCreation();
+
+    const summary = await finalizeExpiredTrials({
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary.items.map((item) => item.subscriptionId)).toEqual([
+      "sub_early",
+      "sub_middle",
+      "sub_late",
+    ]);
+    expect(summary).toMatchObject({ candidates: 3, created: 3 });
+    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(3);
+    expect(
+      db.getRows("subscriptions").find((row) => row.id === "sub_early"),
+    ).toMatchObject({
+      trial_finalized_at: "2026-11-22T12:00:00.000Z",
+    });
+  });
+
+  it("processa somente 20 dos mais de 20 trials vencidos", async () => {
+    const db = useDb(expiredTrials(25));
+
+    mockSuccessfulRemoteCreation();
+
+    const summary = await finalizeExpiredTrials({
+      limit: 20,
+      now: new Date("2026-11-22T12:00:00.000Z"),
+    });
+
+    expect(summary).toMatchObject({
+      candidates: 20,
+      claimed: 20,
+      created: 20,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(20);
+
+    const rows = db.getRows("subscriptions");
+    const remaining = rows.filter((row) => row.status === "trialing");
+
+    expect(remaining).toHaveLength(5);
+    expect(remaining.map((row) => row.id).sort()).toEqual([
+      "sub_20",
+      "sub_21",
+      "sub_22",
+      "sub_23",
+      "sub_24",
+    ]);
+    expect(
+      rows.filter((row) => row.trial_finalized_at !== null),
+    ).toHaveLength(20);
   });
 });

@@ -106,12 +106,17 @@ function useDb(seed: Record<string, FakeRow[]> = {}) {
 beforeEach(() => {
   process.env.ASAAS_ENV = "sandbox";
   process.env.ASAAS_API_KEY = "sandbox-api-key";
-  process.env.ASAAS_WEBHOOK_TOKEN = "webhook-token-with-16-chars";
+  process.env.ASAAS_WEBHOOK_TOKEN =
+    "webhook-token-with-at-least-32-characters-9f3a";
 });
 
 describe("token e sanitização do webhook", () => {
   it("compara o token dedicado em tempo constante", () => {
-    expect(verifyAsaasWebhookToken("webhook-token-with-16-chars")).toBe(true);
+    expect(
+      verifyAsaasWebhookToken(
+        "webhook-token-with-at-least-32-characters-9f3a",
+      ),
+    ).toBe(true);
     expect(verifyAsaasWebhookToken("wrong-token")).toBe(false);
     expect(verifyAsaasWebhookToken(null)).toBe(false);
     expect(verifyAsaasWebhookToken("sandbox-api-key")).toBe(false);
@@ -202,8 +207,161 @@ describe("processamento idempotente dos eventos", () => {
     });
   });
 
+  it("registra PAYMENT_RECEIVED como pago e ativa a assinatura", async () => {
+    const db = useDb();
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_RECEIVED", {
+        status: "RECEIVED",
+        confirmedDate: "2026-11-15",
+      }),
+    );
+
+    expect(db.getRows("payments")[0]).toMatchObject({ status: "paid" });
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      current_period_start: "2026-11-15T12:00:00.000Z",
+      current_period_end: "2026-12-15T12:00:00.000Z",
+    });
+  });
+
+  it("ignora PAYMENT_RECEIVED_IN_CASH e não ativa a assinatura", async () => {
+    const db = useDb();
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_RECEIVED_IN_CASH", {
+        status: "RECEIVED_IN_CASH",
+      }),
+    );
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")).toHaveLength(0);
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("não ativa a assinatura em PAYMENT_UPDATED com RECEIVED_IN_CASH", async () => {
+    const db = useDb();
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_UPDATED", { status: "RECEIVED_IN_CASH" }),
+    );
+
+    expect(outcome).toBe("processed");
+    expect(db.getRows("payments")[0]).toMatchObject({ status: "pending" });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("não ativa a assinatura em PAYMENT_UPDATED com status CONFIRMED", async () => {
+    const db = useDb();
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_UPDATED", { status: "CONFIRMED" }),
+    );
+
+    expect(outcome).toBe("processed");
+    expect(db.getRows("payments")[0]).toMatchObject({ status: "pending" });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("mantém estorno de recebimento em dinheiro sem ativar a assinatura", async () => {
+    const db = useDb({
+      payments: [paymentRow()],
+      subscriptions: [subscriptionRow({ status: "active" })],
+    });
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_RECEIVED_IN_CASH_UNDONE", {
+        status: "RECEIVED_IN_CASH",
+      }),
+    );
+
+    expect(db.getRows("payments")[0]?.status).toBe("refunded");
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it("não ativa assinatura pendente com pagamento pago fora dos eventos de confirmação", async () => {
+    const db = useDb({
+      payments: [paymentRow()],
+      subscriptions: [subscriptionRow({ status: "pending" })],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_UPDATED", { status: "RECEIVED_IN_CASH" }),
+    );
+
+    expect(outcome).toBe("processed");
+    expect(db.getRows("payments")[0]?.status).toBe("paid");
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("não duplica pagamento quando PAYMENT_CREATED chega repetido", async () => {
+    const db = useDb();
+    const event = paymentEvent("PAYMENT_CREATED");
+
+    await processAsaasEvent(db as never, event);
+    await processAsaasEvent(db as never, event);
+
+    expect(db.getRows("payments")).toHaveLength(1);
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("não duplica pagamento nem período quando PAYMENT_CONFIRMED chega repetido", async () => {
+    const db = useDb();
+    const event = paymentEvent("PAYMENT_CONFIRMED", {
+      status: "CONFIRMED",
+      confirmedDate: "2026-11-15",
+    });
+
+    await processAsaasEvent(db as never, event);
+    await processAsaasEvent(db as never, event);
+
+    expect(db.getRows("payments")).toHaveLength(1);
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      current_period_start: "2026-11-15T12:00:00.000Z",
+      current_period_end: "2026-12-15T12:00:00.000Z",
+    });
+  });
+
+  it("permite retry após falha na ativação sem duplicar o pagamento", async () => {
+    const db = useDb();
+    const event = paymentEvent("PAYMENT_CONFIRMED", {
+      status: "CONFIRMED",
+      confirmedDate: "2026-11-15",
+    });
+
+    db.failNext("subscriptions", "XX000", "update");
+
+    await expect(processAsaasEvent(db as never, event)).rejects.toBeInstanceOf(
+      BillingWebhookError,
+    );
+
+    expect(db.getRows("payments")).toHaveLength(1);
+    expect(db.getRows("payments")[0]?.status).toBe("paid");
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+
+    await expect(processAsaasEvent(db as never, event)).resolves.toBe(
+      "processed",
+    );
+
+    expect(db.getRows("payments")).toHaveLength(1);
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      current_period_start: "2026-11-15T12:00:00.000Z",
+    });
+  });
+
   it("não regride pagamento pago quando um evento atrasado chega depois", async () => {
-    const db = useDb({ payments: [paymentRow()] });
+    const db = useDb({
+      payments: [paymentRow()],
+      subscriptions: [subscriptionRow({ status: "active" })],
+    });
 
     await processAsaasEvent(
       db as never,
@@ -212,6 +370,18 @@ describe("processamento idempotente dos eventos", () => {
 
     expect(db.getRows("payments")[0]?.status).toBe("paid");
     expect(db.getRows("subscriptions")[0]?.status).toBe("active");
+  });
+
+  it("não ativa assinatura pendente com evento atrasado de pagamento pago", async () => {
+    const db = useDb({ payments: [paymentRow()] });
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_OVERDUE", { status: "OVERDUE" }),
+    );
+
+    expect(db.getRows("payments")[0]?.status).toBe("paid");
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
   });
 
   it("não retrocede o período ativo com evento financeiro atrasado", async () => {

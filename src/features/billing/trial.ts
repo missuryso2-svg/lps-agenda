@@ -84,7 +84,6 @@ async function findCandidates(
       .from("subscriptions")
       .select("*")
       .eq("status", "pending")
-      .is("gateway_subscription_id", null)
       .is("trial_finalized_at", null)
       .lte("trial_ends_at", nowIso)
       .order("trial_ends_at", { ascending: true })
@@ -150,7 +149,6 @@ async function claimCandidate(
       .eq("id", candidate.id)
       .eq("status", "trialing")
       .lte("trial_ends_at", now.toISOString())
-      .is("gateway_subscription_id", null)
       .select("*")
       .maybeSingle();
 
@@ -171,7 +169,6 @@ async function claimCandidate(
     .update(payload)
     .eq("id", candidate.id)
     .eq("status", "pending")
-    .is("gateway_subscription_id", null)
     .is("trial_finalized_at", null)
     .is("trial_finalization_locked_at", null)
     .select("*")
@@ -195,7 +192,6 @@ async function claimCandidate(
     .update(payload)
     .eq("id", candidate.id)
     .eq("status", "pending")
-    .is("gateway_subscription_id", null)
     .is("trial_finalized_at", null)
     .lt("trial_finalization_locked_at", staleCutoff)
     .select("*")
@@ -277,18 +273,23 @@ function pricedPlan(plan: PlanRow, subscription: SubscriptionRow): PlanRow {
 async function markSuccess(
   supabase: Supabase,
   subscriptionId: string,
+  gatewaySubscriptionId: string,
   now: Date,
 ): Promise<void> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("subscriptions")
     .update({
       trial_finalized_at: now.toISOString(),
       trial_finalization_locked_at: null,
       trial_finalization_error: null,
     })
-    .eq("id", subscriptionId);
+    .eq("id", subscriptionId)
+    .eq("gateway_subscription_id", gatewaySubscriptionId)
+    .is("trial_finalized_at", null)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !data) {
     throw new BillingServiceError(
       "gateway",
       "A assinatura foi criada no Asaas, mas não foi possível registrar a finalização.",
@@ -307,7 +308,8 @@ async function markFailure(
       trial_finalization_locked_at: null,
       trial_finalization_error: failureMessage(error).slice(0, 500),
     })
-    .eq("id", subscriptionId);
+    .eq("id", subscriptionId)
+    .is("trial_finalized_at", null);
 }
 
 async function finalizeCandidate(
@@ -348,6 +350,18 @@ async function finalizeCandidate(
       );
     }
 
+    const gatewaySubscriptionId = updated.gateway_subscription_id;
+
+    if (
+      updated.gateway_status === "inactive" ||
+      updated.gateway_status === "expired"
+    ) {
+      throw new BillingServiceError(
+        "pending_confirmation",
+        "A assinatura existente no Asaas não está ativa. Verifique o painel antes de tentar novamente.",
+      );
+    }
+
     // Defesa contra cancelamento concorrente: se a barbearia cancelou enquanto
     // o Asaas criava a recorrência, remove a assinatura remota antes de
     // encerrar a finalização.
@@ -356,6 +370,13 @@ async function finalizeCandidate(
       .select("status, gateway_subscription_id")
       .eq("id", claimed.id)
       .maybeSingle();
+
+    if (current && current.gateway_subscription_id !== gatewaySubscriptionId) {
+      throw new BillingServiceError(
+        "pending_confirmation",
+        "O vínculo da assinatura mudou durante a finalização. Tente novamente em instantes.",
+      );
+    }
 
     if (
       current?.status === "canceled" ||
@@ -383,7 +404,12 @@ async function finalizeCandidate(
       };
     }
 
-    await markSuccess(supabase, claimed.id, now);
+    await markSuccess(
+      supabase,
+      claimed.id,
+      gatewaySubscriptionId,
+      now,
+    );
 
     return { ...base, outcome: "created" };
   } catch (error) {

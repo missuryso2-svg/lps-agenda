@@ -9,6 +9,37 @@ const serverEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url().optional(),
 });
 
+const simpleSequenceBase = "0123456789abcdefghijklmnopqrstuvwxyz";
+const simpleSequences = [
+  simpleSequenceBase.repeat(8),
+  [...simpleSequenceBase].reverse().join("").repeat(8),
+];
+
+/**
+ * O Asaas recusa tokens óbvios. Além de repetições, rejeitamos sequências
+ * contínuas do alfabeto alfanumérico, que são o caso mais comum de token fraco.
+ */
+function isSimpleWebhookToken(value: string): boolean {
+  if (/^(.{1,16})\1+$/.test(value)) {
+    return true;
+  }
+
+  const normalized = value.toLowerCase();
+
+  return simpleSequences.some((sequence) => sequence.includes(normalized));
+}
+
+const asaasWebhookTokenSchema = z
+  .string()
+  .min(32, "ASAAS_WEBHOOK_TOKEN deve ter entre 32 e 255 caracteres.")
+  .max(255, "ASAAS_WEBHOOK_TOKEN deve ter entre 32 e 255 caracteres.")
+  .refine((value) => !/\s/.test(value), {
+    message: "ASAAS_WEBHOOK_TOKEN não pode conter espaços em branco.",
+  })
+  .refine((value) => !isSimpleWebhookToken(value), {
+    message: "ASAAS_WEBHOOK_TOKEN não pode ser uma sequência simples.",
+  });
+
 /**
  * Nesta fase a integração só pode apontar para o Sandbox do Asaas.
  * Qualquer outro valor falha fechado para evitar cobrança real.
@@ -16,7 +47,7 @@ const serverEnvSchema = z.object({
 const asaasEnvSchema = z.object({
   ASAAS_ENV: z.literal("sandbox").default("sandbox"),
   ASAAS_API_KEY: z.string().trim().min(1),
-  ASAAS_WEBHOOK_TOKEN: z.string().trim().min(16),
+  ASAAS_WEBHOOK_TOKEN: asaasWebhookTokenSchema,
 });
 
 export type AsaasServerEnv = {

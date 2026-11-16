@@ -618,6 +618,8 @@ export type Database = {
           trial_finalization_attempts: number;
           trial_finalization_error: string | null;
           trial_finalized_at: string | null;
+          past_due_since: string | null;
+          grace_period_ends_at: string | null;
           checkout_locked_at: string | null;
           checkout_lease_token: string | null;
           checkout_attempted_at: string | null;
@@ -656,6 +658,8 @@ export type Database = {
           trial_finalization_attempts?: number;
           trial_finalization_error?: string | null;
           trial_finalized_at?: string | null;
+          past_due_since?: string | null;
+          grace_period_ends_at?: string | null;
           checkout_locked_at?: string | null;
           checkout_lease_token?: string | null;
           checkout_attempted_at?: string | null;
@@ -694,6 +698,8 @@ export type Database = {
           trial_finalization_attempts?: number;
           trial_finalization_error?: string | null;
           trial_finalized_at?: string | null;
+          past_due_since?: string | null;
+          grace_period_ends_at?: string | null;
           checkout_locked_at?: string | null;
           checkout_lease_token?: string | null;
           checkout_attempted_at?: string | null;
@@ -925,6 +931,10 @@ export type Database = {
           p_barbershop_id: string;
           p_cancel_reason?: string | null;
         };
+        Returns: Json;
+      };
+      get_barbershop_booking_access: {
+        Args: { p_barbershop_id: string };
         Returns: Json;
       };
     };

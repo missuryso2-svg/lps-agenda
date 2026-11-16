@@ -243,8 +243,40 @@ function actionSeed(overrides: Record<string, FakeRow[]> = {}) {
 
 function setupDb(seed: Record<string, FakeRow[]> = baseSeed()): FakeSupabase {
   const db = new FakeSupabase(seed);
+  db.setRpcHandler("get_barbershop_booking_access", () => ({
+    allowed: true,
+    state: "normal",
+    subscription_status: null,
+    past_due_since: null,
+    grace_period_ends_at: null,
+    seconds_remaining: null,
+  }));
   state.db = db;
   return db;
+}
+
+function setBookingBlocked(db: FakeSupabase, shopId = SHOP_A): void {
+  db.setRpcHandler("get_barbershop_booking_access", (args) => {
+    if (args.p_barbershop_id !== shopId) {
+      return {
+        allowed: true,
+        state: "normal",
+        subscription_status: null,
+        past_due_since: null,
+        grace_period_ends_at: null,
+        seconds_remaining: null,
+      };
+    }
+
+    return {
+      allowed: false,
+      state: "blocked",
+      subscription_status: "past_due",
+      past_due_since: "2026-11-10T12:00:00.000Z",
+      grace_period_ends_at: "2026-11-13T12:00:00.000Z",
+      seconds_remaining: null,
+    };
+  });
 }
 
 function bookingInput(overrides: Record<string, unknown> = {}) {
@@ -300,6 +332,17 @@ describe("página pública de agendamento", () => {
     const result = await loadPublicBookingPageData(client(db), SLUG_A, NOW);
 
     expect(result.status).toBe("inactive");
+  });
+
+  it("mostra página pública genérica quando a tolerância terminou", async () => {
+    const db = setupDb();
+    setBookingBlocked(db);
+
+    const result = await loadPublicBookingPageData(client(db), SLUG_A, NOW);
+
+    expect(result).toEqual({ status: "booking_blocked" });
+    expect(JSON.stringify(result)).not.toContain("past_due");
+    expect(JSON.stringify(result)).not.toContain("grace_period");
   });
 
   it("retorna erro genérico quando a leitura falha", async () => {
@@ -364,6 +407,26 @@ describe("página pública de agendamento", () => {
 });
 
 describe("disponibilidade pública", () => {
+  it("não expõe horários quando novas reservas estão bloqueadas", async () => {
+    const db = setupDb();
+    setBookingBlocked(db);
+
+    const result = await loadPublicAvailability({
+      supabase: client(db),
+      slug: SLUG_A,
+      serviceId: SERVICE_A1,
+      barberId: BARBER_A1,
+      date: DATE,
+      now: NOW,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      message: expect.stringContaining("temporariamente indisponíveis"),
+    });
+    expect(JSON.stringify(result)).not.toContain("past_due");
+  });
+
   it("recusa barbearia inexistente e inativa", async () => {
     const missing = setupDb(baseSeed({ barbershops: [] }));
     const first = await loadPublicAvailability({
@@ -394,7 +457,7 @@ describe("disponibilidade pública", () => {
 
     expect(second.ok).toBe(false);
     if (!second.ok) {
-      expect(second.message).toContain("não está aceitando");
+      expect(second.message).toContain("temporariamente indisponíveis");
     }
   });
 
@@ -599,6 +662,25 @@ describe("criação de reserva pública", () => {
     }
     expect(db.getRows("appointments")).toHaveLength(0);
     expect(db.getRows("customers")).toHaveLength(1);
+  });
+
+  it("traduz bloqueio do trigger do banco sem expor a situação financeira", async () => {
+    const db = setupDb();
+    db.failNext("appointments", "P0001", "insert");
+
+    const result = await createPublicBooking({
+      supabase: client(db),
+      input: bookingInput(),
+      now: NOW,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "booking_blocked",
+      message: expect.stringContaining("temporariamente indisponíveis"),
+    });
+    expect(JSON.stringify(result)).not.toContain("past_due");
+    expect(db.getRows("appointments")).toHaveLength(0);
   });
 
   it("não aceita serviço de outra barbearia", async () => {
@@ -1066,6 +1148,22 @@ describe("actions públicas e rate limiting", () => {
       phone: "11987654321",
       email: "ana@exemplo.com",
     });
+  });
+
+  it("bloqueia chamada direta à action pública sem criar cliente nem reserva", async () => {
+    const db = setupDb(baseSeed({ appointments: [] }));
+    setBookingBlocked(db);
+
+    const result = await createPublicBookingAction(actionBookingInput());
+
+    expect(result.status).toBe("error");
+    if (result.status === "error") {
+      expect(result.message).toContain("temporariamente indisponíveis");
+      expect(result.message).not.toContain("past_due");
+      expect(result.message).not.toContain("pagamento");
+    }
+    expect(db.getRows("appointments")).toHaveLength(0);
+    expect(db.getRows("customers")).toHaveLength(1);
   });
 
   it("ignora tenant, preço e duração injetados no payload da action", async () => {

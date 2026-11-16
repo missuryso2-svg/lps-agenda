@@ -65,7 +65,7 @@ describe("migrações", () => {
       "20261115120000_subscription_cancel_reason.sql",
     );
     expect(migrationFiles.at(-1)).toBe(
-      "20261116100000_billing_concurrency_hardening.sql",
+      "20261116120000_subscription_booking_grace_period.sql",
     );
   });
 
@@ -235,6 +235,37 @@ describe("migrações", () => {
     );
     expect(migration).toMatch(
       /grant execute on function public\.cancel_subscription_with_cleanup\(uuid, uuid, text\)\s+to service_role;/,
+    );
+  });
+
+  it("persiste a tolerância de 72h e protege inserts e reagendamentos no banco", () => {
+    const migration = read(
+      "supabase/migrations/20261116120000_subscription_booking_grace_period.sql",
+    );
+
+    expect(migration).toContain(
+      "add column if not exists past_due_since timestamptz",
+    );
+    expect(migration).toContain(
+      "add column if not exists grace_period_ends_at timestamptz",
+    );
+    expect(migration).toContain("v_transition_time timestamptz := clock_timestamp()");
+    expect(migration).toContain("interval '72 hours'");
+    expect(migration).toContain("create or replace function private.set_subscription_past_due_grace()");
+    expect(migration).toContain("old.status = 'past_due'");
+    expect(migration).toContain("new.past_due_since := null");
+    expect(migration).toContain("new.grace_period_ends_at := null");
+    expect(migration).toContain("create or replace function public.get_barbershop_booking_access(");
+    expect(migration).toContain("v_now timestamptz := clock_timestamp()");
+    expect(migration).toContain("create or replace function private.enforce_appointment_booking_grace()");
+    expect(migration).toContain("for share");
+    expect(migration).toContain("before insert or update on public.appointments");
+    expect(migration).toContain("using errcode = 'P0001'");
+    expect(migration).toMatch(
+      /revoke all on function public\.get_barbershop_booking_access\(uuid\)\s+from authenticated;/,
+    );
+    expect(migration).toMatch(
+      /grant execute on function public\.get_barbershop_booking_access\(uuid\)\s+to service_role;/,
     );
   });
 

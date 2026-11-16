@@ -257,6 +257,7 @@ export function AgendaBoard({
   options,
   initialCustomers,
   canManage,
+  canCreateAppointments,
   today,
   openNewOnMount = false,
 }: {
@@ -264,6 +265,7 @@ export function AgendaBoard({
   options: SchedulingOptions;
   initialCustomers: CustomerOption[];
   canManage: boolean;
+  canCreateAppointments: boolean;
   today: string;
   openNewOnMount?: boolean;
 }) {
@@ -293,12 +295,16 @@ export function AgendaBoard({
       : `${weekdayLabel(selectedWeekday)} · ${formatDateOnlyBR(data.date)}`;
 
   const openNew = () => {
+    if (!canCreateAppointments) {
+      return;
+    }
+
     setNewKey((value) => value + 1);
     setNewOpen(true);
   };
 
   const handleNewOpenChange = (open: boolean) => {
-    setNewOpen(open);
+    setNewOpen(open && canCreateAppointments);
 
     if (!open && openNewOnMount) {
       router.replace(
@@ -447,6 +453,7 @@ export function AgendaBoard({
                 variant="gold"
                 className="h-9"
                 onClick={openNew}
+                disabled={!canCreateAppointments}
               >
                 <Plus className="size-4" />
                 Novo agendamento
@@ -483,7 +490,7 @@ export function AgendaBoard({
             title="Nenhum profissional ativo"
             description="Ative ou cadastre profissionais para visualizar a agenda diária e os horários disponíveis."
             action={
-              canManage ? (
+              canCreateAppointments ? (
                 <Button type="button" variant="gold" onClick={openNew}>
                   <CalendarPlus className="size-4" />
                   Novo agendamento
@@ -574,7 +581,7 @@ export function AgendaBoard({
 
       <NewAppointmentDialog
         key={`new-appointment-${newKey}`}
-        open={newOpen}
+        open={newOpen && canCreateAppointments}
         onOpenChange={handleNewOpenChange}
         options={options}
         initialCustomers={initialCustomers}
@@ -586,6 +593,7 @@ export function AgendaBoard({
       <AppointmentDetailsDialog
         appointment={selected}
         timeZone={data.timeZone}
+        canCreateAppointments={canCreateAppointments}
         onOpenChange={(open) => {
           if (!open) {
             setSelected(null);

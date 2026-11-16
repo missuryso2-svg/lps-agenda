@@ -62,6 +62,7 @@ export type PublicBookingPageResult =
   | { status: "ready"; data: PublicBookingPageData }
   | { status: "not_found" }
   | { status: "inactive" }
+  | { status: "booking_blocked" }
   | { status: "error" };
 
 export type PublicReservation = {
@@ -97,6 +98,7 @@ export type PublicBookingActionResult =
 export type PublicBookingFailureCode =
   | "not_found"
   | "inactive"
+  | "booking_blocked"
   | "invalid_date"
   | "unavailable"
   | "customer"

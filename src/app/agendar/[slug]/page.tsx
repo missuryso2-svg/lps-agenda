@@ -99,6 +99,15 @@ export default async function PublicBookingPage({
     );
   }
 
+  if (result.status === "booking_blocked") {
+    return (
+      <PublicMessagePage
+        title="Agendamentos temporariamente indisponíveis"
+        description="No momento não é possível criar novas reservas online. Entre em contato diretamente com a barbearia."
+      />
+    );
+  }
+
   if (result.status === "error") {
     return (
       <PublicMessagePage

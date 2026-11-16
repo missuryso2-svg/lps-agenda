@@ -26,6 +26,7 @@ import {
   type AvailabilityActionResult,
   type CustomerSearchResult,
 } from "@/features/scheduling/types";
+import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import {
   loadAvailability,
   searchCustomerOptions,
@@ -40,6 +41,10 @@ const genericError =
 
 const unavailableSlotMessage =
   "O horário selecionado não está mais disponível. Atualize os horários e escolha outra opção.";
+const bookingBlockedMessage =
+  "Novos agendamentos estão bloqueados por uma pendência da assinatura. Acesse Plano e assinatura para regularizar o pagamento.";
+const bookingAccessUnavailableMessage =
+  "Não foi possível verificar se a barbearia pode aceitar novos agendamentos. Tente novamente.";
 
 const DEFAULT_TIME_ZONE = "America/Sao_Paulo";
 
@@ -70,6 +75,8 @@ function appointmentMutationMessage(error: { code?: string } | null): string {
       return "Cliente, serviço ou profissional não pertencem a esta barbearia.";
     case "23514":
       return "O período do agendamento não respeita os limites permitidos.";
+    case "P0001":
+      return bookingBlockedMessage;
     case "42501":
       return "Você não tem permissão para alterar a agenda desta barbearia.";
     default:
@@ -102,6 +109,16 @@ export async function createAppointmentAction(
   const barbershopId = authorization.context.active.barbershop_id;
   const timeZone = shopTimeZone(authorization.context);
   const supabase = await createClient();
+
+  try {
+    const access = await getBarbershopBookingAccess(barbershopId);
+
+    if (!access.allowed) {
+      return actionError(bookingBlockedMessage);
+    }
+  } catch {
+    return actionError(bookingAccessUnavailableMessage);
+  }
 
   const customerPromise = supabase
     .from("customers")
@@ -226,6 +243,16 @@ export async function rescheduleAppointmentAction(
     return actionError(
       `Um agendamento ${statusLabels[appointment.status]} não pode ser reagendado.`,
     );
+  }
+
+  try {
+    const access = await getBarbershopBookingAccess(barbershopId);
+
+    if (!access.allowed) {
+      return actionError(bookingBlockedMessage);
+    }
+  } catch {
+    return actionError(bookingAccessUnavailableMessage);
   }
 
   const availability = await loadAvailability({

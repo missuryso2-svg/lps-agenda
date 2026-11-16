@@ -72,12 +72,14 @@ function actionVariant(action: AppointmentAction) {
 export function AppointmentDetailsDialog({
   appointment,
   timeZone,
+  canCreateAppointments,
   onOpenChange,
   onCancelRequest,
   onRescheduleRequest,
 }: {
   appointment: AgendaAppointment | null;
   timeZone: string;
+  canCreateAppointments: boolean;
   onOpenChange: (open: boolean) => void;
   onCancelRequest: (appointment: AgendaAppointment) => void;
   onRescheduleRequest: (appointment: AgendaAppointment) => void;
@@ -94,7 +96,8 @@ export function AppointmentDetailsDialog({
   }
 
   const actions = allowedAppointmentActions(appointment.status);
-  const rescheduleAllowed = canRescheduleAppointment(appointment.status);
+  const rescheduleAllowed =
+    canCreateAppointments && canRescheduleAppointment(appointment.status);
 
   const runAction = (action: AppointmentAction) => {
     if (action === "cancel") {

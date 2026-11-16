@@ -31,6 +31,8 @@ function subscriptionRow(overrides: FakeRow = {}): FakeRow {
     trial_finalization_locked_at: null,
     trial_finalization_lease_token: null,
     trial_finalized_at: null,
+    past_due_since: null,
+    grace_period_ends_at: null,
     cancel_at_period_end: false,
     gateway: "asaas",
     gateway_subscription_id: "sub_123",
@@ -106,6 +108,41 @@ function useDb(seed: Record<string, FakeRow[]> = {}) {
     ],
     subscriptions: [subscriptionRow()],
     ...seed,
+  });
+}
+
+function installPastDueGraceTrigger(
+  db: FakeSupabase,
+  databaseNow: () => Date,
+): void {
+  db.setUpdateHook("subscriptions", (current, payload) => {
+    const nextStatus = payload.status ?? current.status;
+
+    if (nextStatus !== "past_due") {
+      return {
+        ...payload,
+        past_due_since: null,
+        grace_period_ends_at: null,
+      };
+    }
+
+    const startedAt =
+      current.status === "past_due" && typeof current.past_due_since === "string"
+        ? current.past_due_since
+        : databaseNow().toISOString();
+    const existingEnd =
+      current.status === "past_due" &&
+      typeof current.grace_period_ends_at === "string"
+        ? current.grace_period_ends_at
+        : null;
+
+    return {
+      ...payload,
+      past_due_since: startedAt,
+      grace_period_ends_at:
+        existingEnd ??
+        new Date(new Date(startedAt).getTime() + 72 * 60 * 60 * 1000).toISOString(),
+    };
   });
 }
 
@@ -557,6 +594,102 @@ describe("processamento idempotente dos eventos", () => {
 
     expect(db.getRows("payments")[0]?.status).toBe("refunded");
     expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it("webhook duplicado preserva o início e o fim da tolerância", async () => {
+    let databaseNow = new Date("2026-11-16T12:00:00.000Z");
+    const db = useDb({
+      payments: [paymentRow({ status: "pending", paid_at: null })],
+      subscriptions: [subscriptionRow({ status: "active" })],
+    });
+    installPastDueGraceTrigger(db, () => databaseNow);
+    const overdue = paymentEvent("PAYMENT_OVERDUE", {
+      status: "OVERDUE",
+      dueDate: "2026-11-15",
+    });
+
+    await processAsaasEvent(db as never, overdue);
+    const first = db.getRows("subscriptions")[0];
+
+    expect(first).toMatchObject({
+      status: "past_due",
+      past_due_since: databaseNow.toISOString(),
+      grace_period_ends_at: new Date(
+        databaseNow.getTime() + 72 * 60 * 60 * 1000,
+      ).toISOString(),
+    });
+
+    databaseNow = new Date(databaseNow.getTime() + 30 * 60 * 1000);
+    await processAsaasEvent(db as never, overdue);
+
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "past_due",
+      past_due_since: first?.past_due_since,
+      grace_period_ends_at: first?.grace_period_ends_at,
+    });
+  });
+
+  it("confirma pagamento, ativa a assinatura e encerra a tolerância", async () => {
+    const db = useDb({
+      payments: [paymentRow({ status: "overdue", paid_at: null })],
+      subscriptions: [
+        subscriptionRow({
+          status: "past_due",
+          past_due_since: "2026-11-14T12:00:00.000Z",
+          grace_period_ends_at: "2026-11-17T12:00:00.000Z",
+        }),
+      ],
+    });
+    installPastDueGraceTrigger(
+      db,
+      () => new Date("2026-11-17T12:00:01.000Z"),
+    );
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_CONFIRMED", {
+        status: "CONFIRMED",
+        confirmedDate: "2026-11-17",
+      }),
+    );
+
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      past_due_since: null,
+      grace_period_ends_at: null,
+    });
+  });
+
+  it("inicia uma nova tolerância para uma inadimplência posterior", async () => {
+    const databaseNow = new Date("2026-11-20T12:00:00.000Z");
+    const db = useDb({
+      payments: [paymentRow({ status: "paid" })],
+      subscriptions: [
+        subscriptionRow({
+          status: "active",
+          past_due_since: null,
+          grace_period_ends_at: null,
+        }),
+      ],
+    });
+    installPastDueGraceTrigger(db, () => databaseNow);
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_OVERDUE", {
+        id: "pay_next_period",
+        status: "OVERDUE",
+        dueDate: "2026-12-15",
+      }),
+    );
+
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "past_due",
+      past_due_since: databaseNow.toISOString(),
+      grace_period_ends_at: new Date(
+        databaseNow.getTime() + 72 * 60 * 60 * 1000,
+      ).toISOString(),
+    });
   });
 
   it("recupera a assinatura pelo externalReference quando o vínculo remoto falta", async () => {

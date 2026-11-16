@@ -40,6 +40,8 @@ type UniqueConstraint = {
   predicate?: (row: FakeRow) => boolean;
 };
 
+type FakeUpdateHook = (current: FakeRow, payload: FakeRow) => FakeRow;
+
 type RpcResult = {
   data: unknown;
   error: FakeError | null;
@@ -173,6 +175,7 @@ export class FakeSupabase {
   private rpcFailures = new Map<string, FakeError[]>();
   private rateLimitCounters = new Map<string, number>();
   private uniqueConstraints: UniqueConstraint[] = [];
+  private updateHooks = new Map<string, FakeUpdateHook>();
 
   constructor(seed: Record<string, FakeRow[]> = {}) {
     for (const [table, rows] of Object.entries(seed)) {
@@ -190,6 +193,15 @@ export class FakeSupabase {
 
   setRpcHandler(name: string, handler: RpcHandler) {
     this.rpcHandlers.set(name, handler);
+  }
+
+  setUpdateHook(table: string, hook: FakeUpdateHook) {
+    this.updateHooks.set(table, hook);
+  }
+
+  applyUpdateHook(table: string, current: FakeRow, payload: FakeRow): FakeRow {
+    const hook = this.updateHooks.get(table);
+    return hook ? hook({ ...current }, { ...payload }) : { ...payload };
   }
 
   failNextRpc(name: string, code = "PGRST202") {
@@ -850,11 +862,20 @@ class FakeQuery implements PromiseLike<QueryResult> {
 
       const rows = this.mutableRows();
       const matching = rows.filter((row) => matchesFilters(row, this.filters));
-      const proposed = rows.map((row) =>
-        matching.includes(row)
-          ? { ...row, ...(this.payload[0] ?? {}) }
-          : row,
-      );
+      const updates = new Map<FakeRow, FakeRow>();
+      const proposed = rows.map((row) => {
+        if (!matching.includes(row)) {
+          return row;
+        }
+
+        const update = this.db.applyUpdateHook(
+          this.table,
+          row,
+          this.payload[0] ?? {},
+        );
+        updates.set(row, update);
+        return { ...row, ...update };
+      });
       const violation = this.db.uniqueViolation(this.table, proposed);
 
       if (violation) {
@@ -862,7 +883,7 @@ class FakeQuery implements PromiseLike<QueryResult> {
       }
 
       for (const row of matching) {
-        Object.assign(row, this.payload[0]);
+        Object.assign(row, updates.get(row) ?? this.payload[0] ?? {});
       }
 
       return this.respond(matching);

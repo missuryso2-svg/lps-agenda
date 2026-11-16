@@ -7,6 +7,7 @@ import {
   isDateWithinPublicWindow,
   publicBookingDateWindow,
 } from "@/features/public-booking/constants";
+import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import {
   findPublicShop,
   type PublicShopLookup,
@@ -26,7 +27,7 @@ const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const shopUnavailableMessage =
-  "Esta barbearia não está aceitando agendamentos online agora.";
+  "Agendamentos estão temporariamente indisponíveis. Entre em contato diretamente com a barbearia.";
 
 const genericError =
   "Não foi possível concluir a reserva agora. Tente novamente em instantes.";
@@ -79,6 +80,12 @@ export async function loadPublicAvailability({
 
   const shop = shopLookup.shop;
 
+  const bookingAccess = await getBarbershopBookingAccess(shop.id, supabase);
+
+  if (!bookingAccess.allowed) {
+    return { ok: false, message: shopUnavailableMessage };
+  }
+
   if (!isDateWithinPublicWindow(date, shop.timezone, now)) {
     const { min, max } = publicBookingDateWindow(shop.timezone, now);
 
@@ -107,7 +114,10 @@ export async function loadPublicAvailability({
 
 function insertErrorMessage(
   error: { code?: string } | null,
-): { code: "conflict" | "token" | "error"; message: string } {
+): {
+  code: "conflict" | "token" | "booking_blocked" | "error";
+  message: string;
+} {
   if (error?.code === "23P01") {
     return {
       code: "conflict",
@@ -121,6 +131,13 @@ function insertErrorMessage(
       code: "token",
       message:
         "Não foi possível gerar o código desta reserva. Tente novamente.",
+    };
+  }
+
+  if (error?.code === "P0001") {
+    return {
+      code: "booking_blocked",
+      message: shopUnavailableMessage,
     };
   }
 
@@ -158,6 +175,16 @@ export async function createPublicBooking({
   }
 
   const shop = shopLookup.shop;
+
+  const bookingAccess = await getBarbershopBookingAccess(shop.id, supabase);
+
+  if (!bookingAccess.allowed) {
+    return {
+      ok: false,
+      code: "booking_blocked",
+      message: shopUnavailableMessage,
+    };
+  }
 
   if (!isDateWithinPublicWindow(input.date, shop.timezone, now)) {
     const { min, max } = publicBookingDateWindow(shop.timezone, now);

@@ -19,6 +19,7 @@ import {
   getInitialCustomerOptions,
   getSchedulingOptions,
 } from "@/features/scheduling/queries";
+import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import {
   isCurrentUserPlatformAdmin,
   requireDashboardContext,
@@ -57,7 +58,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
   const view = params.view === "week" ? "week" : "day";
   const barberId = (params.barber ?? "").trim().slice(0, 64) || null;
 
-  const [data, options, customers] = await Promise.all([
+  const [data, options, customers, bookingAccess] = await Promise.all([
     getAgendaPageData({
       barbershopId: shop.id,
       timeZone,
@@ -67,11 +68,13 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
     }),
     getSchedulingOptions(shop.id),
     getInitialCustomerOptions(shop.id),
+    getBarbershopBookingAccess(shop.id).catch(() => null),
   ]);
 
   const canManage =
     canOperateShop(context.active.role) ||
     isCurrentUserPlatformAdmin(context.user);
+  const canCreateAppointments = canManage && bookingAccess?.allowed === true;
 
   const visibleAppointments =
     data.view === "week"
@@ -151,6 +154,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
         options={options}
         initialCustomers={customers}
         canManage={canManage}
+        canCreateAppointments={canCreateAppointments}
         today={today}
         openNewOnMount={params.new === "1"}
       />

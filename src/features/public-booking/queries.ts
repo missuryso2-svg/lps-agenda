@@ -4,6 +4,7 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { publicBookingDateWindow } from "@/features/public-booking/constants";
+import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import type {
   PublicBarber,
   PublicBarbershop,
@@ -159,6 +160,15 @@ export async function loadPublicBookingPageData(
 
   if (shopLookup.status !== "ok") {
     return { status: shopLookup.status };
+  }
+
+  const bookingAccess = await getBarbershopBookingAccess(
+    shopLookup.shop.id,
+    supabase,
+  );
+
+  if (!bookingAccess.allowed) {
+    return { status: "booking_blocked" };
   }
 
   const [servicesResult, barbersResult, assignmentsResult, hoursResult] =

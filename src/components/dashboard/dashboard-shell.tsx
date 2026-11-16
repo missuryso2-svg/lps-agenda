@@ -258,11 +258,11 @@ export function DashboardShell({
         <div className="rounded-xl border border-gold/20 bg-gold-soft/35 p-3">
           <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground">
             <Sparkles className="size-3 text-gold" />
-            Fundação v0.1
+            Plano e pagamentos
           </div>
           <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-            Cobrança inativa. Assinaturas e pagamentos serão conectados na
-            próxima etapa.
+            Acompanhe a assinatura da plataforma e regularize pagamentos
+            pendentes.
           </p>
           {canManage ? (
             <Link
@@ -270,7 +270,7 @@ export function DashboardShell({
               onClick={() => mobile && setMobileOpen(false)}
               className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-foreground underline decoration-gold/50 underline-offset-4 hover:text-gold"
             >
-              Ver estrutura do plano
+              Ver plano e pagamentos
             </Link>
           ) : null}
         </div>

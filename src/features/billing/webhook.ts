@@ -446,6 +446,33 @@ async function upsertPayment(
   return { nextStatus, row: inserted };
 }
 
+async function hasLaterPaidPayment(
+  supabase: Supabase,
+  subscriptionId: string,
+  dueDate: string | null,
+): Promise<boolean> {
+  if (!dueDate) {
+    return false;
+  }
+
+  const { data, error } = await supabase
+    .from("payments")
+    .select("id")
+    .eq("subscription_id", subscriptionId)
+    .eq("status", "paid")
+    .gte("due_date", dueDate)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new BillingWebhookError(
+      "Não foi possível verificar pagamentos posteriores da assinatura.",
+    );
+  }
+
+  return Boolean(data);
+}
+
 async function syncSubscriptionFromPayment(
   supabase: Supabase,
   subscription: SubscriptionRow,
@@ -520,6 +547,16 @@ async function syncSubscriptionFromPayment(
       subscription.status === "pending" ||
       subscription.status === "active"
     ) {
+      if (
+        await hasLaterPaidPayment(
+          supabase,
+          subscription.id,
+          normalizedDate(payment.dueDate),
+        )
+      ) {
+        return;
+      }
+
       const { error } = await supabase
         .from("subscriptions")
         .update({ status: "past_due" })
@@ -537,21 +574,14 @@ async function syncSubscriptionFromPayment(
   }
 
   if (status === "overdue") {
-    const dueDate = normalizedDate(payment.dueDate);
-
-    if (dueDate) {
-      const { data: laterPaid } = await supabase
-        .from("payments")
-        .select("id")
-        .eq("subscription_id", subscription.id)
-        .eq("status", "paid")
-        .gte("due_date", dueDate)
-        .limit(1)
-        .maybeSingle();
-
-      if (laterPaid) {
-        return;
-      }
+    if (
+      await hasLaterPaidPayment(
+        supabase,
+        subscription.id,
+        normalizedDate(payment.dueDate),
+      )
+    ) {
+      return;
     }
 
     const { error } = await supabase
@@ -573,6 +603,16 @@ async function syncSubscriptionFromPayment(
     status === "refunded" &&
     (subscription.status === "active" || subscription.status === "trialing")
   ) {
+    if (
+      await hasLaterPaidPayment(
+        supabase,
+        subscription.id,
+        normalizedDate(payment.dueDate),
+      )
+    ) {
+      return;
+    }
+
     const { error } = await supabase
       .from("subscriptions")
       .update({ status: "past_due" })

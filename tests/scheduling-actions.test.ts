@@ -33,6 +33,9 @@ vi.mock("@/lib/auth/dal", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => state.db),
 }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(() => state.db),
+}));
 
 import {
   cancelAppointmentAction,
@@ -186,8 +189,27 @@ function baseSeed(overrides: Record<string, FakeRow[]> = {}) {
 
 function setupDb(seed: Record<string, FakeRow[]> = baseSeed()): FakeSupabase {
   const fake = new FakeSupabase(seed);
+  fake.setRpcHandler("get_barbershop_booking_access", () => ({
+    allowed: true,
+    state: "normal",
+    subscription_status: "active",
+    past_due_since: null,
+    grace_period_ends_at: null,
+    seconds_remaining: null,
+  }));
   state.db = fake;
   return fake;
+}
+
+function setBookingBlocked(db: FakeSupabase): void {
+  db.setRpcHandler("get_barbershop_booking_access", () => ({
+    allowed: false,
+    state: "blocked",
+    subscription_status: "past_due",
+    past_due_since: "2026-11-10T12:00:00.000Z",
+    grace_period_ends_at: "2026-11-13T12:00:00.000Z",
+    seconds_remaining: null,
+  }));
 }
 
 function booking(overrides: Record<string, unknown> = {}) {
@@ -236,6 +258,48 @@ describe("criação de agendamentos", () => {
       notes: "Cliente prefere máquina 2",
       created_by: USER_A,
     });
+  });
+
+  it("bloqueia Server Action chamada diretamente quando a tolerância expirou", async () => {
+    const db = setupDb();
+    setBookingBlocked(db);
+
+    const result = await createAppointmentAction(booking());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("bloqueados");
+    expect(db.getRows("appointments")).toHaveLength(0);
+  });
+
+  it("traduz bloqueio do trigger do banco e não grava a reserva", async () => {
+    const db = setupDb();
+    db.failNext("appointments", "P0001", "insert");
+
+    const result = await createAppointmentAction(booking());
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("bloqueados");
+    expect(db.getRows("appointments")).toHaveLength(0);
+  });
+
+  it("consulta a autorização com o tenant derivado da sessão", async () => {
+    const db = setupDb();
+    let checkedShopId: unknown = null;
+    db.setRpcHandler("get_barbershop_booking_access", (args) => {
+      checkedShopId = args.p_barbershop_id;
+      return {
+        allowed: true,
+        state: "normal",
+        subscription_status: "active",
+        past_due_since: null,
+        grace_period_ends_at: null,
+        seconds_remaining: null,
+      };
+    });
+
+    await createAppointmentAction(booking());
+
+    expect(checkedShopId).toBe(SHOP_A);
   });
 
   it("rejeita cliente inexistente ou inativo sem gravar", async () => {
@@ -654,6 +718,7 @@ describe("transições de status", () => {
 
   it("cancela com motivo, preserva o histórico e libera o horário", async () => {
     const db = setupDb(baseSeed({ appointments: [appointmentRow()] }));
+    setBookingBlocked(db);
 
     const result = await cancelAppointmentAction(APPOINTMENT_A1, {
       reason: "Cliente pediu para remarcar",
@@ -745,6 +810,22 @@ describe("reagendamento", () => {
       service_id: SERVICE_A1,
       barber_id: BARBER_A1,
     });
+  });
+
+  it("bloqueia o reagendamento para um novo horário após o fim da tolerância", async () => {
+    const db = setupDb(
+      baseSeed({ appointments: [appointmentRow({ status: "confirmed" })] }),
+    );
+    setBookingBlocked(db);
+
+    const result = await rescheduleAppointmentAction(APPOINTMENT_A1, {
+      date: DATE,
+      time: "15:00",
+    });
+
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("bloqueados");
+    expect(db.getRows("appointments")[0]?.starts_at).toBe(at(DATE, "14:00"));
   });
 
   it("rejeita reagendamento para horário ocupado e preserva o registro", async () => {

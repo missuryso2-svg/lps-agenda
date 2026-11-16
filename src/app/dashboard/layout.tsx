@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 
+import { BookingAccessNotice } from "@/components/dashboard/booking-access-notice";
 import { ConfigRequiredPage } from "@/components/config-required-page";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
+import type { BarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import { isCurrentUserPlatformAdmin, requireDashboardContext } from "@/lib/auth/dal";
 import { getSupabasePublicEnv } from "@/lib/env/public";
 
@@ -36,6 +39,14 @@ export default async function DashboardLayout({
 
   const context = await requireDashboardContext();
   const { user, profile, memberships, active } = context;
+  let bookingAccess: BarbershopBookingAccess | null = null;
+  let bookingAccessCheckFailed = false;
+
+  try {
+    bookingAccess = await getBarbershopBookingAccess(active.barbershop_id);
+  } catch {
+    bookingAccessCheckFailed = true;
+  }
 
   const displayName =
     profile?.full_name?.trim() ||
@@ -61,6 +72,12 @@ export default async function DashboardLayout({
       role={active.role}
       isPlatformAdmin={isCurrentUserPlatformAdmin(user)}
     >
+      <BookingAccessNotice
+        access={bookingAccess}
+        checkFailed={bookingAccessCheckFailed}
+        canManageBilling={active.role === "owner"}
+        timeZone={active.barbershop.timezone || "America/Sao_Paulo"}
+      />
       {children}
     </DashboardShell>
   );

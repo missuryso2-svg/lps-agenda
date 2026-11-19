@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 
 import { isAsaasConfigured } from "@/lib/env/server";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +12,24 @@ import type {
   BillingPlan,
   BillingSubscriptionView,
 } from "./types";
+
+const manualPlanSchema = z.object({
+  plan: z.string().nullable(),
+  trial_start: z.string().nullable(),
+  trial_end: z.string().nullable(),
+  days_left: z.number().int().min(0).max(7),
+  trial_state: z.enum(["running", "canceled", "ended"]).nullable(),
+  next_step: z.literal("contact_lps"),
+  access: z.enum(["normal", "grace", "blocked"]),
+  reason: z.string(),
+});
+
+export async function getOwnerManualPlan(shop: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_owner_manual_trial", { p_shop: shop });
+  if (error) throw new Error("Não foi possível consultar o plano.");
+  return data === null ? null : manualPlanSchema.parse(data);
+}
 
 const currentSubscriptionStatuses = [
   "pending",

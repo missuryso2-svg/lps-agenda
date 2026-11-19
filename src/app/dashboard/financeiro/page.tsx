@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Wallet,
 } from "lucide-react";
+import { getOwnerManualPlan } from "@/features/billing/queries";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -59,7 +60,8 @@ export default async function FinancialPage() {
   const context = await requireOwnerDashboardContext();
   const shop = context.active.barbershop;
   const financial = await getFinancialOverview(shop.id, shop.timezone);
-  const subscription = financial.subscription;
+  const manual = context.active.role === "owner" ? await getOwnerManualPlan(shop.id) : null;
+  const subscription = manual ? null : financial.subscription;
 
   return (
     <div className="space-y-7">
@@ -117,9 +119,9 @@ export default async function FinancialPage() {
         />
         <StatCard
           label="Assinatura"
-          value={subscription?.plan?.name ?? "Sem plano"}
+          value={manual?.plan ?? subscription?.plan?.name ?? "Sem plano"}
           hint={
-            subscription
+            manual ? "Assinatura manual" : subscription
               ? "Mensalidade do LPS Agenda"
               : "Sem plano contratado"
           }
@@ -223,7 +225,7 @@ export default async function FinancialPage() {
         </NoticeCard>
         <NoticeCard icon={LockKeyhole} title="Nenhuma chave no navegador">
           A cobrança da assinatura usa exclusivamente variáveis de servidor.
-          Nenhuma chave do Asaas ou do Supabase administrativo é enviada ao
+          Nenhuma credencial administrativa é enviada ao
           cliente.
         </NoticeCard>
       </div>

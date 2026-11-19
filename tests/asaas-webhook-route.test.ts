@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FakeSupabase, type FakeRow } from "./helpers/fake-supabase";
+import { installFakeAsaasPaymentTransitionRpc } from "./helpers/fake-asaas-payment-transition";
 
 vi.mock("server-only", () => ({}));
 
@@ -113,6 +114,7 @@ function useDb(seed: Record<string, FakeRow[]> = {}) {
     ...seed,
   });
 
+  installFakeAsaasPaymentTransitionRpc(db);
   state.db = db;
 
   return db;

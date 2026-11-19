@@ -67,6 +67,16 @@ function revalidateAppointments() {
   revalidatePath("/dashboard", "layout");
 }
 
+async function bookingRestriction(barbershopId: string): Promise<string | null> {
+  try {
+    const access = await getBarbershopBookingAccess(barbershopId);
+    if (access.allowed) return null;
+    return access.manual ? "Novos horários indisponíveis. Consulte Plano e assinatura." : bookingBlockedMessage;
+  } catch {
+    return bookingAccessUnavailableMessage;
+  }
+}
+
 function appointmentMutationMessage(error: { code?: string } | null): string {
   switch (error?.code) {
     case "23P01":
@@ -76,7 +86,7 @@ function appointmentMutationMessage(error: { code?: string } | null): string {
     case "23514":
       return "O período do agendamento não respeita os limites permitidos.";
     case "P0001":
-      return bookingBlockedMessage;
+      return "Novos agendamentos estão bloqueados. Consulte Plano e assinatura.";
     case "42501":
       return "Você não tem permissão para alterar a agenda desta barbearia.";
     default:
@@ -110,15 +120,8 @@ export async function createAppointmentAction(
   const timeZone = shopTimeZone(authorization.context);
   const supabase = await createClient();
 
-  try {
-    const access = await getBarbershopBookingAccess(barbershopId);
-
-    if (!access.allowed) {
-      return actionError(bookingBlockedMessage);
-    }
-  } catch {
-    return actionError(bookingAccessUnavailableMessage);
-  }
+  const blocked = await bookingRestriction(barbershopId);
+  if (blocked) return actionError(blocked);
 
   const customerPromise = supabase
     .from("customers")
@@ -245,15 +248,8 @@ export async function rescheduleAppointmentAction(
     );
   }
 
-  try {
-    const access = await getBarbershopBookingAccess(barbershopId);
-
-    if (!access.allowed) {
-      return actionError(bookingBlockedMessage);
-    }
-  } catch {
-    return actionError(bookingAccessUnavailableMessage);
-  }
+  const blocked = await bookingRestriction(barbershopId);
+  if (blocked) return actionError(blocked);
 
   const availability = await loadAvailability({
     supabase,
@@ -462,6 +458,8 @@ export async function getAppointmentAvailabilityAction(
 
   const barbershopId = authorization.context.active.barbershop_id;
   const supabase = await createClient();
+  const blocked = await bookingRestriction(barbershopId);
+  if (blocked) return { status: "error", message: blocked };
   let excludeAppointmentId: string | undefined;
 
   if (parsed.data.excludeAppointmentId) {

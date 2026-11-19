@@ -572,6 +572,15 @@ describe("criação de agendamentos", () => {
 });
 
 describe("consulta de disponibilidade e clientes", () => {
+  it("oculta horários quando o trial manual terminou", async () => {
+    const db = setupDb();
+    db.setRpcHandler("get_barbershop_booking_access", () => ({
+      allowed: false, state: "blocked", manual: true, reason: "trial_ended", subscription_status: "trialing",
+    }));
+    const result = await getAppointmentAvailabilityAction({ serviceId: SERVICE_A1, barberId: BARBER_A1, date: DATE });
+    expect(result).toMatchObject({ status: "error", message: expect.stringContaining("Plano e assinatura") });
+  });
+
   it("retorna os horários livres reais do profissional", async () => {
     setupDb();
 
@@ -730,12 +739,12 @@ describe("transições de status", () => {
       cancel_reason: "Cliente pediu para remarcar",
     });
 
-    const availability = await getAppointmentAvailabilityAction({
-      serviceId: SERVICE_A1,
-      barberId: BARBER_A1,
-      date: DATE,
-    });
-
+    const query = { serviceId: SERVICE_A1, barberId: BARBER_A1, date: DATE };
+    expect((await getAppointmentAvailabilityAction(query)).status).toBe("error");
+    db.setRpcHandler("get_barbershop_booking_access", () => ({
+      allowed: true, state: "normal", subscription_status: "active",
+    }));
+    const availability = await getAppointmentAvailabilityAction(query);
     expect(availability.status).toBe("success");
     if (availability.status === "success") {
       expect(

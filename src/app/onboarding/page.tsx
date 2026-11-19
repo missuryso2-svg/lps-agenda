@@ -9,6 +9,7 @@ import { ConfigRequiredPage } from "@/components/config-required-page";
 import { getMemberships } from "@/lib/auth/dal";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getSupabasePublicEnv } from "@/lib/env/public";
+import { manualTrialOnboardingEnabled } from "@/lib/env/server";
 import { OnboardingForm } from "@/features/onboarding/components/onboarding-form";
 
 export const metadata: Metadata = {
@@ -157,7 +158,7 @@ export default async function OnboardingPage() {
             </span>
           </div>
 
-          <OnboardingForm />
+          <OnboardingForm manualUserId={manualTrialOnboardingEnabled() ? user.id : null} />
 
           <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
             Já tem uma barbearia?

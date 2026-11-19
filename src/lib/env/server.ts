@@ -2,6 +2,10 @@ import "server-only";
 
 import { z } from "zod";
 
+export function manualTrialOnboardingEnabled(): boolean {
+  return process.env.MANUAL_TRIAL_ONBOARDING_ENABLED === "true";
+}
+
 const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z
     .string()

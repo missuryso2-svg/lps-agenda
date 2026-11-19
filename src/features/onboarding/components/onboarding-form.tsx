@@ -37,7 +37,7 @@ const timezones = [
   { value: "America/Noronha", label: "Fernando de Noronha (GMT-2)" },
 ];
 
-export function OnboardingForm() {
+export function OnboardingForm({ manualUserId }: { manualUserId: string | null }) {
   const form = useForm<CreateBarbershopInput>({
     resolver: zodResolver(createBarbershopSchema),
     defaultValues: {
@@ -63,9 +63,22 @@ export function OnboardingForm() {
 
   const onSubmit = (values: CreateBarbershopInput) => {
     setServerError(null);
+    let intent: string | undefined;
+    if (manualUserId) {
+      // This tab retains a registration attempt across reloads/lost responses.
+      // A different slug starts a distinct shop registration. No contact data is stored.
+      try {
+        const key = `lps.onboarding.${manualUserId}.${values.slug}`;
+        intent = sessionStorage.getItem(key) ?? crypto.randomUUID();
+        sessionStorage.setItem(key, intent);
+      } catch {
+        setServerError("Permita o armazenamento nesta aba para recuperar o cadastro com segurança.");
+        return;
+      }
+    }
 
     startTransition(async () => {
-      const result = await createBarbershopAction(values);
+      const result = await createBarbershopAction(values, intent);
 
       if (result?.status === "error") {
         setServerError(result.message ?? "Não foi possível criar a barbearia.");

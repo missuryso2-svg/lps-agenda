@@ -98,7 +98,7 @@ export function BookingAccessNotice({
         {canManageBilling ? (
           <span className="ml-1">
             <Link href="/dashboard/plano" className="underline underline-offset-2">
-              Regularizar pagamento
+              Plano e assinatura
             </Link>
           </span>
         ) : null}
@@ -116,13 +116,15 @@ export function BookingAccessNotice({
       }
       tone="warning"
     >
-      {canManageBilling
+      {access.manual && access.reason !== "past_due"
+        ? "A assinatura não tem cobertura vigente. As reservas anteriores continuam disponíveis."
+        : canManageBilling
         ? "O período de tolerância do pagamento terminou. Os dados e agendamentos existentes continuam disponíveis; regularize a assinatura para liberar novas reservas."
         : "Os dados existentes continuam disponíveis. Entre em contato com o proprietário da barbearia para liberar novas reservas."}
       {canManageBilling ? (
         <span className="ml-1">
           <Link href="/dashboard/plano" className="underline underline-offset-2">
-            Regularizar pagamento
+            Plano e assinatura
           </Link>
         </span>
       ) : null}

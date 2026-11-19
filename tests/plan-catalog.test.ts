@@ -244,8 +244,9 @@ describe("limites no servidor", () => {
     const limit = read("src/features/barbers/plan-limit.ts");
     const actions = read("src/features/barbers/actions.ts");
 
-    expect(limit).toContain('.from("subscriptions")');
-    expect(limit).toContain('.from("plans")');
+    expect(limit).toContain('.rpc("get_shop_professional_limit"');
+    const access = read("supabase/migrations/20261118140000_manual_trial_access.sql");
+    expect(access).toContain("from public.subscriptions s join public.plans p");
     expect(limit).toContain("max_barbers");
     expect(actions).toContain("validateBarberLimit");
     expect(actions).toContain("getPlanBarberLimit");

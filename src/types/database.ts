@@ -599,6 +599,17 @@ export type Database = {
       };
       subscriptions: {
         Row: {
+          invoice_link_key: string;
+          agreement_at: string | null;
+          coverage_starts_at: string | null;
+          first_competence: string | null;
+          first_due_at: string | null;
+          renewal_anchor_day: number | null;
+          due_anchor_day: number | null;
+          due_month_offset: number | null;
+          due_local_time: string | null;
+          contract_timezone: string | null;
+          agreement_terms: string | null;
           id: string;
           barbershop_id: string;
           plan_id: string;
@@ -639,6 +650,17 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          invoice_link_key?: string;
+          agreement_at?: string | null;
+          coverage_starts_at?: string | null;
+          first_competence?: string | null;
+          first_due_at?: string | null;
+          renewal_anchor_day?: number | null;
+          due_anchor_day?: number | null;
+          due_month_offset?: number | null;
+          due_local_time?: string | null;
+          contract_timezone?: string | null;
+          agreement_terms?: string | null;
           id?: string;
           barbershop_id: string;
           plan_id: string;
@@ -679,6 +701,17 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          invoice_link_key?: string;
+          agreement_at?: string | null;
+          coverage_starts_at?: string | null;
+          first_competence?: string | null;
+          first_due_at?: string | null;
+          renewal_anchor_day?: number | null;
+          due_anchor_day?: number | null;
+          due_month_offset?: number | null;
+          due_local_time?: string | null;
+          contract_timezone?: string | null;
+          agreement_terms?: string | null;
           id?: string;
           barbershop_id?: string;
           plan_id?: string;
@@ -722,6 +755,16 @@ export type Database = {
       };
       payments: {
         Row: {
+          invoice_link_key: string;
+          competence: string | null;
+          original_amount_cents: number | null;
+          adjustment_cents: number | null;
+          adjustment_reason: string | null;
+          due_at: string | null;
+          due_timezone: string | null;
+          verified_at: string | null;
+          verified_by: string | null;
+          receipt_reference: string | null;
           id: string;
           barbershop_id: string;
           subscription_id: string | null;
@@ -740,6 +783,16 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          invoice_link_key?: string;
+          competence?: string | null;
+          original_amount_cents?: number | null;
+          adjustment_cents?: number | null;
+          adjustment_reason?: string | null;
+          due_at?: string | null;
+          due_timezone?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
+          receipt_reference?: string | null;
           id?: string;
           barbershop_id: string;
           subscription_id?: string | null;
@@ -758,6 +811,16 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          invoice_link_key?: string;
+          competence?: string | null;
+          original_amount_cents?: number | null;
+          adjustment_cents?: number | null;
+          adjustment_reason?: string | null;
+          due_at?: string | null;
+          due_timezone?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
+          receipt_reference?: string | null;
           id?: string;
           barbershop_id?: string;
           subscription_id?: string | null;
@@ -860,6 +923,7 @@ export type Database = {
       };
       audit_logs: {
         Row: {
+          extension_link_key: string | null;
           id: string;
           barbershop_id: string | null;
           actor_user_id: string | null;
@@ -871,6 +935,7 @@ export type Database = {
           created_at: string;
         };
         Insert: {
+          extension_link_key?: string | null;
           id?: string;
           barbershop_id?: string | null;
           actor_user_id?: string | null;
@@ -882,6 +947,7 @@ export type Database = {
           created_at?: string;
         };
         Update: {
+          extension_link_key?: string | null;
           id?: string;
           barbershop_id?: string | null;
           actor_user_id?: string | null;
@@ -899,6 +965,25 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      authorize_manual_trial_intent: {
+        Args: { p_actor: string; p_intent_id: string; p_name: string; p_slug: string; p_phone: string | null; p_timezone: string };
+        Returns: undefined;
+      };
+      get_owner_manual_trial: { Args: { p_shop: string }; Returns: Json };
+      get_shop_professional_limit: {
+        Args: { p_shop: string };
+        Returns: { plan_name: string; max_barbers: number | null }[];
+      };
+      create_barbershop_with_manual_trial: {
+        Args: {
+          p_intent_id: string;
+          p_name: string;
+          p_slug: string;
+          p_phone?: string | null;
+          p_timezone?: string;
+        };
+        Returns: string;
+      };
       create_barbershop: {
         Args: {
           p_name: string;
@@ -936,6 +1021,31 @@ export type Database = {
       get_barbershop_booking_access: {
         Args: { p_barbershop_id: string };
         Returns: Json;
+      };
+      sync_subscription_from_asaas_payment: {
+        Args: { p_payment_id: string };
+        Returns: boolean;
+      };
+      apply_asaas_payment_transition: {
+        Args: {
+          p_barbershop_id: string;
+          p_subscription_id: string;
+          p_gateway_payment_id: string;
+          p_amount_cents: number;
+          p_status: Database["public"]["Enums"]["payment_status"];
+          p_method: Database["public"]["Enums"]["payment_method"] | null;
+          p_due_date: string | null;
+          p_paid_at: string | null;
+          p_invoice_url: string | null;
+          p_metadata: Json;
+          p_expected_status:
+            | Database["public"]["Enums"]["payment_status"]
+            | null;
+          p_expected_updated_at: string | null;
+          p_expected_metadata: Json | null;
+          p_sync_subscription: boolean;
+        };
+        Returns: string | null;
       };
     };
     Enums: {

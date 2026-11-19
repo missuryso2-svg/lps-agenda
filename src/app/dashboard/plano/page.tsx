@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { BillingManager } from "@/features/billing/components/billing-manager";
-import { getBillingPageData } from "@/features/billing/queries";
+import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
+import { getBillingPageData, getOwnerManualPlan } from "@/features/billing/queries";
 import { requireOwnerDashboardContext } from "@/lib/auth/dal";
 
 export const metadata: Metadata = {
@@ -13,8 +14,29 @@ export const metadata: Metadata = {
 export default async function PlanPage() {
   const context = await requireOwnerDashboardContext();
   const shop = context.active.barbershop;
-  const data = await getBillingPageData(shop.id);
   const canManage = context.active.role === "owner";
+  if (!canManage && (await getBarbershopBookingAccess(shop.id)).manual) {
+    return <PageHeader title="Plano e assinatura" description="Consulte o proprietário para informações sobre a assinatura." />;
+  }
+  const manual = canManage ? await getOwnerManualPlan(shop.id) : null;
+  if (manual) {
+    const format = (value: string) => new Intl.DateTimeFormat("pt-BR", {
+      timeZone: shop.timezone, dateStyle: "short", timeStyle: "short",
+    }).format(new Date(value));
+    const days = manual.days_left === 1 ? "1 dia restante" : `${manual.days_left} dias restantes`;
+    const trialLabel = manual.trial_state === "running" ? "Teste gratuito" :
+      manual.trial_state === "canceled" ? "Teste cancelado" : "Teste encerrado";
+    return (
+      <section className="space-y-4">
+        <PageHeader eyebrow="Plano e assinatura" title={manual.plan ?? "Assinatura manual"}
+          description={manual.trial_state ? `${trialLabel} · ${days}` : "Assinatura manual"} />
+        {manual.trial_start && manual.trial_end && <p>Período de teste de {format(manual.trial_start)} até {format(manual.trial_end)}.</p>}
+        {manual.access === "blocked" && <p>Novos agendamentos estão bloqueados. Sua agenda e as reservas anteriores continuam disponíveis para consulta.</p>}
+        <p>Combine a contratação e o pagamento diretamente com a LPS Solutions. Não há cobrança automática.</p>
+      </section>
+    );
+  }
+  const data = await getBillingPageData(shop.id);
 
   return (
     <div className="space-y-7">

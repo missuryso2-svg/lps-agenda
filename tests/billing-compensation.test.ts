@@ -193,6 +193,17 @@ beforeEach(() => {
 });
 
 describe("outbox de compensação remota (P3-E)", () => {
+  it("isola jobs antigos ou incompatíveis em uma assinatura manual", async () => {
+    const db = createDb({ subscriptions: [subscriptionRow({ gateway: "manual_pix" })],
+      billing_remote_cleanup_jobs: [jobRow()] });
+    await expect(registerRemoteCleanupCandidate(db as never, {
+      subscriptionId: SUBSCRIPTION_ID, barbershopId: SHOP_ID, externalReference: EXTERNAL_REFERENCE,
+    })).rejects.toThrow("Asaas");
+    await processRemoteCleanupJobs(processOptions(db));
+    expect(db.getRows("billing_remote_cleanup_jobs")[0]?.status).toBe("manual_review");
+    for (const remote of Object.values(asaas)) expect(remote).not.toHaveBeenCalled();
+  });
+
   it("registra um job durável e deduplica chamadas da mesma contratação", async () => {
     const db = createDb({ subscriptions: [subscriptionRow()] });
 

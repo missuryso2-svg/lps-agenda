@@ -64,9 +64,12 @@ describe("migrações", () => {
     expect(migrationFiles).toContain(
       "20261115120000_subscription_cancel_reason.sql",
     );
-    expect(migrationFiles.at(-1)).toBe(
-      "20261116120000_subscription_booking_grace_period.sql",
-    );
+    expect(migrationFiles.slice(-4)).toEqual([
+      "20261117120000_asaas_payment_transition_guard.sql",
+      "20261118120000_manual_billing_foundation.sql",
+      "20261118130000_manual_trial_onboarding.sql",
+      "20261118140000_manual_trial_access.sql",
+    ]);
   });
 
   it("mantém a migration de concorrência aditiva e sem índice redundante", () => {
@@ -369,13 +372,14 @@ describe("migrações", () => {
 });
 
 describe("ambiente e segredos", () => {
-  it("mantém exatamente as oito variáveis no .env.example, sem valores", () => {
+  it("documenta as variáveis e mantém o onboarding manual desligado", () => {
     const lines = read(".env.example").trim().split(/\r?\n/);
 
     expect(lines).toEqual([
       "NEXT_PUBLIC_SUPABASE_URL=",
       "NEXT_PUBLIC_SUPABASE_ANON_KEY=",
       "SUPABASE_SERVICE_ROLE_KEY=",
+      "MANUAL_TRIAL_ONBOARDING_ENABLED=false",
       "ASAAS_ENV=sandbox",
       "ASAAS_API_KEY=",
       "ASAAS_WEBHOOK_TOKEN=",
@@ -823,6 +827,9 @@ describe("assinatura do SaaS via Asaas Sandbox", () => {
   const billingMigration = read(
     "supabase/migrations/20261114100100_billing_asaas.sql",
   );
+  const paymentTransitionMigration = read(
+    "supabase/migrations/20261117120000_asaas_payment_transition_guard.sql",
+  );
   const billingActions = read("src/features/billing/actions.ts");
   const billingService = read("src/features/billing/service.ts");
   const billingWebhook = read("src/features/billing/webhook.ts");
@@ -1007,8 +1014,15 @@ describe("assinatura do SaaS via Asaas Sandbox", () => {
     expect(billingWebhook).toContain('case "PAYMENT_CONFIRMED"');
     expect(billingWebhook).toContain('case "PAYMENT_RECEIVED"');
     expect(billingWebhook).toMatch(
-      /if \(status === "paid"\)[\s\S]*?status: "active"/,
+      /function canConfirmPayment[\s\S]*?event === "PAYMENT_CONFIRMED" && status === "CONFIRMED"[\s\S]*?event === "PAYMENT_RECEIVED" && status === "RECEIVED"/,
     );
+    expect(billingWebhook).toContain(
+      '"apply_asaas_payment_transition"',
+    );
+    expect(paymentTransitionMigration).toContain(
+      "v_state_event = 'PAYMENT_CONFIRMED'",
+    );
+    expect(paymentTransitionMigration).toContain("v_target_status := 'active'");
     expect(billingWebhook).not.toMatch(
       /SUBSCRIPTION_CREATED[\s\S]{0,200}status: "active"/,
     );
@@ -1018,10 +1032,48 @@ describe("assinatura do SaaS via Asaas Sandbox", () => {
   });
 
   it("nunca regride pagamento confirmado ou estornado por evento atrasado", () => {
-    expect(billingWebhook).toMatch(
-      /nextStatus === "pending"[\s\S]*?nextStatus === "overdue"[\s\S]*?existing\.status === "paid"[\s\S]*?existing\.status === "refunded"/,
+    expect(billingWebhook).toContain("isOlderPaymentEvent(event, existing)");
+    expect(billingWebhook).toContain('existing?.status === "refunded"');
+    expect(billingWebhook).toContain('existing?.status === "cancelled"');
+    expect(paymentTransitionMigration).toContain(
+      "v_payment.metadata is distinct from p_expected_metadata",
     );
-    expect(billingWebhook).toContain("finalStatus = existing.status");
+    expect(paymentTransitionMigration.match(/for update;/g)).toHaveLength(4);
+  });
+
+  it("serializa a transição comercial, valida tenant e preserva cancelamento futuro", () => {
+    expect(paymentTransitionMigration).toContain(
+      "and s.barbershop_id = v_payment.barbershop_id",
+    );
+    expect(paymentTransitionMigration).toContain(
+      "v_subscription.status in ('canceled', 'expired')",
+    );
+    expect(paymentTransitionMigration).toContain(
+      "v_due_date is distinct from v_current_start_date",
+    );
+    expect(paymentTransitionMigration).toContain(
+      "v_due_date is distinct from v_current_end_date",
+    );
+    expect(paymentTransitionMigration).toContain("later_payment.due_date >= v_due_date");
+    expect(paymentTransitionMigration).toContain("to service_role;");
+    expect(paymentTransitionMigration).toContain(
+      "v_next_state_event = 'PAYMENT_REFUND_DENIED'",
+    );
+    expect(paymentTransitionMigration).toContain(
+      "v_previous_state_event <> v_restored_from_event",
+    );
+    expect(paymentTransitionMigration).toContain(
+      "perform public.sync_subscription_from_asaas_payment(v_payment_id)",
+    );
+    expect(paymentTransitionMigration).toContain(
+      "v_payment.metadata is distinct from p_expected_metadata",
+    );
+    expect(paymentTransitionMigration).not.toContain(
+      "cancel_at_period_end = false",
+    );
+    expect(paymentTransitionMigration).toMatch(
+      /apply_asaas_payment_transition[\s\S]*?from public\.subscriptions s[\s\S]*?for update;[\s\S]*?from public\.payments p[\s\S]*?for update;/,
+    );
   });
 
   it("não coleta cartão e bloqueia cartão no banco e na validação", () => {

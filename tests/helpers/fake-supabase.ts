@@ -178,6 +178,12 @@ export class FakeSupabase {
   private updateHooks = new Map<string, FakeUpdateHook>();
 
   constructor(seed: Record<string, FakeRow[]> = {}) {
+    this.setRpcHandler("get_shop_professional_limit", ({ p_shop }) => {
+      const subscription = this.getRows("subscriptions").find(s => s.barbershop_id === p_shop
+        && ["pending", "trialing", "active", "past_due"].includes(String(s.status)));
+      const plan = this.getRows("plans").find(p => p.id === subscription?.plan_id);
+      return plan ? [{ plan_name: plan.name, max_barbers: plan.max_barbers }] : [];
+    });
     for (const [table, rows] of Object.entries(seed)) {
       this.setRows(table, rows);
     }

@@ -256,6 +256,17 @@ function mapAsaasError(error: unknown): BillingServiceError {
   );
 }
 
+async function requireLegacyBillingShop(supabase: Supabase, shop: string) {
+  const { data, error } = await supabase.from("subscriptions").select("id")
+    .eq("barbershop_id", shop).eq("gateway", "manual_pix").limit(1).maybeSingle();
+  if (error || data) throw new BillingServiceError("conflict",
+    "A contratação online está indisponível para esta barbearia.");
+}
+
+function requireAsaasSubscription(row: SubscriptionRow) {
+  if (row.gateway !== "asaas") throw new BillingServiceError("conflict", "Esta assinatura não utiliza o Asaas.");
+}
+
 async function findCurrentSubscription(
   supabase: Supabase,
   barbershopId: string,
@@ -276,6 +287,7 @@ async function findCurrentSubscription(
     );
   }
 
+  if (data) requireAsaasSubscription(data);
   return data ?? null;
 }
 
@@ -286,6 +298,7 @@ async function findSubscriptionById(
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*")
+    .eq("gateway", "asaas")
     .eq("id", subscriptionId)
     .maybeSingle();
 
@@ -356,6 +369,7 @@ export async function resolveBillingCustomer(
     phone?: string | null;
   },
 ): Promise<string> {
+  await requireLegacyBillingShop(supabase, input.barbershopId);
   const documentDigits = onlyDigits(input.document);
 
   if (documentDigits.length !== 11 && documentDigits.length !== 14) {
@@ -375,6 +389,7 @@ export async function resolveBillingCustomer(
   const { data: existing, error } = await supabase
     .from("billing_customers")
     .select("*")
+    .eq("gateway", "asaas")
     .eq("barbershop_id", input.barbershopId)
     .maybeSingle();
 
@@ -557,6 +572,7 @@ async function saveLocalBillingCustomer(
   const { data: existing, error } = await supabase
     .from("billing_customers")
     .select("*")
+    .eq("gateway", "asaas")
     .eq("barbershop_id", input.barbershopId)
     .maybeSingle();
 
@@ -762,6 +778,7 @@ async function assertNoPendingRemoteCleanup(
   await supabase
     .from("subscriptions")
     .update({ remote_cleanup_pending: false })
+    .eq("gateway", "asaas")
     .in("id", [...completedIds])
     .eq("remote_cleanup_pending", true);
 }
@@ -830,6 +847,7 @@ async function persistRemoteSubscription(
     const base = supabase
       .from("subscriptions")
       .update(payload)
+      .eq("gateway", "asaas")
       .eq("id", local.id)
       .in("status", [...currentSubscriptionStatuses]);
 
@@ -920,7 +938,8 @@ async function clearRemoteSubscriptionLink(
       gateway_subscription_id: null,
       gateway_status: "pending_creation",
     })
-    .eq("id", local.id)
+    .eq("gateway", "asaas")
+      .eq("id", local.id)
     .eq("gateway_subscription_id", gatewaySubscriptionId)
     .in("status", [...currentSubscriptionStatuses]);
 
@@ -974,6 +993,8 @@ export async function ensureRemoteSubscription(
   customerId: string,
   fencing?: SubscriptionFencing,
 ): Promise<SubscriptionRow> {
+  requireAsaasSubscription(local);
+  await requireLegacyBillingShop(supabase, local.barbershop_id);
   let current = local;
   const existingGatewaySubscriptionId = current.gateway_subscription_id;
 
@@ -1102,6 +1123,7 @@ async function applyPlanToRemote(
   customerId: string,
   fencing?: SubscriptionFencing,
 ): Promise<SubscriptionRow> {
+  requireAsaasSubscription(local);
   if (!local.gateway_subscription_id) {
     return ensureRemoteSubscription(supabase, local, plan, customerId, fencing);
   }
@@ -1110,6 +1132,7 @@ async function applyPlanToRemote(
     throw new BillingServiceError("validation", "Escolha boleto ou Pix.");
   }
 
+  await requireLegacyBillingShop(supabase, local.barbershop_id);
   try {
     const remote = await updateAsaasSubscription(local.gateway_subscription_id, {
       billingType: asaasBillingType(local.billing_type),
@@ -1128,6 +1151,7 @@ async function applyPlanToRemote(
           gateway_subscription_id: null,
           gateway_status: "pending_creation",
         })
+        .eq("gateway", "asaas")
         .eq("id", local.id)
         .eq("gateway_subscription_id", local.gateway_subscription_id)
         .in("status", [...currentSubscriptionStatuses]);
@@ -1192,6 +1216,7 @@ async function resolveCustomerForExistingSubscription(
   const { data: existing, error } = await supabase
     .from("billing_customers")
     .select("*")
+    .eq("gateway", "asaas")
     .eq("barbershop_id", barbershopId)
     .maybeSingle();
 
@@ -1251,6 +1276,7 @@ async function claimCheckoutLease(
       .from("subscriptions")
       .update(payload)
       .eq("id", current.id)
+      .eq("gateway", "asaas")
       .eq("status", current.status)
       .eq("plan_id", current.plan_id)
       .in("status", [...currentSubscriptionStatuses])
@@ -1405,6 +1431,7 @@ export async function startSubscription(input: {
   phone?: string | null;
 }): Promise<{ message: string; trialEndsAt?: string }> {
   const supabase = createAdminClient();
+  await requireLegacyBillingShop(supabase, input.barbershopId);
   const plan = await findActivePlan(supabase, input.planId);
 
   assertChargeablePlan(plan);
@@ -1659,6 +1686,7 @@ export async function changePlan(input: {
   planId: string;
 }): Promise<{ message: string }> {
   const supabase = createAdminClient();
+  await requireLegacyBillingShop(supabase, input.barbershopId);
   const plan = await findActivePlan(supabase, input.planId);
 
   assertChargeablePlan(plan);
@@ -1696,6 +1724,7 @@ export async function changePlan(input: {
         contracted_interval: plan.interval,
       })
       .eq("id", current.id)
+      .eq("gateway", "asaas")
       .eq("status", "trialing")
       .is("gateway_subscription_id", null)
       .is("trial_finalization_locked_at", null)
@@ -1791,6 +1820,7 @@ export async function cancelSubscription(input: {
   reason?: string | null;
 }): Promise<{ message: string }> {
   const supabase = createAdminClient();
+  await requireLegacyBillingShop(supabase, input.barbershopId);
   const cancelReason = normalizeCancelReason(input.reason);
   let current = await findCurrentSubscription(supabase, input.barbershopId);
 
@@ -1818,6 +1848,7 @@ export async function cancelSubscription(input: {
         trial_finalization_lease_token: null,
       })
       .eq("id", current.id)
+      .eq("gateway", "asaas")
       .eq("status", "trialing")
       .is("gateway_subscription_id", null)
       .select("*")
@@ -1854,6 +1885,7 @@ export async function cancelSubscription(input: {
       .from("subscriptions")
       .select("*")
       .eq("id", current.id)
+      .eq("gateway", "asaas")
       .maybeSingle();
 
     if (refreshError || !refreshed) {
@@ -1875,6 +1907,7 @@ export async function cancelSubscription(input: {
           .from("subscriptions")
           .update({ cancel_reason: cancelReason })
           .eq("id", current.id)
+          .eq("gateway", "asaas")
           .is("cancel_reason", null);
 
         if (reasonError) {
@@ -1925,6 +1958,7 @@ export async function cancelSubscription(input: {
       );
     }
 
+    requireAsaasSubscription(refreshed);
     current = refreshed;
   }
 

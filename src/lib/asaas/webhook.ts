@@ -44,6 +44,7 @@ export const asaasWebhookSchema = z
   .object({
     id: z.string().min(1).max(200),
     event: z.string().min(1).max(120),
+    dateCreated: z.string().max(40).optional(),
     payment: asaasPaymentSchema.optional(),
     subscription: asaasSubscriptionSchema.optional(),
   })

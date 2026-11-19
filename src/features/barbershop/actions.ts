@@ -1,5 +1,8 @@
 "use server";
 
+import { z } from "zod";
+import { manualTrialOnboardingEnabled } from "@/lib/env/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -43,6 +46,7 @@ function activeShopCookie(barbershopId: string) {
 
 export async function createBarbershopAction(
   values: unknown,
+  intentId?: string,
 ): Promise<ActionState> {
   if (!getSupabasePublicEnv()) {
     return actionError(configMissing);
@@ -64,14 +68,31 @@ export async function createBarbershopAction(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("create_barbershop", {
+  const params = {
     p_name: parsed.data.name,
     p_slug: parsed.data.slug,
     p_phone: parsed.data.phone || null,
     p_timezone: parsed.data.timezone,
-  });
+  };
+  const manual = manualTrialOnboardingEnabled();
+  const create = async () => {
+    if (!manual) return supabase.rpc("create_barbershop", params);
+    const intent = z.uuid().safeParse(intentId);
+    if (!intent.success) throw new Error("Intenção de cadastro ausente.");
+    const args = { ...params, p_intent_id: intent.data };
+    const permit = await createAdminClient().rpc("authorize_manual_trial_intent", {
+      ...args, p_actor: user.id,
+    });
+    if (permit.error) return { data: null, error: permit.error };
+    return supabase.rpc("create_barbershop_with_manual_trial", args);
+  };
+  const { data, error } = await create().catch(() => ({
+    data: null, error: { code: "unavailable", message: "" },
+  }));
 
   if (error || !data) {
+    if (error?.code === "55000") return actionError("O plano Básico está indisponível. Tente novamente mais tarde.");
+    if (error?.code === "42501") return actionError("O cadastro não está disponível neste momento.");
     if (error?.code === "23505") {
       return actionError(
         "Este identificador já está em uso. Escolha outro.",
@@ -79,7 +100,7 @@ export async function createBarbershopAction(
       );
     }
 
-    if (error?.code === "22023" || error?.code === "28000" || error?.code === "42501") {
+    if (error?.code === "22023" || error?.code === "28000") {
       return actionError(error.message);
     }
 

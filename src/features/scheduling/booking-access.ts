@@ -11,6 +11,8 @@ type SubscriptionStatus = Database["public"]["Enums"]["subscription_status"];
 export type BookingAccessState = "normal" | "grace" | "blocked";
 
 export type BarbershopBookingAccess = {
+  manual?: boolean;
+  reason?: string;
   allowed: boolean;
   state: BookingAccessState;
   subscriptionStatus: SubscriptionStatus | null;
@@ -69,6 +71,8 @@ function parseBookingAccess(value: Json | null): BarbershopBookingAccess {
   }
 
   return {
+    manual: value.manual === true,
+    reason: typeof value.reason === "string" ? value.reason : undefined,
     allowed: value.allowed,
     state,
     subscriptionStatus:

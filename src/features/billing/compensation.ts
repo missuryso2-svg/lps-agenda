@@ -180,6 +180,7 @@ async function updateSubscriptionCleanupFlag(
   await supabase
     .from("subscriptions")
     .update({ remote_cleanup_pending: Boolean(data) })
+    .eq("gateway", "asaas")
     .eq("id", subscriptionId);
 }
 
@@ -277,6 +278,10 @@ export async function registerRemoteCleanupCandidate(
 
   const nowIso = new Date().toISOString();
 
+  const { data: origin, error: originError } = await supabase.from("subscriptions")
+    .select("gateway, barbershop_id").eq("id", input.subscriptionId).maybeSingle();
+  if (originError || origin?.gateway !== "asaas" || origin.barbershop_id !== input.barbershopId) throw new Error("A compensação está restrita a assinaturas Asaas.");
+
   const { data: existing, error: existingError } = await supabase
     .from("billing_remote_cleanup_jobs")
     .select("*")
@@ -362,6 +367,8 @@ export async function registerRemoteCleanupCandidate(
     await supabase
       .from("subscriptions")
       .update({ remote_cleanup_pending: true })
+      .eq("gateway", "asaas")
+      .eq("barbershop_id", input.barbershopId)
       .eq("id", input.subscriptionId);
   }
 
@@ -552,10 +559,13 @@ async function processClaimedJob(
   }
 
   const current = subscription as SubscriptionRow;
+  const { data: manual, error: originError } = await supabase.from("subscriptions").select("id")
+    .eq("barbershop_id", current.barbershop_id).eq("gateway", "manual_pix").limit(1).maybeSingle();
+  if (originError || manual) return moveToManualReview(supabase, job, token, "Origem manual ou indeterminada.");
   const terminal = isTerminalStatus(current.status);
   const currentLink = current.gateway_subscription_id;
 
-  if (job.provider !== "asaas") {
+  if (job.provider !== "asaas" || current.gateway !== "asaas" || current.barbershop_id !== job.barbershop_id) {
     return moveToManualReview(
       supabase,
       job,

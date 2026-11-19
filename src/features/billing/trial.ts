@@ -78,6 +78,7 @@ async function findCandidates(
     supabase
       .from("subscriptions")
       .select("*")
+      .eq("gateway", "asaas")
       .eq("status", "trialing")
       .lte("trial_ends_at", nowIso)
       .order("trial_ends_at", { ascending: true })
@@ -85,6 +86,7 @@ async function findCandidates(
     supabase
       .from("subscriptions")
       .select("*")
+      .eq("gateway", "asaas")
       .eq("status", "pending")
       .is("trial_finalized_at", null)
       .lte("trial_ends_at", nowIso)
@@ -143,12 +145,14 @@ async function claimCandidate(
   candidate: SubscriptionRow,
   now: Date,
 ): Promise<SubscriptionRow | null> {
+  if (candidate.gateway !== "asaas") return null;
   const payload = claimPayload(candidate, now);
 
   if (candidate.status === "trialing") {
     const { data, error } = await supabase
       .from("subscriptions")
       .update(payload)
+      .eq("gateway", "asaas")
       .eq("id", candidate.id)
       .eq("status", "trialing")
       .lte("trial_ends_at", now.toISOString())
@@ -173,6 +177,7 @@ async function claimCandidate(
   const { data: unlocked, error: unlockedError } = await supabase
     .from("subscriptions")
     .update(payload)
+    .eq("gateway", "asaas")
     .eq("id", candidate.id)
     .eq("status", "pending")
     .is("trial_finalized_at", null)
@@ -198,6 +203,7 @@ async function claimCandidate(
   const { data: stale, error: staleError } = await supabase
     .from("subscriptions")
     .update(payload)
+    .eq("gateway", "asaas")
     .eq("id", candidate.id)
     .eq("status", "pending")
     .is("trial_finalized_at", null)
@@ -295,6 +301,7 @@ async function markSuccess(
       trial_finalization_lease_token: null,
       trial_finalization_error: null,
     })
+    .eq("gateway", "asaas")
     .eq("id", subscriptionId)
     .eq("gateway_subscription_id", gatewaySubscriptionId)
     .eq("trial_finalization_lease_token", leaseToken)
@@ -324,6 +331,7 @@ async function markFailure(
       trial_finalization_lease_token: null,
       trial_finalization_error: failureMessage(error).slice(0, 500),
     })
+    .eq("gateway", "asaas")
     .eq("id", subscriptionId)
     .eq("trial_finalization_lease_token", leaseToken)
     .is("trial_finalized_at", null);
@@ -338,6 +346,7 @@ async function finalizeCandidate(
     subscriptionId: claimed.id,
     barbershopId: claimed.barbershop_id,
   };
+  if (claimed.gateway !== "asaas") return { ...base, outcome: "skipped" };
   const leaseToken = claimed.trial_finalization_lease_token;
 
   if (!leaseToken) {
@@ -398,10 +407,12 @@ async function finalizeCandidate(
     const { data: current } = await supabase
       .from("subscriptions")
       .select("status, gateway_subscription_id")
+      .eq("gateway", "asaas")
+      .eq("barbershop_id", claimed.barbershop_id)
       .eq("id", claimed.id)
       .maybeSingle();
 
-    if (current && current.gateway_subscription_id !== gatewaySubscriptionId) {
+    if (!current || current.gateway_subscription_id !== gatewaySubscriptionId) {
       throw new BillingServiceError(
         "pending_confirmation",
         "O vínculo da assinatura mudou durante a finalização. Tente novamente em instantes.",

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FakeSupabase, type FakeRow } from "./helpers/fake-supabase";
+import { installFakeAsaasPaymentTransitionRpc } from "./helpers/fake-asaas-payment-transition";
 
 vi.mock("server-only", () => ({}));
 
@@ -15,9 +16,12 @@ import {
 } from "@/lib/asaas/webhook";
 
 const SHOP_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const OTHER_SHOP_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const SUBSCRIPTION_ID = "11111111-1111-4111-8111-111111111111";
+const OTHER_SUBSCRIPTION_ID = "55555555-5555-4555-8555-555555555555";
 const PLAN_ID = "22222222-2222-4222-8222-222222222222";
 const EXTERNAL_REFERENCE = "33333333-3333-4333-8333-333333333333";
+const OTHER_EXTERNAL_REFERENCE = "66666666-6666-4666-8666-666666666666";
 
 function subscriptionRow(overrides: FakeRow = {}): FakeRow {
   return {
@@ -67,6 +71,7 @@ function paymentRow(overrides: FakeRow = {}): FakeRow {
     invoice_url: null,
     metadata: {},
     created_at: "2026-11-14T12:00:00.000Z",
+    updated_at: "2026-11-14T12:00:00.000Z",
     ...overrides,
   };
 }
@@ -92,7 +97,7 @@ function paymentEvent(
 }
 
 function useDb(seed: Record<string, FakeRow[]> = {}) {
-  return new FakeSupabase({
+  const db = new FakeSupabase({
     plans: [
       {
         id: PLAN_ID,
@@ -109,6 +114,10 @@ function useDb(seed: Record<string, FakeRow[]> = {}) {
     subscriptions: [subscriptionRow()],
     ...seed,
   });
+
+  installFakeAsaasPaymentTransitionRpc(db);
+
+  return db;
 }
 
 function installPastDueGraceTrigger(
@@ -167,6 +176,35 @@ function patchSubscriptionAfterFirstRead(
       "subscriptions",
       rows.map((row) =>
         row.id === SUBSCRIPTION_ID ? { ...row, ...patch } : { ...row },
+      ),
+    );
+
+    return snapshot;
+  };
+}
+
+function patchPaymentAfterFirstRead(
+  db: FakeSupabase,
+  paymentId: string,
+  patch: FakeRow,
+): void {
+  const originalGetRows = db.getRows.bind(db);
+  let firstRead = true;
+
+  db.getRows = (table: string) => {
+    const rows = originalGetRows(table);
+
+    if (table !== "payments" || !firstRead) {
+      return rows;
+    }
+
+    firstRead = false;
+    const snapshot = rows.map((row) => ({ ...row }));
+
+    db.setRows(
+      "payments",
+      rows.map((row) =>
+        row.id === paymentId ? { ...row, ...patch } : { ...row },
       ),
     );
 
@@ -276,6 +314,639 @@ describe("processamento idempotente dos eventos", () => {
       current_period_start: "2026-11-15T12:00:00.000Z",
       current_period_end: "2026-12-15T12:00:00.000Z",
     });
+  });
+
+  it("não avança duas vezes o período em eventos distintos da mesma confirmação", async () => {
+    const db = useDb();
+    const confirmed = paymentEvent("PAYMENT_CONFIRMED", {
+      status: "CONFIRMED",
+      confirmedDate: "2026-11-15",
+    });
+    const received = {
+      ...paymentEvent("PAYMENT_RECEIVED", {
+        status: "RECEIVED",
+        paymentDate: "2026-11-15",
+      }),
+      id: "evt_payment_received_after_confirmed",
+    };
+
+    await processAsaasEvent(db as never, confirmed);
+    const periodAfterConfirmation = {
+      start: db.getRows("subscriptions")[0]?.current_period_start,
+      end: db.getRows("subscriptions")[0]?.current_period_end,
+    };
+    await processAsaasEvent(db as never, received);
+
+    expect(db.getRows("payments")).toHaveLength(1);
+    expect(db.getRows("payments")[0]?.status).toBe("paid");
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      current_period_start: periodAfterConfirmation.start,
+      current_period_end: periodAfterConfirmation.end,
+    });
+  });
+
+  it("preserva o período inadimplente quando uma cobrança de outubro é confirmada atrasada", async () => {
+    const octoberPayment = paymentRow({
+      id: "44444444-4444-4444-8444-444444444410",
+      gateway_payment_id: "pay_october",
+      due_date: "2026-10-15",
+      paid_at: "2026-10-15T12:00:00.000Z",
+    });
+    const novemberPayment = paymentRow({
+      id: "44444444-4444-4444-8444-444444444411",
+      gateway_payment_id: "pay_november",
+      due_date: "2026-11-15",
+      status: "overdue",
+      paid_at: null,
+    });
+    const db = useDb({
+      payments: [octoberPayment, novemberPayment],
+      subscriptions: [
+        subscriptionRow({
+          status: "past_due",
+          current_period_start: "2026-10-15T12:00:00.000Z",
+          current_period_end: "2026-11-15T12:00:00.000Z",
+          past_due_since: "2026-11-16T12:00:00.000Z",
+          grace_period_ends_at: "2026-11-19T12:00:00.000Z",
+        }),
+      ],
+    });
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_CONFIRMED", {
+        id: "pay_october",
+        status: "CONFIRMED",
+        dueDate: "2026-10-15",
+        confirmedDate: "2026-10-15",
+      }),
+    );
+
+    expect(db.getRows("payments")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ gateway_payment_id: "pay_october", status: "paid" }),
+        expect.objectContaining({ gateway_payment_id: "pay_november", status: "overdue" }),
+      ]),
+    );
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "past_due",
+      current_period_start: "2026-10-15T12:00:00.000Z",
+      current_period_end: "2026-11-15T12:00:00.000Z",
+      past_due_since: "2026-11-16T12:00:00.000Z",
+      grace_period_ends_at: "2026-11-19T12:00:00.000Z",
+    });
+  });
+
+  it("não restaura pagamento estornado com confirmação antiga de outro evento", async () => {
+    const db = useDb({
+      payments: [
+        paymentRow({
+          status: "refunded",
+          paid_at: "2026-11-15T12:00:00.000Z",
+          metadata: {
+            asaas_event: "PAYMENT_REFUNDED",
+            asaas_status: "REFUNDED",
+            asaas_payment_state_event: "PAYMENT_REFUNDED",
+            asaas_payment_state_status: "refunded",
+          },
+        }),
+      ],
+      subscriptions: [subscriptionRow({ status: "past_due" })],
+    });
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_CONFIRMED", {
+        status: "CONFIRMED",
+        confirmedDate: "2026-11-15",
+      }),
+    );
+
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "refunded",
+      metadata: expect.objectContaining({
+        asaas_payment_state_event: "PAYMENT_REFUNDED",
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it("usa dateCreated do Asaas para rejeitar confirmação mais antiga com outro ID", async () => {
+    const db = useDb();
+    const received = {
+      ...paymentEvent("PAYMENT_RECEIVED", {
+        status: "RECEIVED",
+        paymentDate: "2026-11-15",
+      }),
+      id: "evt_payment_received_newer",
+      dateCreated: "2026-11-15 14:00:00",
+    };
+    const confirmed = {
+      ...paymentEvent("PAYMENT_CONFIRMED", {
+        status: "CONFIRMED",
+        value: 129.9,
+        confirmedDate: "2026-11-15",
+      }),
+      id: "evt_payment_confirmed_older",
+      dateCreated: "2026-11-15 13:00:00",
+    };
+
+    await processAsaasEvent(db as never, received);
+    const periodAfterReceived = {
+      start: db.getRows("subscriptions")[0]?.current_period_start,
+      end: db.getRows("subscriptions")[0]?.current_period_end,
+    };
+    const outcome = await processAsaasEvent(db as never, confirmed);
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")).toHaveLength(1);
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "paid",
+      amount_cents: 8990,
+      metadata: expect.objectContaining({
+        asaas_event: "PAYMENT_RECEIVED",
+        asaas_event_id: "evt_payment_received_newer",
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      current_period_start: periodAfterReceived.start,
+      current_period_end: periodAfterReceived.end,
+    });
+  });
+
+  it("não infere ordem absoluta entre dateCreated com e sem timezone", async () => {
+    const db = useDb();
+    const wallClockEvent = {
+      ...paymentEvent("PAYMENT_RECEIVED", { status: "RECEIVED" }),
+      id: "evt_wall_clock_received",
+      dateCreated: "2026-11-15 14:00:00",
+    };
+    const zonedEvent = {
+      ...paymentEvent("PAYMENT_CONFIRMED", { status: "CONFIRMED" }),
+      id: "evt_zoned_confirmation",
+      dateCreated: "2026-11-15T13:00:00Z",
+    };
+
+    await processAsaasEvent(db as never, wallClockEvent);
+    const outcome = await processAsaasEvent(db as never, zonedEvent);
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "paid",
+      metadata: expect.objectContaining({
+        asaas_event: "PAYMENT_RECEIVED",
+        asaas_event_id: "evt_wall_clock_received",
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("active");
+  });
+
+  it("normaliza offsets explícitos antes de comparar dateCreated", async () => {
+    const db = useDb();
+    const laterReceived = {
+      ...paymentEvent("PAYMENT_RECEIVED", { status: "RECEIVED" }),
+      id: "evt_received_brasilia_offset",
+      dateCreated: "2026-11-15T14:00:00-03:00",
+    };
+    const earlierConfirmed = {
+      ...paymentEvent("PAYMENT_CONFIRMED", { status: "CONFIRMED" }),
+      id: "evt_confirmed_utc_earlier",
+      dateCreated: "2026-11-15T16:30:00Z",
+    };
+
+    await processAsaasEvent(db as never, laterReceived);
+    const outcome = await processAsaasEvent(db as never, earlierConfirmed);
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "paid",
+      metadata: expect.objectContaining({
+        asaas_event_id: "evt_received_brasilia_offset",
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("active");
+  });
+
+  it("só restaura cobrança cancelada após PAYMENT_RESTORED com status pendente", async () => {
+    const db = useDb({
+      payments: [
+        paymentRow({
+          status: "cancelled",
+          paid_at: null,
+          metadata: {
+            asaas_event: "PAYMENT_DELETED",
+            asaas_status: "DELETED",
+            asaas_payment_state_event: "PAYMENT_DELETED",
+            asaas_payment_state_status: "cancelled",
+          },
+        }),
+      ],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_RESTORED", { status: "PENDING" }),
+    );
+
+    expect(outcome).toBe("processed");
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "pending",
+      metadata: expect.objectContaining({
+        asaas_payment_state_event: "PAYMENT_RESTORED",
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("não reabre cobrança cancelada por confirmação financeira", async () => {
+    const db = useDb({
+      payments: [
+        paymentRow({
+          status: "cancelled",
+          paid_at: null,
+          metadata: {
+            asaas_event: "PAYMENT_DELETED",
+            asaas_status: "DELETED",
+            asaas_payment_state_event: "PAYMENT_DELETED",
+            asaas_payment_state_status: "cancelled",
+          },
+        }),
+      ],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_RECEIVED", { status: "RECEIVED" }),
+    );
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")[0]?.status).toBe("cancelled");
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("mantém o estorno mais recente em confirmações e estorno concorrentes", async () => {
+    const db = useDb();
+    db.addUniqueConstraint("payments", ["gateway", "gateway_payment_id"]);
+    const confirmation = {
+      ...paymentEvent("PAYMENT_CONFIRMED", { status: "CONFIRMED" }),
+      id: "evt_confirmation_before_refund",
+      dateCreated: "2026-11-15 13:00:00",
+    };
+    const refund = {
+      ...paymentEvent("PAYMENT_REFUNDED", { status: "REFUNDED" }),
+      id: "evt_refund_after_confirmation",
+      dateCreated: "2026-11-15 14:00:00",
+    };
+
+    await Promise.all([
+      processAsaasEvent(db as never, confirmation),
+      processAsaasEvent(db as never, refund),
+    ]);
+
+    expect(db.getRows("payments")).toHaveLength(1);
+    expect(db.getRows("payments")[0]).toMatchObject({ status: "refunded" });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it("preserva o cancelamento futuro após confirmação financeira", async () => {
+    const db = useDb({
+      payments: [paymentRow({ status: "overdue", paid_at: null })],
+      subscriptions: [
+        subscriptionRow({ status: "active", cancel_at_period_end: true }),
+      ],
+    });
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_CONFIRMED", {
+        status: "CONFIRMED",
+        confirmedDate: "2026-11-15",
+      }),
+    );
+
+    expect(db.getRows("payments")[0]?.status).toBe("paid");
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      cancel_at_period_end: true,
+    });
+  });
+
+  it("ignora PAYMENT_DUNNING_RECEIVED sem alterar pagamento ou assinatura", async () => {
+    const initialPayment = paymentRow({
+      status: "overdue",
+      paid_at: null,
+      metadata: { preserved: "true" },
+    });
+    const db = useDb({
+      payments: [initialPayment],
+      subscriptions: [subscriptionRow({ status: "past_due" })],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_DUNNING_RECEIVED", {
+        status: "DUNNING_RECEIVED",
+      }),
+    );
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "overdue",
+      metadata: { preserved: "true" },
+    });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it("não trata PAYMENT_REFUND_DENIED como confirmação financeira nova", async () => {
+    const db = useDb({
+      payments: [
+        paymentRow({
+          status: "refunded",
+          metadata: {
+            asaas_event: "PAYMENT_REFUNDED",
+            asaas_status: "REFUNDED",
+            asaas_payment_state_event: "PAYMENT_REFUNDED",
+            asaas_payment_state_status: "refunded",
+          },
+        }),
+      ],
+      subscriptions: [subscriptionRow({ status: "past_due" })],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_REFUND_DENIED", { status: "RECEIVED" }),
+    );
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")[0]?.status).toBe("refunded");
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it("permite restauração explicitamente negada apenas após estorno em andamento", async () => {
+    const db = useDb({
+      payments: [
+        paymentRow({
+          status: "refunded",
+          metadata: {
+            asaas_event: "PAYMENT_REFUND_IN_PROGRESS",
+            asaas_status: "REFUND_IN_PROGRESS",
+            asaas_payment_state_event: "PAYMENT_REFUND_IN_PROGRESS",
+            asaas_event_created_at: "wall_clock:2026-11-16T12:00:00.000",
+            asaas_payment_state_created_at: "wall_clock:2026-11-16T12:00:00.000",
+            asaas_payment_state_status: "refunded",
+          },
+        }),
+      ],
+      subscriptions: [
+        subscriptionRow({
+          status: "past_due",
+          current_period_start: "2026-11-15T12:00:00.000Z",
+          current_period_end: "2026-12-15T12:00:00.000Z",
+        }),
+      ],
+    });
+
+    await processAsaasEvent(
+      db as never,
+      {
+        ...paymentEvent("PAYMENT_REFUND_DENIED", {
+          status: "RECEIVED",
+          dueDate: "2026-11-15",
+        }),
+        id: "evt_refund_denied_after_progress",
+        dateCreated: "2026-11-17 12:00:00",
+      },
+    );
+
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "paid",
+      metadata: expect.objectContaining({
+        asaas_restored_from_event: "PAYMENT_REFUND_IN_PROGRESS",
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      current_period_start: "2026-11-15T12:00:00.000Z",
+      current_period_end: "2026-12-15T12:00:00.000Z",
+    });
+  });
+
+  it("não reverte estorno em andamento sem timestamp que prove a ordem do evento", async () => {
+    const db = useDb({
+      payments: [
+        paymentRow({
+          status: "refunded",
+          metadata: {
+            asaas_event: "PAYMENT_REFUND_IN_PROGRESS",
+            asaas_status: "REFUND_IN_PROGRESS",
+            asaas_payment_state_event: "PAYMENT_REFUND_IN_PROGRESS",
+            asaas_event_created_at: "wall_clock:2026-11-16T12:00:00.000",
+            asaas_payment_state_created_at: "wall_clock:2026-11-16T12:00:00.000",
+            asaas_payment_state_status: "refunded",
+          },
+        }),
+      ],
+      subscriptions: [subscriptionRow({ status: "past_due" })],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_REFUND_DENIED", { status: "RECEIVED" }),
+    );
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")[0]?.status).toBe("refunded");
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it("não sobrescreve pagamento estornado por confirmação após leitura concorrente", async () => {
+    const targetPaymentId = "44444444-4444-4444-8444-444444444499";
+    const targetPayment = paymentRow({
+      id: targetPaymentId,
+      status: "pending",
+      paid_at: null,
+    });
+    const db = useDb({ payments: [targetPayment] });
+    patchPaymentAfterFirstRead(db, targetPaymentId, {
+      status: "refunded",
+      updated_at: "2026-11-16T12:00:00.000Z",
+      metadata: {
+        asaas_event: "PAYMENT_REFUNDED",
+        asaas_status: "REFUNDED",
+        asaas_payment_state_event: "PAYMENT_REFUNDED",
+        asaas_payment_state_status: "refunded",
+      },
+    });
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_CONFIRMED", { status: "CONFIRMED" }),
+    );
+
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "refunded",
+      metadata: expect.objectContaining({
+        asaas_payment_state_event: "PAYMENT_REFUNDED",
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
+  it("não atualiza pagamento de outro tenant quando o ID remoto colide com evento da barbearia A", async () => {
+    const otherSubscription = subscriptionRow({
+      id: OTHER_SUBSCRIPTION_ID,
+      barbershop_id: OTHER_SHOP_ID,
+      external_reference: OTHER_EXTERNAL_REFERENCE,
+      gateway_subscription_id: "sub_other",
+      status: "past_due",
+    });
+    const otherPayment = paymentRow({
+      id: "77777777-7777-4777-8777-777777777777",
+      barbershop_id: OTHER_SHOP_ID,
+      subscription_id: OTHER_SUBSCRIPTION_ID,
+      gateway_subscription_id: "sub_other",
+      status: "overdue",
+      paid_at: null,
+    });
+    const db = useDb({
+      payments: [otherPayment],
+      subscriptions: [subscriptionRow(), otherSubscription],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_CONFIRMED", { status: "CONFIRMED" }),
+    );
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")[0]).toMatchObject({
+      id: otherPayment.id,
+      barbershop_id: OTHER_SHOP_ID,
+      subscription_id: OTHER_SUBSCRIPTION_ID,
+      status: "overdue",
+    });
+    expect(db.getRows("subscriptions")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: SUBSCRIPTION_ID, status: "pending" }),
+        expect.objectContaining({ id: OTHER_SUBSCRIPTION_ID, status: "past_due" }),
+      ]),
+    );
+  });
+
+  it("ignora cobrança financeira recebida durante trial local sem assinatura remota", async () => {
+    const db = useDb({
+      subscriptions: [
+        subscriptionRow({ status: "trialing", gateway_subscription_id: null }),
+      ],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_CONFIRMED", { status: "CONFIRMED" }),
+    );
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")).toHaveLength(0);
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "trialing",
+      gateway_subscription_id: null,
+    });
+  });
+
+  it("não altera valores financeiros por PAYMENT_CREATED duplicado com valor diferente", async () => {
+    const db = useDb();
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_CREATED", { value: 89.9 }),
+    );
+    await processAsaasEvent(
+      db as never,
+      {
+        ...paymentEvent("PAYMENT_CREATED", { value: 129.9 }),
+        id: "evt_payment_created_with_stale_amount",
+      },
+    );
+
+    expect(db.getRows("payments")).toHaveLength(1);
+    expect(db.getRows("payments")[0]).toMatchObject({
+      amount_cents: 8990,
+      status: "pending",
+    });
+  });
+
+  it("aceita alteração de valor somente em PAYMENT_UPDATED e rejeita sua versão antiga", async () => {
+    const db = useDb();
+    const created = {
+      ...paymentEvent("PAYMENT_CREATED", { value: 89.9 }),
+      id: "evt_payment_created_before_update",
+      dateCreated: "2026-11-15 12:00:00",
+    };
+    const updated = {
+      ...paymentEvent("PAYMENT_UPDATED", {
+        value: 99.9,
+        status: "PENDING",
+        dueDate: "2026-11-20",
+      }),
+      id: "evt_payment_updated_newer",
+      dateCreated: "2026-11-15 13:00:00",
+    };
+    const staleUpdate = {
+      ...paymentEvent("PAYMENT_UPDATED", {
+        value: 129.9,
+        status: "PENDING",
+        dueDate: "2026-11-25",
+      }),
+      id: "evt_payment_updated_older",
+      dateCreated: "2026-11-15 12:30:00",
+    };
+
+    await processAsaasEvent(db as never, created);
+    await processAsaasEvent(db as never, updated);
+    const outcome = await processAsaasEvent(db as never, staleUpdate);
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")[0]).toMatchObject({
+      amount_cents: 9990,
+      due_date: "2026-11-20",
+      status: "pending",
+    });
+  });
+
+  it("atualiza uma cobrança vencida preexistente sem exigir metadata nova", async () => {
+    const db = useDb({
+      payments: [
+        paymentRow({
+          status: "overdue",
+          paid_at: null,
+          metadata: {
+            asaas_event: "PAYMENT_OVERDUE",
+            asaas_status: "OVERDUE",
+          },
+        }),
+      ],
+      subscriptions: [subscriptionRow({ status: "past_due" })],
+    });
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_UPDATED", {
+        status: "PENDING",
+        value: 99.9,
+        dueDate: "2026-11-20",
+      }),
+    );
+
+    expect(outcome).toBe("processed");
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "overdue",
+      amount_cents: 9990,
+      due_date: "2026-11-20",
+    });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
   });
 
   it("registra PAYMENT_RECEIVED como pago e ativa a assinatura", async () => {
@@ -421,6 +1092,22 @@ describe("processamento idempotente dos eventos", () => {
     expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
   });
 
+  it("não confirma cobrança de recebimento em dinheiro", async () => {
+    const db = useDb();
+
+    const outcome = await processAsaasEvent(
+      db as never,
+      paymentEvent("PAYMENT_RECEIVED", {
+        status: "RECEIVED",
+        billingType: "RECEIVED_IN_CASH",
+      }),
+    );
+
+    expect(outcome).toBe("ignored");
+    expect(db.getRows("payments")).toHaveLength(0);
+    expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
+  });
+
   it("mantém estorno de recebimento em dinheiro sem ativar a assinatura", async () => {
     const db = useDb({
       payments: [paymentRow()],
@@ -449,7 +1136,7 @@ describe("processamento idempotente dos eventos", () => {
       paymentEvent("PAYMENT_UPDATED", { status: "RECEIVED_IN_CASH" }),
     );
 
-    expect(outcome).toBe("processed");
+    expect(outcome).toBe("ignored");
     expect(db.getRows("payments")[0]?.status).toBe("paid");
     expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
   });
@@ -490,14 +1177,13 @@ describe("processamento idempotente dos eventos", () => {
       confirmedDate: "2026-11-15",
     });
 
-    db.failNext("subscriptions", "XX000", "update");
+    db.failNextRpc("apply_asaas_payment_transition", "XX000");
 
     await expect(processAsaasEvent(db as never, event)).rejects.toBeInstanceOf(
       BillingWebhookError,
     );
 
-    expect(db.getRows("payments")).toHaveLength(1);
-    expect(db.getRows("payments")[0]?.status).toBe("paid");
+    expect(db.getRows("payments")).toHaveLength(0);
     expect(db.getRows("subscriptions")[0]?.status).toBe("pending");
 
     await expect(processAsaasEvent(db as never, event)).resolves.toBe(
@@ -594,6 +1280,85 @@ describe("processamento idempotente dos eventos", () => {
 
     expect(db.getRows("payments")[0]?.status).toBe("refunded");
     expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it.each([
+    ["PAYMENT_PARTIALLY_REFUNDED", "PARTIALLY_REFUNDED"],
+    ["PAYMENT_REFUND_IN_PROGRESS", "REFUND_IN_PROGRESS"],
+  ] as const)("mantém %s como estado não liquidado", async (event, status) => {
+    const db = useDb({
+      payments: [paymentRow()],
+      subscriptions: [subscriptionRow({ status: "active" })],
+    });
+
+    await processAsaasEvent(
+      db as never,
+      paymentEvent(event, { status }),
+    );
+
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "refunded",
+      metadata: expect.objectContaining({
+        asaas_payment_state_event: event,
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+  });
+
+  it("restaura chargeback apenas após a reversão e uma confirmação posterior", async () => {
+    const db = useDb({
+      payments: [paymentRow()],
+      subscriptions: [
+        subscriptionRow({
+          status: "active",
+          current_period_start: "2026-11-15T12:00:00.000Z",
+          current_period_end: "2026-12-15T12:00:00.000Z",
+        }),
+      ],
+    });
+    const chargeback = {
+      ...paymentEvent("PAYMENT_CHARGEBACK_REQUESTED", {
+        status: "RECEIVED",
+        dueDate: "2026-11-15",
+      }),
+      id: "evt_chargeback_requested",
+      dateCreated: "2026-11-16 12:00:00",
+    };
+    const awaitingReversal = {
+      ...paymentEvent("PAYMENT_AWAITING_CHARGEBACK_REVERSAL", {
+        status: "AWAITING_CHARGEBACK_REVERSAL",
+        dueDate: "2026-11-15",
+      }),
+      id: "evt_chargeback_awaiting_reversal",
+      dateCreated: "2026-11-17 12:00:00",
+    };
+    const restored = {
+      ...paymentEvent("PAYMENT_RECEIVED", {
+        status: "RECEIVED",
+        dueDate: "2026-11-15",
+      }),
+      id: "evt_chargeback_reversal_received",
+      dateCreated: "2026-11-18 12:00:00",
+    };
+
+    await processAsaasEvent(db as never, chargeback);
+    await processAsaasEvent(db as never, awaitingReversal);
+    expect(db.getRows("payments")[0]?.status).toBe("refunded");
+    expect(db.getRows("subscriptions")[0]?.status).toBe("past_due");
+
+    await processAsaasEvent(db as never, restored);
+
+    expect(db.getRows("payments")[0]).toMatchObject({
+      status: "paid",
+      metadata: expect.objectContaining({
+        asaas_restored_from_event: "PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
+      }),
+    });
+    expect(db.getRows("subscriptions")[0]).toMatchObject({
+      status: "active",
+      current_period_start: "2026-11-15T12:00:00.000Z",
+      current_period_end: "2026-12-15T12:00:00.000Z",
+    });
   });
 
   it("webhook duplicado preserva o início e o fim da tolerância", async () => {

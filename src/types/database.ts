@@ -965,6 +965,24 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      finance_operator: { Args: { target: string; permission: "operator" | "manager" | "revoke"; reason: string }; Returns: string };
+      finance_agreement: { Args: { op: string; shop: string; terms: Json; reference: string; reason: string }; Returns: Json };
+      finance_invoice: { Args: { op: string; shop: string; contract: string; competence: string }; Returns: Json };
+      finance_confirm_pix: {
+        Args: { op: string; shop: string; contract: string; invoice: string; received_cents: number;
+          credited_at: string; checked: boolean; reference?: string | null };
+        Returns: Json;
+      };
+      finance_contract_action: {
+        Args: { op: string; shop: string; contract: string; command: "suspend" | "resume" | "cancel"; reason: string };
+        Returns: Json;
+      };
+      finance_shops: { Args: { after_id?: string | null; page_size?: number }; Returns: Json[] };
+      finance_invoices: { Args: { shop: string | null; bill_month: string | null; state: Database["public"]["Enums"]["payment_status"] | null;
+        after_id?: string | null; page_size?: number }; Returns: Json[] };
+      finance_totals: { Args: { bill_month: string; shop?: string | null }; Returns: Json };
+      finance_history: { Args: { shop: string; after_id?: string | null; page_size?: number }; Returns: Json[] };
+      finance_events: { Args: { shop: string; after_id?: string | null; page_size?: number }; Returns: Json[] };
       authorize_manual_trial_intent: {
         Args: { p_actor: string; p_intent_id: string; p_name: string; p_slug: string; p_phone: string | null; p_timezone: string };
         Returns: undefined;

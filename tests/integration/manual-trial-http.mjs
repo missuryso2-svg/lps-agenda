@@ -69,7 +69,9 @@ try {
   const projection = await owner.client.rpc("get_owner_manual_trial", {p_shop: shop});
   assert.ifError(projection.error);
   assert.equal(projection.data.days_left,7);
-  assert.deepEqual(Object.keys(projection.data).sort(), ["access","days_left","next_step","plan","reason","trial_end","trial_start","trial_state"]);
+  assert.deepEqual(Object.keys(projection.data).sort(), ["access","agreement","days_left","next_step","plan","reason","status","trial_end","trial_start","trial_state"]);
+  assert.equal(projection.data.agreement, null);
+  assert.equal(projection.data.status, "trialing");
   assert.equal(projection.data.trial_state,"running");
   assert.equal(projection.data.next_step,"contact_lps");
   for (const actor of [staff,other]) denied(await actor.client.rpc("get_owner_manual_trial", {p_shop:shop}));

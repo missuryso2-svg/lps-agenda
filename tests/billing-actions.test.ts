@@ -99,7 +99,7 @@ describe("autorização das ações de cobrança", () => {
       document: "52998224725",
       email: "owner@example.com",
       phone: "(11) 99999-9999",
-    });
+    }, "resume-pending");
   });
 
   it("bloqueia staff mesmo em chamada direta", async () => {
@@ -147,13 +147,13 @@ describe("validação e configuração das ações", () => {
     expect(state.startSubscription).not.toHaveBeenCalled();
   });
 
-  it("permite iniciar o trial sem o Sandbox configurado", async () => {
+  it("encaminha apenas retomada de legado mesmo sem o Sandbox configurado", async () => {
     state.asaasConfigured = false;
 
     const result = await startSubscriptionAction(validInput);
 
     expect(result.status).toBe("success");
-    expect(state.startSubscription).toHaveBeenCalledTimes(1);
+    expect(state.startSubscription).toHaveBeenCalledWith(expect.anything(), "resume-pending");
   });
 
   it("valida o plano na troca e encaminha o cancelamento", async () => {

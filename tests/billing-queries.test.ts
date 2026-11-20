@@ -136,6 +136,7 @@ function paymentRow(index: number, overrides: FakeRow = {}): FakeRow {
     status: "paid",
     method: "pix",
     scope: "platform_subscription",
+    gateway: "asaas",
     due_date: `2026-11-${day}`,
     paid_at: `2026-11-${day}T12:00:00.000Z`,
     invoice_url: `https://example.com/invoices/${index}`,
@@ -290,6 +291,8 @@ describe("consultas da página de cobrança", () => {
       currentPeriodStart: "2026-11-01T12:00:00.000Z",
       currentPeriodEnd: "2026-12-01T12:00:00.000Z",
       contractedPriceCents: 2990,
+      contractedCurrency: "BRL",
+      contractedInterval: "month",
       cancelAtPeriodEnd: false,
       canceledAt: null,
       hasRemoteSubscription: true,
@@ -477,7 +480,6 @@ describe("histórico e trial", () => {
       canceledAt: "2026-11-09T12:00:00.000Z",
       cancelReason: "Mudei de plano",
     });
-    expect(data.trialAvailable).toBe(false);
   });
 
   it("ignora cancelamento sem data e aceita motivo nulo", async () => {
@@ -507,17 +509,17 @@ describe("histórico e trial", () => {
     });
   });
 
-  it("oferece trial apenas para loja nova com plano de trial", async () => {
+  it("não concede oferta de trial Asaas à loja nova", async () => {
     setup({ plans: [planRow(PLAN_BASIC_ID)] });
 
     const data = await getBillingPageData(SHOP_A);
 
-    expect(data.trialAvailable).toBe(true);
+    expect(data).not.toHaveProperty("trialAvailable");
     expect(data.hasUsedTrial).toBe(false);
     expect(data.lastCanceled).toBeNull();
   });
 
-  it("não oferece trial quando já existe assinatura atual", async () => {
+  it("identifica o contrato atual", async () => {
     setup({
       plans: [planRow(PLAN_BASIC_ID)],
       subscriptions: [subscriptionRow()],
@@ -526,10 +528,9 @@ describe("histórico e trial", () => {
     const data = await getBillingPageData(SHOP_A);
 
     expect(data.subscription).not.toBeNull();
-    expect(data.trialAvailable).toBe(false);
   });
 
-  it("não oferece trial quando o histórico já usou o teste", async () => {
+  it("preserva o histórico de teste utilizado", async () => {
     setup({
       plans: [planRow(PLAN_BASIC_ID)],
       subscriptions: [
@@ -543,16 +544,8 @@ describe("histórico e trial", () => {
     const data = await getBillingPageData(SHOP_A);
 
     expect(data.hasUsedTrial).toBe(true);
-    expect(data.trialAvailable).toBe(false);
   });
 
-  it("não oferece trial quando nenhum plano tem trial", async () => {
-    setup({ plans: [planRow(PLAN_BASIC_ID, { trial_days: 0 })] });
-
-    const data = await getBillingPageData(SHOP_A);
-
-    expect(data.trialAvailable).toBe(false);
-  });
 
   it("devolve estado vazio quando não há dados financeiros", async () => {
     setup({ plans: [planRow(PLAN_BASIC_ID)] });
@@ -583,33 +576,12 @@ describe("erros e resultados vazios", () => {
     const data = await getBillingPageData(SHOP_A);
 
     expect(data.plans).toEqual([]);
-    expect(data.trialAvailable).toBe(false);
   });
 
-  it("tolera erro na consulta da assinatura atual", async () => {
-    const { db } = setup({
-      plans: [planRow(PLAN_BASIC_ID)],
-      subscriptions: [subscriptionRow()],
-    });
+  it("falha fechado quando não consegue classificar o contrato", async () => {
+    const { db } = setup({ plans: [planRow(PLAN_BASIC_ID)], subscriptions: [subscriptionRow()] });
     db.failNext("subscriptions");
-
-    const data = await getBillingPageData(SHOP_A);
-
-    expect(data.subscription).toBeNull();
-    expect(data.hasUsedTrial).toBe(false);
-  });
-
-  it("documenta que erro na assinatura atual ainda sugere trial (comportamento atual)", async () => {
-    const { db } = setup({ plans: [planRow(PLAN_BASIC_ID)] });
-    db.failNext("subscriptions");
-
-    const data = await getBillingPageData(SHOP_A);
-
-    // Risco P3-04: trialAvailable não considera subscriptionResult.error.
-    // Este teste apenas caracteriza o comportamento atual; não é uma
-    // recomendação de produto.
-    expect(data.subscription).toBeNull();
-    expect(data.trialAvailable).toBe(true);
+    await expect(getBillingPageData(SHOP_A)).rejects.toThrow(/origem/);
   });
 
   it("tolera erro na consulta do pagador", async () => {
@@ -628,7 +600,7 @@ describe("erros e resultados vazios", () => {
     expect(data.invoices).toHaveLength(1);
   });
 
-  it("tolera erro na consulta de pagamentos", async () => {
+  it("não informa histórico vazio em caso de falha", async () => {
     const { db } = setup({
       plans: [planRow(PLAN_BASIC_ID)],
       subscriptions: [subscriptionRow()],
@@ -636,12 +608,7 @@ describe("erros e resultados vazios", () => {
       payments: [paymentRow(0)],
     });
     db.failNext("payments");
-
-    const data = await getBillingPageData(SHOP_A);
-
-    expect(data.invoices).toEqual([]);
-    expect(data.subscription).not.toBeNull();
-    expect(data.customer).not.toBeNull();
+    await expect(getBillingPageData(SHOP_A)).rejects.toThrow(/Histórico/);
   });
 
   it("falha fechado quando o histórico não pode ser lido", async () => {
@@ -667,7 +634,6 @@ describe("erros e resultados vazios", () => {
     const data = await getBillingPageData(SHOP_A);
 
     expect(data.subscription).not.toBeNull();
-    expect(data.trialAvailable).toBe(false);
     expect(data.hasUsedTrial).toBe(false);
     expect(data.lastCanceled).toBeNull();
   });

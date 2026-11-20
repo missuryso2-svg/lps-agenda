@@ -8,7 +8,7 @@ import {
 export const metadata: Metadata = {
   title: "Privacidade",
   description:
-    "Como a versão de fundação do LPS Agenda trata dados de conta e de barbearia, com segurança e isolamento entre barbearias.",
+    "Como o LPS Agenda trata dados de conta e de barbearia, com segurança e isolamento entre barbearias.",
 };
 
 const sections: LegalSection[] = [
@@ -16,7 +16,7 @@ const sections: LegalSection[] = [
     id: "escopo",
     title: "1. Escopo desta política",
     paragraphs: [
-      "Esta política descreve o tratamento de dados na versão de fundação do LPS Agenda, produto da LPS Solutions. Ela cobre a landing page, a autenticação, o onboarding e o painel administrativo.",
+      "Esta política descreve o tratamento de dados no LPS Agenda, produto da LPS Solutions. Ela cobre a landing page, a autenticação, o onboarding e o painel administrativo.",
       "A página da Barbearia Aurora é uma demonstração estática com dados fictícios. Nenhum dado pessoal é coletado nela.",
     ],
   },
@@ -25,7 +25,7 @@ const sections: LegalSection[] = [
     title: "2. Quais dados são tratados",
     paragraphs: [
       "Quando a autenticação está configurada, o Supabase Auth processa e-mail, senha (armazenada de forma criptografada pelo provedor) e metadados necessários à sessão. O perfil da aplicação pode conter nome, e-mail, telefone e avatar.",
-      "Para operar uma barbearia, o sistema pode armazenar nome, identificador público, descrição, telefone, endereço, fuso horário e status da barbearia. A estrutura também prevê dados de equipe, serviços, clientes e agendamentos, com isolamento por barbearia.",
+      "Para operar uma barbearia, o sistema pode armazenar nome, identificador público, descrição, telefone, endereço, fuso horário e status da barbearia. O painel também organiza equipe, serviços, clientes e agendamentos, com isolamento por barbearia.",
     ],
     bullets: [
       "Dados de conta: e-mail, nome, telefone e avatar.",
@@ -39,7 +39,7 @@ const sections: LegalSection[] = [
     title: "3. Para que os dados são usados",
     paragraphs: [
       "Os dados são usados para autenticar o usuário, criar e manter o vínculo com a barbearia, executar a operação contratada, aplicar permissões e manter a segurança da plataforma.",
-      "Nesta versão não há envio de e-mail marketing, cobrança real, integração de WhatsApp ou compartilhamento com gateways de pagamento. Quando esses recursos forem habilitados, esta política será atualizada.",
+      "O botão comercial abre o WhatsApp com uma mensagem sobre o plano. O texto sugerido contém apenas informações públicas do produto. Cabe a você decidir se deseja enviá-lo e quais informações compartilhar na conversa.",
     ],
   },
   {
@@ -55,7 +55,7 @@ const sections: LegalSection[] = [
     title: "5. Compartilhamento e operadores",
     paragraphs: [
       "A plataforma utiliza o Supabase como provedor de banco de dados e autenticação. O acesso é feito por chaves públicas no navegador e chaves restritas ao servidor para operações administrativas.",
-      "Nenhum dado é vendido. O compartilhamento com terceiros se limita a operadores necessários à prestação do serviço e a hipóteses legais. A futura integração de pagamentos será documentada antes de entrar em operação.",
+      "Nenhum dado é vendido. O compartilhamento com terceiros se limita a operadores necessários à prestação do serviço e a hipóteses legais. Contratos legados podem utilizar o Asaas para processar e conciliar cobranças.",
     ],
   },
   {
@@ -113,8 +113,8 @@ export default function PrivacyPage() {
     <LegalPage
       eyebrow="Legal"
       title="Política de privacidade"
-      intro="Como o LPS Agenda trata dados de conta e de barbearia nesta versão de fundação, com isolamento entre barbearias e segurança no banco de dados."
-      updatedAt="8 de novembro de 2026"
+      intro="Como o LPS Agenda trata dados de conta e de barbearia com isolamento entre barbearias e segurança no banco de dados."
+      updatedAt="20 de novembro de 2026"
       sections={sections}
     />
   );

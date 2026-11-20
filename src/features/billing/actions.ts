@@ -64,8 +64,6 @@ export async function startSubscriptionAction(
     return actionError(configMissing);
   }
 
-  // O trial é local e não chama o Asaas. A ausência de credenciais só impede
-  // uma contratação paga imediata, que falha fechada dentro do serviço.
   const parsed = startSubscriptionSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -86,7 +84,7 @@ export async function startSubscriptionAction(
       document: parsed.data.document,
       email: context.user.email ?? null,
       phone: context.active.barbershop.phone,
-    });
+    }, "resume-pending");
 
     revalidateBilling();
     return actionSuccess(result.message);

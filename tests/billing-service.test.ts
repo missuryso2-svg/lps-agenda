@@ -185,6 +185,14 @@ beforeEach(() => {
 });
 
 describe("contratação da assinatura", () => {
+  it.each([0, 7])("a entrada comercial recusa loja sem contrato, inclusive com trial de %i dias", async (days) => {
+    const db = createDb({ plans: [planRow({ trial_days: days })], billing_customers: [] });
+    await expect(startSubscription(startInput(), "resume-pending")).rejects.toThrow(/LPS Solutions/);
+    expect(db.getRows("subscriptions")).toHaveLength(0);
+    expect(db.getRows("payments")).toHaveLength(0);
+    expect(db.getRows("billing_customers")).toHaveLength(0);
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+  });
   it("cria o registro local pendente antes e só então chama o Asaas", async () => {
     const db = state.db as FakeSupabase;
 

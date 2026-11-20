@@ -8,7 +8,7 @@ import {
 export const metadata: Metadata = {
   title: "Termos de uso",
   description:
-    "Termos de uso da versão de fundação do LPS Agenda, produto da LPS Solutions para gestão de barbearias.",
+    "Termos de uso do LPS Agenda, produto da LPS Solutions para gestão de barbearias.",
 };
 
 const sections: LegalSection[] = [
@@ -16,8 +16,8 @@ const sections: LegalSection[] = [
     id: "sobre",
     title: "1. Sobre esta versão",
     paragraphs: [
-      "O LPS Agenda é um produto em desenvolvimento da LPS Solutions. Esta versão é uma fundação técnica e visual: apresenta a proposta do produto, permite criar conta e configurar uma barbearia quando um projeto Supabase está conectado e entrega um painel de leitura com dados reais da barbearia.",
-      "Recursos como agendamento completo, convites de equipe, edição de catálogo e cobrança de assinatura ainda não estão habilitados. Quando um recurso aparece sinalizado como protótipo, ele serve apenas para demonstrar a experiência planejada e não executa a ação correspondente.",
+      "O LPS Agenda é um produto da LPS Solutions para gestão de barbearias, com agenda por profissional, cadastro de clientes e serviços e acompanhamento dos atendimentos.",
+      "As funcionalidades disponíveis dependem do perfil de acesso e da situação da barbearia. A demonstração apresenta uma experiência ilustrativa.",
     ],
   },
   {
@@ -46,15 +46,15 @@ const sections: LegalSection[] = [
     title: "4. Dados da barbearia e dos clientes",
     paragraphs: [
       "O proprietário e a equipe da barbearia são responsáveis pela licitude dos dados que inserem na plataforma, incluindo dados de clientes. O LPS Agenda atua como fornecedor de infraestrutura e deve tratar esses dados conforme as instruções do controlador e a legislação aplicável.",
-      "Nesta versão, o cadastro de clientes pelo painel ainda não está habilitado. A estrutura do banco já prevê esse dado e exige isolamento por barbearia.",
+      "O acesso aos cadastros depende do vínculo do usuário com a barbearia e das permissões do seu perfil.",
     ],
   },
   {
     id: "pagamentos",
     title: "5. Planos e pagamentos",
     paragraphs: [
-      "A estrutura de planos, assinaturas, pagamentos e eventos de webhook está modelada no banco, mas nenhum gateway de pagamento está conectado. Nenhuma cobrança real será realizada por esta versão.",
-      "Valores de planos exibidos como referência não constituem oferta comercial. A contratação só existirá quando a integração de cobrança for habilitada e comunicada de forma expressa.",
+      "Para novas contratações, a LPS Solutions negocia plano, mensalidade e vencimentos diretamente com a barbearia. O operador financeiro registra o acordo e confirma cada pagamento por Pix após conferir o crédito.",
+      "Criar uma conta ou abrir uma conversa comercial não gera mensalidade. As assinaturas legadas do Asaas seguem as condições e o histórico do contrato existente.",
     ],
   },
   {
@@ -92,7 +92,7 @@ const sections: LegalSection[] = [
     id: "contato",
     title: "10. Contato",
     paragraphs: [
-      "Os canais oficiais de atendimento da LPS Solutions serão publicados junto com a operação comercial. Até lá, este documento tem finalidade informativa sobre a versão de fundação do LPS Agenda.",
+      "Consulte a área de contato na página inicial para verificar a disponibilidade do canal comercial.",
     ],
   },
 ];
@@ -102,8 +102,8 @@ export default function TermsPage() {
     <LegalPage
       eyebrow="Legal"
       title="Termos de uso"
-      intro="Regras de uso da versão de fundação do LPS Agenda, um produto da LPS Solutions. Leia com atenção antes de criar sua conta ou configurar uma barbearia."
-      updatedAt="8 de novembro de 2026"
+      intro="Regras de uso do LPS Agenda, um produto da LPS Solutions. Leia com atenção antes de criar sua conta ou configurar uma barbearia."
+      updatedAt="20 de novembro de 2026"
       sections={sections}
     />
   );

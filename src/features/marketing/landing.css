@@ -306,18 +306,6 @@
   font-size: 0.875rem;
   margin-top: 0.4rem;
 }
-.lp-price {
-  margin-block: 1.5rem;
-  font-size: clamp(1.8rem, 2.8vw, 2.7rem);
-  font-weight: 650;
-  letter-spacing: -0.06em;
-}
-.lp-price small {
-  font-size: 0.8rem;
-  color: var(--muted-foreground);
-  font-weight: 500;
-  letter-spacing: 0;
-}
 .lp-plan-grid ul {
   display: grid;
   gap: 0.65rem;
@@ -366,6 +354,9 @@
 }
 .lp-final .lp-kicker {
   color: #e9dc8a;
+}
+.lp-final > p {
+  color: #d5d5cb;
 }
 @media (max-width: 880px) {
   .lp-intro {

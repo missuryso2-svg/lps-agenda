@@ -131,7 +131,7 @@ export default async function OnboardingPage() {
               O que acontece ao continuar
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Você terá acesso ao painel de proprietário para configurar serviços, profissionais e horários.
+              Você terá acesso ao painel de proprietário. A contratação de um plano pago depende de um acordo com a LPS Solutions.
             </p>
           </div>
 

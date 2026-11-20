@@ -24,7 +24,7 @@ export default function SignUpPage() {
         Crie sua conta.
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Use seu e-mail para cadastrar a barbearia e acessar o painel de gestão.
+        Use seu e-mail para acessar o painel. A contratação de um plano é combinada separadamente com a LPS Solutions.
       </p>
 
       {!configured ? (

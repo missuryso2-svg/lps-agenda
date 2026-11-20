@@ -18,7 +18,7 @@ import {
 const links = [
   { href: "/#recursos", label: "Recursos" },
   { href: "/#como-funciona", label: "Como funciona" },
-  { href: "/#planos", label: "Planos" },
+  { href: "/cadastro", label: "Criar conta" },
   { href: "/barbearia/barbearia-aurora", label: "Demonstração" },
 ];
 
@@ -48,8 +48,8 @@ export function SiteHeader() {
             <Link href="/login">Entrar</Link>
           </Button>
           <Button asChild variant="gold" className="gap-1.5">
-            <Link href="/cadastro">
-              Criar conta
+            <Link href="/#planos">
+              Conhecer os planos
               <ArrowUpRight className="size-3.5" />
             </Link>
           </Button>
@@ -93,8 +93,8 @@ export function SiteHeader() {
                 </SheetClose>
                 <SheetClose asChild>
                   <Button asChild variant="gold" size="xl">
-                    <Link href="/cadastro">
-                      Criar conta
+                    <Link href="/#planos">
+                      Conhecer os planos
                       <ArrowUpRight className="size-4" />
                     </Link>
                   </Button>

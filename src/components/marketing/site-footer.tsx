@@ -11,6 +11,7 @@ const productLinks = [
 ];
 
 const companyLinks = [
+  { href: "/#contato", label: "Contato comercial" },
   { href: "/#como-funciona", label: "Como funciona" },
   { href: "/#faq", label: "Perguntas frequentes" },
   { href: "/cadastro", label: "Criar conta" },

@@ -1429,7 +1429,7 @@ export async function startSubscription(input: {
   document: string;
   email?: string | null;
   phone?: string | null;
-}): Promise<{ message: string; trialEndsAt?: string }> {
+}, mode: "resume-pending" | "legacy" = "legacy"): Promise<{ message: string; trialEndsAt?: string }> {
   const supabase = createAdminClient();
   await requireLegacyBillingShop(supabase, input.barbershopId);
   const plan = await findActivePlan(supabase, input.planId);
@@ -1443,6 +1443,11 @@ export async function startSubscription(input: {
   await assertNoPendingRemoteCleanup(supabase, input.barbershopId);
 
   const current = await findCurrentSubscription(supabase, input.barbershopId);
+
+  // Check the very row used by the fenced update before any Asaas call or write.
+  if (mode === "resume-pending" && (!current || current.status !== "pending" || current.plan_id !== plan.id)) {
+    throw new BillingServiceError("conflict", "Para contratar um plano, consulte a LPS Solutions.");
+  }
 
   if (current && current.status !== "pending") {
     throw new BillingServiceError(

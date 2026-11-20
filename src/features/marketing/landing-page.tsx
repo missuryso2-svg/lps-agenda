@@ -4,11 +4,9 @@ import {
   ArrowRight,
   ArrowUpRight,
   CalendarDays,
-  Check,
   ChevronDown,
   Clock3,
   LayoutDashboard,
-  LockKeyhole,
   Scissors,
   ShieldCheck,
   UsersRound,
@@ -16,7 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { demoBarbershops } from "@/features/public-barbershop/demo-data";
-import "./landing.css";
+import { CommercialContact, CommercialPlans } from "./commercial-plans";
 
 const demo = demoBarbershops[0];
 const demoPath = `/barbearia/${demo.slug}`;
@@ -39,40 +37,27 @@ const resources = [
   },
 ];
 
-const plans = [
-  {
-    name: "Básico",
-    price: "R$ 49,90",
-    limit: "1 profissional ativo",
-    features: [
-      "Agenda online",
-      "Cadastro de clientes e serviços",
-      "Controle de horários",
-    ],
-  },
-  {
-    name: "Profissional",
-    price: "R$ 79,90",
-    limit: "Até 5 profissionais ativos",
-    features: [
-      "Tudo do Básico",
-      "Relatórios financeiros",
-      "Indicadores de desempenho",
-    ],
-  },
-  {
-    name: "Premium",
-    price: "R$ 119,90",
-    limit: "Até 10 profissionais ativos",
-    features: [
-      "Tudo do Profissional",
-      "Relatórios avançados",
-      "Prioridade no suporte",
-    ],
-  },
-];
-
 const faq = [
+  [
+    "Como contratar o LPS Agenda?",
+    "Escolha o plano pelo número de profissionais e solicite uma proposta pelo canal comercial, quando disponível. A LPS Solutions combina as condições com você e registra o acordo.",
+  ],
+  [
+    "Como funcionam os planos e os valores?",
+    "O Básico atende 1 profissional ativo, o Profissional até 5 e o Premium até 10. A mensalidade é definida na proposta para a sua barbearia.",
+  ],
+  [
+    "Como funciona o pagamento por Pix?",
+    "Após o acordo, a equipe financeira registra a mensalidade e orienta o pagamento. Um operador autorizado confere o crédito e confirma a parcela.",
+  ],
+  [
+    "Existe teste gratuito?",
+    "O teste manual do Básico dura sete dias quando o cadastro com teste está habilitado. Consulte a disponibilidade para sua barbearia antes de contar com o período gratuito.",
+  ],
+  [
+    "Posso mudar de plano?",
+    "Converse com a LPS Solutions para avaliar o novo limite e as condições. A mudança depende de revisão do acordo.",
+  ],
   [
     "Como meus clientes agendam?",
     "Você configura serviços, profissionais e horários. Com a agenda disponível, o cliente abre o link da barbearia e escolhe um atendimento.",
@@ -94,7 +79,7 @@ export function LandingPage() {
         <div className="lp-photo">
           <Image
             src="/images/barbearia.webp"
-            alt=""
+            alt="Barbeiro trabalhando em um corte de cabelo na barbearia"
             fill
             preload
             sizes="(min-width: 900px) 68vw, 100vw"
@@ -115,13 +100,13 @@ export function LandingPage() {
               <em>Sua agenda.</em>
             </h1>
             <p className="lp-lead">
-              Organize horários, conecte sua equipe e acompanhe cada atendimento
-              em um só lugar.
+              Organize agendamentos, serviços e clientes. Veja quem atende em
+              cada horário e compartilhe a agenda da barbearia por link.
             </p>
             <div className="lp-actions">
               <Button asChild size="xl" variant="gold">
-                <Link href="/cadastro">
-                  Criar minha conta <ArrowUpRight />
+                <Link href="#planos">
+                  Conhecer os planos <ArrowRight />
                 </Link>
               </Button>
               <Link href={demoPath} className="lp-demo-link">
@@ -215,41 +200,7 @@ export function LandingPage() {
             Planos
           </p>
           <h2 className="lp-title">Um plano para cada equipe.</h2>
-          <div className="lp-plan-grid">
-            {plans.map((plan) => (
-              <article
-                key={plan.name}
-                data-recommended={plan.name === "Profissional"}
-              >
-                <div className="lp-plan-name">
-                  <h3>{plan.name}</h3>
-                  {plan.name === "Profissional" && <span>Recomendado</span>}
-                </div>
-                <p>{plan.limit}</p>
-                <div className="lp-price">
-                  {plan.price}
-                  <small> / mês</small>
-                </div>
-                <ul>
-                  {plan.features.map((feature) => (
-                    <li key={feature}>
-                      <Check size={16} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  asChild
-                  size="lg"
-                  variant={plan.name === "Profissional" ? "gold" : "outline"}
-                >
-                  <Link href="/cadastro">
-                    Criar conta <ArrowRight />
-                  </Link>
-                </Button>
-              </article>
-            ))}
-          </div>
+          <CommercialPlans />
         </div>
       </section>
 
@@ -276,19 +227,14 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="lp-final">
+      <section id="contato" className="lp-final">
         <div>
-          <p className="lp-kicker">
-            <LockKeyhole size={15} />
-            Seu espaço de gestão
+          <h2>Pronto para organizar sua barbearia?</h2>
+          <p className="mt-3 text-sm text-white/80">
+            Converse sobre a equipe, os valores e as condições para começar.
           </p>
-          <h2>Vamos organizar sua barbearia?</h2>
         </div>
-        <Button asChild size="xl" variant="gold">
-          <Link href="/cadastro">
-            Criar minha conta <ArrowUpRight />
-          </Link>
-        </Button>
+        <CommercialContact />
       </section>
     </>
   );

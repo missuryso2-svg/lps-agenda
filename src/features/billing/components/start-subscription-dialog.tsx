@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { CreditCard, Loader2, ShieldCheck } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -38,12 +38,10 @@ export function StartSubscriptionDialog({
   open,
   onOpenChange,
   plan,
-  trialDays = 0,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   plan: BillingPlan;
-  trialDays?: number;
 }) {
   const [holderName, setHolderName] = useState("");
   const [document, setDocument] = useState("");
@@ -74,9 +72,7 @@ export function StartSubscriptionDialog({
       const result = await startSubscriptionAction(parsed.data);
 
       if (result.status === "error") {
-        setFieldErrors(
-          (result.fieldErrors ?? {}) as Record<string, string[]>,
-        );
+        setFieldErrors((result.fieldErrors ?? {}) as Record<string, string[]>);
         setServerError(
           result.message ?? "Não foi possível iniciar a contratação.",
         );
@@ -95,7 +91,7 @@ export function StartSubscriptionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Contratar plano {plan.name}</DialogTitle>
+          <DialogTitle>Retomar assinatura Asaas · {plan.name}</DialogTitle>
           <DialogDescription>
             A mensalidade do LPS Agenda é cobrada do proprietário da barbearia,
             separada dos serviços prestados aos clientes.
@@ -110,9 +106,8 @@ export function StartSubscriptionDialog({
             </span>
           </p>
           <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-            {trialDays > 0
-              ? `Teste gratuito de ${trialDays} dias. Nenhuma assinatura ou cobrança é criada no Asaas durante o período. Ao final, a recorrência é criada automaticamente e a primeira fatura fica disponível para pagamento.`
-              : "O primeiro vencimento é amanhã. A assinatura só é ativada depois da confirmação do pagamento pelo Asaas."}
+            Valor de catálogo aplicado na retomada do contrato legado. A
+            ativação depende da confirmação do pagamento.
           </p>
         </div>
 
@@ -159,9 +154,8 @@ export function StartSubscriptionDialog({
               </p>
             ) : (
               <p className="text-[11px] text-muted-foreground">
-                {trialDays > 0
-                  ? "Usado para cadastrar o pagador no Asaas ao final do teste. O documento é exibido mascarado nesta página."
-                  : "Usado apenas para cadastrar o pagador no Asaas. O documento é exibido mascarado nesta página."}
+                Usado apenas para cadastrar o pagador no Asaas. O documento é
+                exibido mascarado nesta página.
               </p>
             )}
           </div>
@@ -196,7 +190,8 @@ export function StartSubscriptionDialog({
           <div className="flex items-start gap-2 rounded-xl border border-border/80 bg-muted/25 p-3.5 text-[11px] leading-relaxed text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-gold" />
             <p>
-              Este ambiente de testes usa o Asaas Sandbox. Confira o plano e os dados do titular antes de continuar.
+              Este ambiente de testes usa o Asaas Sandbox. Confira o plano e os
+              dados do titular antes de continuar.
             </p>
           </div>
 
@@ -213,16 +208,12 @@ export function StartSubscriptionDialog({
               {isPending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  {trialDays > 0 ? "Iniciando teste..." : "Criando assinatura..."}
+                  Retomando...
                 </>
               ) : (
                 <>
-                  {trialDays > 0 ? (
-                    <Sparkles className="size-4" />
-                  ) : (
-                    <CreditCard className="size-4" />
-                  )}
-                  {trialDays > 0 ? "Iniciar teste grátis" : "Iniciar contratação"}
+                  <CreditCard className="size-4" />
+                  Retomar contratação
                 </>
               )}
             </Button>

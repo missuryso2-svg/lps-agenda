@@ -26,6 +26,8 @@ export type BillingSubscriptionView = {
   trialStartedAt: string | null;
   trialEndsAt: string | null;
   contractedPriceCents: number | null;
+  contractedCurrency: string | null;
+  contractedInterval: Database["public"]["Enums"]["billing_interval"] | null;
   cancelAtPeriodEnd: boolean;
   canceledAt: string | null;
   hasRemoteSubscription: boolean;
@@ -63,7 +65,6 @@ export type BillingPageData = {
   customer: BillingCustomerView | null;
   invoices: BillingInvoice[];
   asaasConfigured: boolean;
-  trialAvailable: boolean;
   hasUsedTrial: boolean;
   lastCanceled: BillingLastCancellation | null;
 };

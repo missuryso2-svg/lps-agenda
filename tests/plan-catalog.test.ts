@@ -203,7 +203,7 @@ describe("integração da interface com o catálogo", () => {
     expect(queries).toContain('.eq("is_active", true)');
   });
 
-  it("renderiza nome, descrição, preço, limite, trial e destaque do Profissional", () => {
+  it("mantém valores e limites no painel privado do contrato legado", () => {
     const manager = read(
       "src/features/billing/components/billing-manager.tsx",
     );
@@ -214,29 +214,12 @@ describe("integração da interface com o catálogo", () => {
       "formatCurrencyFromCents(plan.price_cents, plan.currency)",
     );
     expect(manager).toContain("plan.max_barbers");
-    expect(manager).toContain("plan.trial_days");
-    expect(manager).toContain("dias grátis");
+    expect(manager).not.toContain("Iniciar teste grátis");
     expect(manager).toContain("Mais recomendado");
     expect(manager).toContain('plan.code === "profissional"');
   });
 
-  it("alinha a landing page aos nomes e preços oficiais", () => {
-    const landing = read("src/features/marketing/landing-page.tsx");
-    const marketingPlans = [
-      ["Básico", "R$ 49,90"],
-      ["Profissional", "R$ 79,90"],
-      ["Premium", "R$ 119,90"],
-    ] as const;
 
-    for (const [name, price] of marketingPlans) {
-      expect(landing).toContain(`name: "${name}"`);
-      expect(landing).toContain(`price: "${price}"`);
-    }
-
-    expect(landing).not.toContain('name: "Essencial"');
-    expect(landing).not.toContain('name: "Estúdios"');
-    expect(landing).not.toContain("Sob consulta");
-  });
 });
 
 describe("limites no servidor", () => {

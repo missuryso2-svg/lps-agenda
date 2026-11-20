@@ -22,6 +22,13 @@ const manualPlanSchema = z.object({
   next_step: z.literal("contact_lps"),
   access: z.enum(["normal", "grace", "blocked"]),
   reason: z.string(),
+  // Migration 26 extends this projection. Older databases only report trial/access.
+  status: z.enum(["pending","trialing","active","past_due","canceled","expired"]).nullish(),
+  agreement: z.object({
+    monthly_cents: z.number().int().nonnegative(),
+    period_start: z.string(), period_end: z.string(),
+    first_due_at: z.string(), outstanding_due_at: z.string().nullable(),
+  }).nullish(),
 });
 
 export async function getOwnerManualPlan(shop: string) {
@@ -65,7 +72,7 @@ export async function getBillingPageData(
     plansResult,
     subscriptionResult,
     customerResult,
-    invoicesResult,
+    invoices,
     historyResult,
   ] = await Promise.all([
     supabase
@@ -90,15 +97,7 @@ export async function getBillingPageData(
       )
       .eq("barbershop_id", barbershopId)
       .maybeSingle(),
-    supabase
-      .from("payments")
-      .select(
-        "id, amount_cents, status, method, due_date, paid_at, invoice_url, created_at",
-      )
-      .eq("barbershop_id", barbershopId)
-      .eq("scope", "platform_subscription")
-      .order("created_at", { ascending: false })
-      .limit(12),
+    readLegacyInvoices(supabase, barbershopId),
     supabase
       .from("subscriptions")
       .select("id, status, trial_ends_at, canceled_at, cancel_reason")
@@ -106,6 +105,9 @@ export async function getBillingPageData(
       .order("created_at", { ascending: false }),
   ]);
 
+  if (subscriptionResult.error || (subscriptionResult.data && subscriptionResult.data.gateway !== "asaas")) {
+    throw new Error("Não foi possível identificar a origem da assinatura.");
+  }
   const plans = (plansResult.data ?? []) as BillingPlan[];
 
   let subscription: BillingSubscriptionView | null = null;
@@ -132,6 +134,8 @@ export async function getBillingPageData(
       trialStartedAt: row.trial_started_at,
       trialEndsAt: row.trial_ends_at,
       contractedPriceCents: row.contracted_price_cents,
+      contractedCurrency: row.contracted_currency,
+      contractedInterval: row.contracted_interval,
       cancelAtPeriodEnd: row.cancel_at_period_end,
       canceledAt: row.canceled_at,
       hasRemoteSubscription: Boolean(row.gateway_subscription_id),
@@ -159,17 +163,6 @@ export async function getBillingPageData(
     };
   }
 
-  const invoices: BillingInvoice[] = (invoicesResult.data ?? []).map((row) => ({
-    id: row.id,
-    amountCents: row.amount_cents,
-    status: row.status,
-    method: row.method,
-    dueDate: row.due_date,
-    paidAt: row.paid_at,
-    invoiceUrl: row.invoice_url,
-    createdAt: row.created_at,
-  }));
-
   const history = historyResult.data ?? [];
   const hasUsedTrial = history.some((row) => row.trial_ends_at !== null);
   const lastCanceledRow = history.find(
@@ -182,14 +175,6 @@ export async function getBillingPageData(
     customer,
     invoices,
     asaasConfigured: isAsaasConfigured(),
-    // Fail closed: se o histórico não pôde ser lido, não oferece um novo trial.
-    // O trial é único por barbearia, mas uma contratação paga anterior sem
-    // teste gratuito não impede o primeiro trial.
-    trialAvailable:
-      !historyResult.error &&
-      !subscription &&
-      !hasUsedTrial &&
-      plans.some((plan) => plan.trial_days > 0),
     hasUsedTrial,
     lastCanceled:
       !historyResult.error && lastCanceledRow?.canceled_at
@@ -199,4 +184,32 @@ export async function getBillingPageData(
           }
         : null,
   };
+}
+
+async function readLegacyInvoices(supabase: Awaited<ReturnType<typeof createClient>>, barbershopId: string): Promise<BillingInvoice[]> {
+  const invoicesResult = await supabase
+      .from("payments")
+      .select(
+        "id, amount_cents, status, method, due_date, paid_at, invoice_url, created_at",
+      )
+      .eq("barbershop_id", barbershopId)
+      .eq("gateway", "asaas")
+      .eq("scope", "platform_subscription")
+      .order("created_at", { ascending: false })
+      .limit(12);
+  if (invoicesResult.error) throw new Error("Histórico de mensalidades indisponível.");
+  return (invoicesResult.data ?? []).map((row) => ({
+    id: row.id,
+    amountCents: row.amount_cents,
+    status: row.status,
+    method: row.method,
+    dueDate: row.due_date,
+    paidAt: row.paid_at,
+    invoiceUrl: row.invoice_url,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function getLegacyInvoices(shop: string) {
+  return readLegacyInvoices(await createClient(), shop);
 }

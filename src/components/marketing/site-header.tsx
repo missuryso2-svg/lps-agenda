@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Menu, Sparkles } from "lucide-react";
+import { ArrowUpRight, Menu } from "lucide-react";
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
@@ -25,7 +25,7 @@ const links = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-[4.5rem] w-full max-w-7xl items-center justify-between gap-6 px-5 sm:px-8">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
         <Link href="/" aria-label="LPS Agenda — início">
           <Logo />
         </Link>
@@ -95,13 +95,10 @@ export function SiteHeader() {
                   <Button asChild variant="gold" size="xl">
                     <Link href="/cadastro">
                       Criar conta
-                      <Sparkles className="size-4" />
+                      <ArrowUpRight className="size-4" />
                     </Link>
                   </Button>
                 </SheetClose>
-                <p className="pt-1 text-center text-[11px] text-muted-foreground">
-                  Produto em desenvolvimento. Interface de demonstração.
-                </p>
               </div>
             </SheetContent>
           </Sheet>

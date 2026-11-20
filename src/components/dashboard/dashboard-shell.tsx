@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   Scissors,
-  Search,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -286,13 +285,13 @@ export function DashboardShell({
   );
 
   return (
-    <div className="min-h-svh bg-background lg:grid lg:grid-cols-[17.5rem_1fr]">
+    <div className="min-h-svh bg-background lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
       <aside className="sticky top-0 hidden h-svh border-r border-sidebar-border lg:block">
         {sidebar(false)}
       </aside>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <div className="flex min-h-svh flex-col">
+        <div className="flex min-h-svh min-w-0 flex-col">
           <header className="sticky top-0 z-30 flex h-[4.5rem] items-center gap-3 border-b border-border/70 bg-background/85 px-4 backdrop-blur-xl sm:px-6">
             <SheetTrigger asChild>
               <Button
@@ -315,21 +314,6 @@ export function DashboardShell({
             </div>
 
             <div className="ml-auto flex items-center gap-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled
-                className="hidden h-8 gap-2 rounded-lg border-dashed text-[11px] text-muted-foreground xl:inline-flex"
-                title="Busca global em construção"
-              >
-                <Search className="size-3.5" />
-                Buscar (em breve)
-                <kbd className="ml-2 rounded border bg-muted px-1 font-mono text-[9px]">
-                  /
-                </kbd>
-              </Button>
-
               <ThemeToggle />
 
               <DropdownMenu>
@@ -341,7 +325,6 @@ export function DashboardShell({
                     aria-label="Notificações"
                   >
                     <Bell className="size-4" />
-                    <span className="absolute right-2 top-2 size-1.5 rounded-full bg-gold" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-72">
@@ -351,9 +334,7 @@ export function DashboardShell({
                     <p className="mt-2 text-xs font-medium">
                       Nenhuma notificação por aqui
                     </p>
-                    <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
-                      A central de notificações será conectada na próxima etapa.
-                    </p>
+
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -448,7 +429,7 @@ function NavGroup({
 
   return (
     <div>
-      <p className="px-2.5 pb-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
+      <p className="px-2.5 pb-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {label}
       </p>
       <div className="space-y-0.5">
@@ -464,20 +445,18 @@ function NavGroup({
               className={cn(
                 "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  ? "bg-[var(--brand-yellow)] text-[var(--ink)]"
                   : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
               )}
             >
               <item.icon
                 className={cn(
                   "size-4 shrink-0",
-                  active ? "text-gold" : "text-muted-foreground/80",
+                  active ? "text-[var(--ink)]" : "text-muted-foreground/80",
                 )}
               />
               <span className="flex-1">{item.label}</span>
-              {active ? (
-                <span className="size-1 rounded-full bg-gold" aria-hidden />
-              ) : null}
+
             </Link>
           );
         })}

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { Logo } from "@/components/brand/logo";
 import { ConfigAlert } from "@/components/config-alert";
 import { ForgotPasswordForm } from "@/features/auth/components/forgot-password-form";
 import { isSupabaseConfigured } from "@/lib/env/public";
@@ -16,10 +15,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-col items-start gap-3 lg:hidden">
-        <Logo showTagline={false} />
-      </div>
-
       <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-gold">
         Recuperação de acesso
       </p>

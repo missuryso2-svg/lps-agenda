@@ -18,17 +18,17 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-5 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between",
+        "flex min-w-0 flex-col gap-5 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between",
         className,
       )}
     >
-      <div className="max-w-2xl">
+      <div className="min-w-0 max-w-2xl">
         {eyebrow ? (
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold">
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="mt-2 font-display text-3xl leading-[1.06] tracking-[-0.03em] sm:text-[2.1rem]">
+        <h2 className="mt-2 font-display text-4xl leading-[1.06] tracking-[-0.03em] sm:text-[2.65rem]">
           {title}
         </h2>
         {description ? (

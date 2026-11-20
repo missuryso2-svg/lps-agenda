@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { requireFinancialAdmin } from "@/lib/auth/financial-admin";
 import { FinanceNav } from "@/features/admin-billing/navigation";
+import { SolutionsLogo } from "@/components/brand/logo";
+import { ShieldCheck } from "lucide-react";
 import "./finance.css";
 
 export const dynamic = "force-dynamic";
@@ -21,14 +23,13 @@ export default async function Layout({
       </a>
       <aside className="fa-rail">
         <header className="fa-brand">
-          <span aria-hidden="true">LPS</span>
-          <div>
-            LPS Solutions<small>Administração financeira</small>
-          </div>
+          <SolutionsLogo />
+          <small>Administração financeira</small>
         </header>
         <FinanceNav manager={level === "manager"} />
         <footer>
           <strong>
+            <ShieldCheck size={16} aria-hidden="true" />
             {level === "manager" ? "Gestor financeiro" : "Operador financeiro"}
           </strong>
           <span>{user.email ?? user.id}</span>

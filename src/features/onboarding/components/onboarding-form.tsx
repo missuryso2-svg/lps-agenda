@@ -152,8 +152,7 @@ export function OnboardingForm({ manualUserId }: { manualUserId: string | null }
             </p>
           ) : (
             <p className="text-[11px] text-muted-foreground">
-              Letras minúsculas, números e hífens. O link público personalizado
-              entra em uma próxima etapa.
+              Use letras minúsculas, números e hífens no link de agendamento.
             </p>
           )}
         </div>
@@ -181,7 +180,7 @@ export function OnboardingForm({ manualUserId }: { manualUserId: string | null }
           </div>
 
           <div className="space-y-2">
-            <Label>Fuso horário</Label>
+            <Label htmlFor="timezone">Fuso horário</Label>
             <Controller
               control={form.control}
               name="timezone"
@@ -192,6 +191,7 @@ export function OnboardingForm({ manualUserId }: { manualUserId: string | null }
                   disabled={isPending}
                 >
                   <SelectTrigger
+                    id="timezone"
                     className="h-11 w-full rounded-xl px-3"
                     aria-invalid={Boolean(form.formState.errors.timezone)}
                   >
@@ -220,8 +220,7 @@ export function OnboardingForm({ manualUserId }: { manualUserId: string | null }
           <div>
             <p className="text-xs font-medium">Você será o proprietário</p>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-              O papel de proprietário permite editar a barbearia e gerenciar a
-              equipe. A regra é imposta pelo banco de dados.
+              Você poderá editar os dados da barbearia e gerenciar a equipe.
             </p>
           </div>
         </div>

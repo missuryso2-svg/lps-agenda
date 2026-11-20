@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { Logo } from "@/components/brand/logo";
 import { ConfigAlert } from "@/components/config-alert";
 import { Button } from "@/components/ui/button";
 import { SignUpForm } from "@/features/auth/components/signup-form";
@@ -18,10 +17,6 @@ export default function SignUpPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-col items-start gap-3 lg:hidden">
-        <Logo showTagline={false} />
-      </div>
-
       <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-gold">
         Comece pelo essencial
       </p>
@@ -29,8 +24,7 @@ export default function SignUpPage() {
         Crie sua conta.
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Em poucos minutos você configura a barbearia e entra no painel. Sem
-        cobrança nesta versão.
+        Use seu e-mail para cadastrar a barbearia e acessar o painel de gestão.
       </p>
 
       {!configured ? (

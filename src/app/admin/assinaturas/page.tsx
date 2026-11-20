@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleDollarSign, Clock3 } from "lucide-react";
 import {
   overview,
   selectedMonth,
@@ -28,11 +29,11 @@ export default async function Overview({ searchParams }: PageProps) {
       <h2>Mensalidades de {period(m)}</h2>
       <div className="fa-metrics fa-money">
         <div className="fa-metric">
-          <span>Recebido</span>
+          <span><CircleDollarSign size={17} /> Recebido</span>
           <strong>{money(data.received_cents)}</strong>
         </div>
         <div className="fa-metric">
-          <span>Em aberto</span>
+          <span><Clock3 size={17} /> Em aberto</span>
           <strong>{money(data.open_cents)}</strong>
         </div>
       </div>

@@ -19,11 +19,11 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <Card className={cn("gap-0 py-0", className)}>
-      <CardContent className="flex items-start gap-3 p-4">
+    <Card className={cn("gap-0 py-0", tone === "gold" && "ring-gold/60", className)}>
+      <CardContent className="relative flex flex-col items-start gap-4 p-5">
         <span
           className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-xl border",
+            "grid size-9 shrink-0 place-items-center rounded-lg border",
             tone === "gold"
               ? "border-gold/30 bg-gold-soft/55 text-gold"
               : tone === "muted"
@@ -33,11 +33,11 @@ export function StatCard({
         >
           <Icon className="size-4" />
         </span>
-        <div className="min-w-0">
-          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <div className="min-w-0 w-full">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {label}
           </p>
-          <p className="mt-1 font-display text-2xl leading-none tracking-tight">
+          <p className="mt-2 font-display text-3xl tabular-nums leading-none tracking-tight">
             {value}
           </p>
           {hint ? (

@@ -79,7 +79,7 @@ export default async function DashboardOverviewPage({
       <PageHeader
         eyebrow="Visão geral"
         title={`Olá, ${firstName}.`}
-        description={`Este é o pulso de ${shop.name}. Os indicadores refletem os dados reais gravados no seu espaço.`}
+        description={`Acompanhe a agenda e os atendimentos de ${shop.name}.`}
         actions={
           <>
             <Button asChild variant="outline" size="lg">
@@ -119,11 +119,10 @@ export default async function DashboardOverviewPage({
               </span>
               <div>
                 <p className="text-sm font-medium">
-                  Sua base está pronta. Falta preencher a operação.
+                  Prepare sua agenda para receber clientes.
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Cadastre serviços e profissionais para que a agenda e os
-                  indicadores comecem a ganhar vida.
+                  Cadastre seus serviços e os profissionais que vão atender.
                 </p>
               </div>
             </div>

@@ -11,8 +11,7 @@
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", monospace;
-  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua",
-    Palatino, "Times New Roman", serif;
+  --font-display: var(--font-sans);
   --font-heading: var(--font-display);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
@@ -56,78 +55,64 @@
 }
 
 :root {
-  --background: oklch(0.985 0.004 88);
-  --foreground: oklch(0.215 0.007 65);
-  --card: oklch(0.997 0.002 90);
-  --card-foreground: oklch(0.215 0.007 65);
-  --popover: oklch(0.997 0.002 90);
-  --popover-foreground: oklch(0.215 0.007 65);
-  --primary: oklch(0.235 0.008 65);
-  --primary-foreground: oklch(0.985 0.004 88);
-  --secondary: oklch(0.957 0.007 85);
-  --secondary-foreground: oklch(0.265 0.008 65);
-  --muted: oklch(0.957 0.006 85);
-  --muted-foreground: oklch(0.505 0.01 65);
-  --accent: oklch(0.948 0.024 86);
-  --accent-foreground: oklch(0.265 0.01 65);
-  --destructive: oklch(0.577 0.212 27.3);
-  --border: oklch(0.9 0.009 80);
-  --input: oklch(0.9 0.009 80);
-  --ring: oklch(0.74 0.09 80);
-  --gold: oklch(0.71 0.105 79);
-  --gold-soft: oklch(0.945 0.035 86);
-  --gold-foreground: oklch(0.24 0.02 70);
-  --chart-1: oklch(0.71 0.105 79);
-  --chart-2: oklch(0.58 0.06 78);
-  --chart-3: oklch(0.42 0.025 70);
-  --chart-4: oklch(0.3 0.012 65);
-  --chart-5: oklch(0.84 0.045 85);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.975 0.005 87);
-  --sidebar-foreground: oklch(0.245 0.007 65);
-  --sidebar-primary: oklch(0.235 0.008 65);
-  --sidebar-primary-foreground: oklch(0.985 0.004 88);
-  --sidebar-accent: oklch(0.94 0.018 86);
-  --sidebar-accent-foreground: oklch(0.245 0.01 65);
-  --sidebar-border: oklch(0.9 0.009 80);
-  --sidebar-ring: oklch(0.74 0.09 80);
+  --brand-yellow: #ffdb16;
+  --ink: #101112;
+  --background: #f6f6f2;
+  --foreground: #17191a;
+  --card: #ffffff;
+  --popover: var(--card);
+  --primary: #202224;
+  --primary-foreground: #ffffff;
+  --secondary: #e9eae6;
+  --muted: var(--secondary);
+  --muted-foreground: #555953;
+  --accent: #eeefdf;
+  --destructive: #b62639;
+  --border: #d6d8d1;
+  --input: #858880;
+  --ring: #817000;
+  --gold: #685700;
+  --gold-soft: #fff3b2;
+  --gold-foreground: #ffffff;
+  --chart-1: var(--gold);
+  --chart-2: #a99213;
+  --chart-3: #79827d;
+  --chart-4: #589383;
+  --chart-5: #b99c59;
+  --radius: 0.65rem;
+  --sidebar: #fdfdfa;
+  --sidebar-accent: #eeefdf;
+  --card-foreground: var(--foreground);
+  --popover-foreground: var(--foreground);
+  --secondary-foreground: var(--foreground);
+  --accent-foreground: var(--foreground);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
 .dark {
-  --background: oklch(0.16 0.005 65);
-  --foreground: oklch(0.955 0.004 88);
-  --card: oklch(0.205 0.006 65);
-  --card-foreground: oklch(0.955 0.004 88);
-  --popover: oklch(0.215 0.006 65);
-  --popover-foreground: oklch(0.955 0.004 88);
-  --primary: oklch(0.78 0.1 81);
-  --primary-foreground: oklch(0.19 0.01 65);
-  --secondary: oklch(0.255 0.008 65);
-  --secondary-foreground: oklch(0.94 0.004 88);
-  --muted: oklch(0.255 0.008 65);
-  --muted-foreground: oklch(0.71 0.008 80);
-  --accent: oklch(0.27 0.018 75);
-  --accent-foreground: oklch(0.945 0.004 88);
-  --destructive: oklch(0.704 0.191 22.2);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.78 0.1 81);
-  --gold: oklch(0.79 0.1 82);
-  --gold-soft: oklch(0.29 0.04 78);
-  --gold-foreground: oklch(0.18 0.015 65);
-  --chart-1: oklch(0.79 0.1 82);
-  --chart-2: oklch(0.65 0.07 80);
-  --chart-3: oklch(0.52 0.04 75);
-  --chart-4: oklch(0.8 0.01 85);
-  --chart-5: oklch(0.38 0.03 70);
-  --sidebar: oklch(0.185 0.006 65);
-  --sidebar-foreground: oklch(0.93 0.004 88);
-  --sidebar-primary: oklch(0.79 0.1 82);
-  --sidebar-primary-foreground: oklch(0.18 0.015 65);
-  --sidebar-accent: oklch(0.26 0.015 72);
-  --sidebar-accent-foreground: oklch(0.95 0.004 88);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.79 0.1 82);
+  --background: #101112;
+  --foreground: #f6f6f1;
+  --card: #1b1d1e;
+  --popover: #242627;
+  --primary: var(--brand-yellow);
+  --primary-foreground: var(--ink);
+  --secondary: #292c2d;
+  --muted-foreground: #b2b5b2;
+  --accent: #303127;
+  --destructive: #ff939e;
+  --border: #363939;
+  --input: #646866;
+  --ring: var(--brand-yellow);
+  --gold: var(--brand-yellow);
+  --gold-soft: #36321b;
+  --gold-foreground: var(--ink);
+  --sidebar: #151718;
+  --sidebar-accent: #343423;
 }
 
 @layer base {
@@ -141,23 +126,17 @@
 
   body {
     @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(
-        58rem 38rem at 8% -12%,
-        oklch(0.71 0.105 79 / 0.07),
-        transparent 62%
-      ),
-      radial-gradient(
-        44rem 34rem at 105% 8%,
-        oklch(0.42 0.02 70 / 0.05),
-        transparent 58%
-      );
-    background-attachment: fixed;
+    font-feature-settings: "ss01", "cv11";
   }
 
   ::selection {
-    background: oklch(0.71 0.105 79 / 0.28);
-    color: var(--foreground);
+    background: var(--brand-yellow);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
   }
 
   h1,
@@ -174,6 +153,8 @@
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
+    font-weight: 650;
+    overflow-wrap: anywhere;
   }
 
   .surface-grain {
@@ -189,24 +170,7 @@
   }
 
   .text-gold-gradient {
-    background-image: linear-gradient(
-      100deg,
-      oklch(0.52 0.09 72),
-      oklch(0.74 0.11 82) 46%,
-      oklch(0.58 0.075 74)
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .dark .text-gold-gradient {
-    background-image: linear-gradient(
-      100deg,
-      oklch(0.7 0.09 78),
-      oklch(0.88 0.08 88) 48%,
-      oklch(0.72 0.1 80)
-    );
+    color: var(--gold);
   }
 
   .animate-rise {

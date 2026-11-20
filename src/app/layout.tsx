@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s · LPS Agenda",
   },
   description:
-    "Agenda, equipe, clientes e financeiro em uma plataforma multiempresa feita para barbearias que levam a operação a sério.",
+    "Organize horários, serviços e equipe da sua barbearia com o LPS Agenda.",
   applicationName: "LPS Agenda",
   authors: [{ name: "LPS Solutions" }],
   keywords: [
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     siteName: "LPS Agenda",
     title: "LPS Agenda — Gestão premium para barbearias",
     description:
-      "Uma fundação multiempresa para agenda, equipe, clientes e financeiro da sua barbearia.",
+      "Agenda online, gestão de profissionais e acompanhamento dos atendimentos da barbearia.",
   },
   robots: {
     index: true,
@@ -39,8 +39,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf8f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#191817" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f6f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#101112" },
   ],
   colorScheme: "light dark",
 };

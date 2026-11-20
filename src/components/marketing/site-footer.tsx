@@ -1,7 +1,7 @@
-import { ArrowUpRight, AtSign, Globe2, Mail } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
-import { Logo } from "@/components/brand/logo";
+import { Logo, SolutionsLogo } from "@/components/brand/logo";
 
 const productLinks = [
   { href: "/#recursos", label: "Recursos" },
@@ -23,30 +23,15 @@ const legalLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 bg-[oklch(0.185_0.006_65)] text-white">
+    <footer className="mt-16 border-t border-white/15 bg-[#141617] text-white">
       <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
           <div>
             <Logo tone="inverse" />
             <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/55">
-              Uma fundação multiempresa para barbearias que querem agenda,
-              equipe, clientes e financeiro no mesmo lugar — com segurança desde
-              o banco de dados.
+              Agenda, equipe e serviços em um só lugar para quem vive o dia a dia da barbearia.
             </p>
-            <div className="mt-6 flex items-center gap-2">
-              <span className="inline-flex size-8 items-center justify-center rounded-lg border border-white/10 text-white/60">
-                <AtSign className="size-3.5" />
-              </span>
-              <span className="inline-flex size-8 items-center justify-center rounded-lg border border-white/10 text-white/60">
-                <Globe2 className="size-3.5" />
-              </span>
-              <span className="inline-flex size-8 items-center justify-center rounded-lg border border-white/10 text-white/60">
-                <Mail className="size-3.5" />
-              </span>
-              <span className="ml-1 text-[11px] text-white/35">
-                Canais em configuração
-              </span>
-            </div>
+
           </div>
 
           <FooterColumn title="Produto" links={productLinks} />
@@ -55,17 +40,11 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-6 md:flex-row md:items-center md:justify-between">
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-white/65">
             © {new Date().getFullYear()} LPS Solutions. Todos os direitos
             reservados.
           </p>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-white/40">
-            <span>Feito no Brasil</span>
-            <span className="size-1 rounded-full bg-gold/70" />
-            <span>Fundação v0.1</span>
-            <span className="size-1 rounded-full bg-gold/70" />
-            <span>Recursos em desenvolvimento</span>
-          </div>
+          <SolutionsLogo />
         </div>
       </div>
     </footer>
@@ -81,7 +60,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold">
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#ffdb16]">
         {title}
       </h3>
       <ul className="mt-5 space-y-3">

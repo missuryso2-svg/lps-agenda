@@ -27,19 +27,19 @@ export function DashboardEmpty({
   return (
     <Empty
       className={cn(
-        "rounded-2xl border border-dashed border-border/80 bg-card/45 py-10",
+        "rounded-2xl border border-dashed border-border/80 bg-muted/25 py-10",
         className,
       )}
     >
       <EmptyHeader>
         <EmptyMedia
           variant="icon"
-          className="size-10 rounded-xl border border-gold/25 bg-gold-soft/45 text-gold"
+          className="size-12 rounded-2xl border border-gold/25 bg-gold-soft/45 text-gold"
         >
           <Icon />
         </EmptyMedia>
-        <EmptyTitle className="text-sm">{title}</EmptyTitle>
-        <EmptyDescription className="max-w-md text-xs">
+        <EmptyTitle className="text-base font-semibold">{title}</EmptyTitle>
+        <EmptyDescription className="max-w-md text-sm">
           {description}
         </EmptyDescription>
       </EmptyHeader>

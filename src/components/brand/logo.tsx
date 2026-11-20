@@ -1,59 +1,42 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-type LogoProps = {
-  className?: string;
-  tone?: "default" | "inverse";
-  showTagline?: boolean;
-};
-
-export function Logo({
-  className,
-  tone = "default",
-  showTagline = true,
-}: LogoProps) {
-  const inverse = tone === "inverse";
-
+export function Logo({ tone = "default" }: { tone?: "default" | "inverse" }) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <span
+    <span
+      className="inline-flex shrink-0 items-center gap-1.5 align-middle"
+      role="img"
+      aria-label="LPS Agenda"
+    >
+      <Image
+        src="/brand/lps.webp"
+        width={160}
+        height={88}
+        alt=""
+        className="h-7 w-auto"
+      />
+      <Image
+        src="/brand/agenda.webp"
+        width={380}
+        height={91}
+        alt=""
         className={cn(
-          "relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-[11px] border",
-          inverse
-            ? "border-gold/40 bg-gold text-gold-foreground"
-            : "border-white/10 bg-primary text-gold",
+          "h-[1.35rem] w-auto",
+          tone === "default" && "brightness-0 dark:brightness-100",
         )}
-        aria-hidden="true"
-      >
-        <span className="font-display text-[17px] leading-none font-semibold">
-          L
-        </span>
-        <span
-          className={cn(
-            "absolute right-1 top-1 size-1 rounded-full",
-            inverse ? "bg-gold-foreground/60" : "bg-gold",
-          )}
-        />
-      </span>
-      <span className="flex min-w-0 flex-col">
-        <span
-          className={cn(
-            "font-display text-[17px] leading-none font-semibold tracking-tight",
-            inverse ? "text-white" : "text-foreground",
-          )}
-        >
-          LPS <span className="text-gold italic">Agenda</span>
-        </span>
-        {showTagline ? (
-          <span
-            className={cn(
-              "mt-1 text-[9px] font-medium uppercase tracking-[0.2em]",
-              inverse ? "text-white/50" : "text-muted-foreground",
-            )}
-          >
-            by LPS Solutions
-          </span>
-        ) : null}
-      </span>
+      />
     </span>
+  );
+}
+
+export function SolutionsLogo() {
+  return (
+    <Image
+      src="/brand/lps-solutions.webp"
+      width={400}
+      height={76}
+      alt="LPS Solutions"
+      className="h-6 w-auto"
+    />
   );
 }

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { KeyRound } from "lucide-react";
 
-import { Logo } from "@/components/brand/logo";
 import { ConfigAlert } from "@/components/config-alert";
 import { Button } from "@/components/ui/button";
 import { ResetPasswordForm } from "@/features/auth/components/reset-password-form";
@@ -20,10 +19,6 @@ export default async function ResetPasswordPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-col items-start gap-3 lg:hidden">
-        <Logo showTagline={false} />
-      </div>
-
       <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-gold">
         Novo acesso
       </p>

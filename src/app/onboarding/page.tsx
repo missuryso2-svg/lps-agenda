@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { Logo } from "@/components/brand/logo";
@@ -93,8 +93,7 @@ export default async function OnboardingPage() {
             </span>
           </h1>
           <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-            Esta etapa cria a raiz do seu espaço no LPS Agenda. Você será o
-            proprietário e poderá ajustar os demais dados depois.
+            Escolha como sua barbearia aparece para os clientes. Você poderá ajustar essas informações depois.
           </p>
 
           <ol className="mt-9 space-y-1">
@@ -132,15 +131,11 @@ export default async function OnboardingPage() {
               O que acontece ao continuar
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              A barbearia e o vínculo de proprietário são criados na mesma
-              transação. Nenhum outro usuário terá acesso aos seus dados.
+              Você terá acesso ao painel de proprietário para configurar serviços, profissionais e horários.
             </p>
           </div>
 
-          <p className="mt-5 flex items-start gap-2 text-[11px] text-muted-foreground">
-            <Sparkles className="mt-0.5 size-3.5 shrink-0 text-gold" />
-            Convites de equipe e agendamento completo entram na próxima etapa.
-          </p>
+
         </div>
 
         <div className="animate-rise-slow rounded-3xl border border-border/80 bg-card p-6 shadow-premium sm:p-8">

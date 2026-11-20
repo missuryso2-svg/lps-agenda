@@ -91,11 +91,11 @@ function PlanCard({
     <Card
       className={cn(
         "relative flex flex-col",
-        highlighted && "border-gold/35 bg-gold-soft/15 shadow-premium",
+        highlighted && "border-t-4 border-gold bg-gold-soft/15 ring-gold/50",
       )}
     >
       {highlighted ? (
-        <span className="absolute right-3 top-3">
+        <span className="mx-4 w-fit">
           <Badge
             variant="outline"
             className="border-gold/35 bg-gold-soft/60 text-[9px] uppercase tracking-[0.12em]"
@@ -109,7 +109,7 @@ function PlanCard({
         <p className="text-xs leading-relaxed text-muted-foreground">
           {plan.description ?? "Plano da plataforma LPS Agenda."}
         </p>
-        <p className="mt-2 font-display text-2xl">
+        <p className="mt-3 font-display text-3xl tabular-nums">
           {formatCurrencyFromCents(plan.price_cents, plan.currency)}
           <span className="ml-1 font-sans text-xs font-normal text-muted-foreground">
             {plan.interval === "year" ? "/ ano" : "/ mês"}
@@ -231,10 +231,10 @@ export function BillingManager({
   return (
     <div className="space-y-7">
       {!asaasConfigured ? (
-        <NoticeCard icon={LockKeyhole} title="Asaas Sandbox não configurado" tone="warning">
+        <NoticeCard icon={LockKeyhole} title="Contratação automática indisponível" tone="warning">
           {trialAvailable
-            ? "O teste gratuito pode ser iniciado agora. A cobrança automática só será habilitada quando as credenciais Sandbox estiverem configuradas no servidor."
-            : "Defina as credenciais do Asaas Sandbox no servidor para habilitar contratação, troca e cancelamento. Nenhuma cobrança é feita nesta tela enquanto a configuração estiver ausente."}
+            ? "Você pode iniciar o teste gratuito. A emissão de cobranças está indisponível no momento."
+            : "A contratação, a troca e o cancelamento pelo painel estão indisponíveis no momento."}
         </NoticeCard>
       ) : null}
 
@@ -589,13 +589,10 @@ export function BillingManager({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <NoticeCard icon={ShieldCheck} title="Cobrança sob controle" tone="gold">
-          Somente boleto e Pix estão disponíveis nesta fase. A confirmação vem de
-          eventos financeiros do Asaas, nunca do evento de criação da assinatura.
+          Acompanhe boletos e Pix no histórico. A situação do pagamento é atualizada após a confirmação pelo provedor.
         </NoticeCard>
-        <NoticeCard icon={LockKeyhole} title="Segredos fora do cliente">
-          As chaves de API, o token do webhook e a chave administrativa do
-          Supabase permanecem restritas ao servidor. Nenhum dado de cartão é
-          coletado ou armazenado.
+        <NoticeCard icon={LockKeyhole} title="Dados de pagamento">
+          Boleto e Pix usam os dados do titular informados na contratação. Você pode conferir o titular na seção de assinatura.
         </NoticeCard>
       </div>
 

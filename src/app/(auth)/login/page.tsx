@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { ConfigAlert } from "@/components/config-alert";
 import { FormError } from "@/components/forms/form-message";
-import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { LoginForm } from "@/features/auth/components/login-form";
 import { isSupabaseConfigured } from "@/lib/env/public";
@@ -27,10 +26,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <div>
-      <div className="mb-8 flex flex-col items-start gap-3 lg:hidden">
-        <Logo showTagline={false} />
-      </div>
-
       <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-gold">
         Bem-vindo de volta
       </p>

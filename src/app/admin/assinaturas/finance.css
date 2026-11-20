@@ -1,8 +1,8 @@
 .fa-shell {
-  --fa-bg: #141515;
-  --fa-surface: #1d1e1e;
-  --fa-border: #393a37;
-  --fa-gold: #e4c688;
+  --fa-bg: var(--ink);
+  --fa-surface: #1b1d1e;
+  --fa-border: #383b3a;
+  --fa-gold: var(--brand-yellow);
   --fa-muted: #b7b8b2;
   min-height: 100svh;
   background: var(--fa-bg);
@@ -13,7 +13,7 @@
   font-size: 0.9375rem;
 }
 .fa-rail {
-  background: #191a19;
+  background: #161819;
   border-right: 1px solid var(--fa-border);
   display: flex;
   flex-direction: column;
@@ -21,18 +21,23 @@
   gap: 2rem;
 }
 .fa-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 650;
+  display: grid;
+  justify-items: start;
+  gap: 0.7rem;
+  padding: 0.4rem 0.7rem 1.3rem;
+  border-bottom: 1px solid var(--fa-border);
 }
-.fa-brand > span {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  background: var(--fa-gold);
-  color: #191a19;
-  padding: 0.6rem 0.35rem;
-  border-radius: 0.25rem;
+.fa-brand small {
+  letter-spacing: 0.07em;
+}
+.fa-rail footer strong {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.fa-rail footer svg {
+  color: var(--fa-gold);
 }
 .fa-shell small,
 .fa-rail footer span,
@@ -56,7 +61,12 @@
 }
 .fa-rail nav a[aria-current] {
   color: var(--fa-gold);
-  background: #302c23;
+  background: #353323;
+  box-shadow: inset 3px 0 var(--fa-gold);
+}
+.fa-rail nav a:hover {
+  background: #282b2a;
+  color: #fff;
 }
 .fa-rail footer {
   margin-top: auto;
@@ -74,6 +84,8 @@
 .fa-main h1,
 .fa-main h2 {
   font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.045em;
   line-height: 1.12;
   text-wrap: balance;
 }
@@ -120,6 +132,10 @@
 }
 .fa-filters {
   margin: 1rem 0 1.5rem;
+  padding: 1rem;
+  background: #191b1c;
+  border: 1px solid var(--fa-border);
+  border-radius: var(--radius);
 }
 .fa-shell label {
   display: grid;
@@ -133,8 +149,8 @@
   max-width: 100%;
   min-width: 0;
   background: #151615;
-  border: 1px solid #565852;
-  border-radius: 0.35rem;
+  border: 1px solid #71756d;
+  border-radius: 0.45rem;
   padding: 0.55rem 0.7rem;
   color: #fff;
 }
@@ -144,7 +160,7 @@
 .fa-shell button,
 .fa-paging a {
   border: 1px solid #57584f;
-  border-radius: 0.35rem;
+  border-radius: 0.45rem;
   padding: 0.55rem 0.85rem;
   cursor: pointer;
 }
@@ -186,7 +202,7 @@
 .fa-panel {
   background: var(--fa-surface);
   border: 1px solid var(--fa-border);
-  border-radius: 0.55rem;
+  border-radius: var(--radius);
   padding: 1.15rem;
 }
 .fa-metric strong {
@@ -196,6 +212,19 @@
 }
 .fa-money .fa-metric {
   padding: 1.5rem;
+  border-top: 3px solid #777d79;
+}
+.fa-money .fa-metric:first-child {
+  border-top-color: var(--fa-gold);
+}
+.fa-money .fa-metric span {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.fa-money .fa-metric strong {
+  letter-spacing: -0.05em;
+  margin-top: 0.55rem;
 }
 .fa-money strong {
   color: var(--fa-gold);
@@ -223,12 +252,17 @@
 }
 .fa-table {
   overflow-x: auto;
+  background: var(--fa-surface);
+  border: 1px solid var(--fa-border);
+  border-radius: var(--radius);
 }
 .fa-table table {
   width: 100%;
   border-collapse: collapse;
 }
 .fa-table th {
+  background: #262929;
+  font-weight: 600;
   text-align: left;
   color: var(--fa-muted);
   font-size: 0.8rem;
@@ -245,18 +279,20 @@
 .fa-badge {
   display: inline-block;
   border: 1px solid #51534e;
-  border-radius: 0.35rem;
+  border-radius: 0.45rem;
   padding: 0.08rem 0.4rem;
   font-size: 0.78rem;
 }
 .fa-badge[data-state="paid"],
 .fa-badge[data-state="active"] {
-  color: #b7e0c3;
+  color: #b7edc9;
+  background: #193126;
 }
 .fa-badge[data-state="past_due"],
 .fa-badge[data-state="overdue"],
 .fa-badge[data-state="reconcile"] {
-  color: var(--fa-gold);
+  color: #ffe2a0;
+  background: #342c18;
 }
 .fa-records {
   display: grid;
@@ -288,7 +324,10 @@
   color: var(--fa-gold);
   cursor: pointer;
   width: fit-content;
-  padding: 0.4rem 0;
+  padding: 0.55rem 0.85rem;
+  background: #252727;
+  border: 1px solid var(--fa-border);
+  border-radius: var(--radius);
 }
 .fa-inset {
   margin-top: 0.4rem;
@@ -298,6 +337,65 @@
 }
 .fa-shell [hidden] {
   display: none;
+}
+.fa-shell button:hover:not(:disabled),
+.fa-paging a:hover {
+  border-color: var(--fa-gold);
+}
+.fa-shell .fa-primary:hover:not(:disabled) {
+  background: #ffe867;
+}
+.fa-shell .fa-danger {
+  background: #782c3a;
+  border-color: #bf6876;
+  color: #fff;
+}
+.fa-operation[data-danger="true"] summary {
+  color: #ffacb6;
+}
+.fa-review {
+  margin: auto;
+  width: min(36rem, calc(100% - 2rem));
+  max-height: 85svh;
+  overflow: auto;
+  padding: 1.5rem;
+  border: 1px solid #575a59;
+  border-radius: var(--radius);
+  background: #1b1d1e;
+  color: #f6f6f1;
+  box-shadow: 0 20px 70px #0008;
+}
+.fa-review::backdrop {
+  background: #050607bd;
+}
+.fa-review > small {
+  margin-bottom: 0.5rem;
+}
+.fa-review h3 {
+  font-size: 1.45rem;
+  letter-spacing: -0.035em;
+}
+.fa-review .fa-facts {
+  padding-block: 0.8rem;
+  border-block: 1px solid var(--fa-border);
+}
+.fa-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.fa-review-actions button + button {
+  margin-left: 0;
+}
+.fa-inset [role="status"],
+.fa-inset [role="alert"] {
+  margin-block: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+}
+.fa-inset [role="status"] {
+  color: #ade3bc;
 }
 @media (max-width: 800px) {
   .fa-shell {
@@ -309,12 +407,19 @@
     border-right: none;
     border-bottom: 1px solid var(--fa-border);
   }
+  .fa-brand {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .65rem;
+    padding: 0 0 .7rem;
+  }
   .fa-rail nav {
     display: flex;
     flex-wrap: wrap;
   }
   .fa-rail nav a {
-    padding: 0.35rem 0.5rem;
+    padding: 0.65rem 0.6rem;
     font-size: 0.82rem;
   }
   .fa-rail footer {
@@ -338,4 +443,10 @@
   .fa-table td {
     min-width: 8rem;
   }
+}
+
+@media (max-width: 420px) {
+  .fa-rail nav { gap: .15rem; }
+  .fa-rail nav a { padding-inline: .45rem; gap: .3rem; }
+  .fa-rail nav svg { width: .86rem; }
 }

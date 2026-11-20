@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { submitFinancialOperation, type Outcome } from "./actions";
 import { operation, type Kind } from "./validation";
@@ -53,12 +53,27 @@ export function OperationForm({
   const busy = useRef(false),
     key = useRef(""),
     heading = useRef<HTMLHeadingElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const reviewButton = useRef<HTMLButtonElement>(null);
+  const disclosure = useRef<HTMLElement>(null);
+  const reviewId = useId();
+  const revoking = ids.permission === "revoke";
+  const destructive = revoking || review?.command === "cancel" || review?.command === "suspend";
   const storageKey = ["lps.finance", actor, kind, ...Object.values(ids)].join(
     "/",
   );
   useEffect(() => {
-    if (review) heading.current?.focus();
+    if (review && dialog.current) {
+      dialog.current.showModal();
+      heading.current?.focus();
+    }
   }, [review]);
+  function returnToForm() {
+    if (busy.current) return;
+    setReview(null);
+    setOutcome(null);
+    requestAnimationFrame(() => reviewButton.current?.focus());
+  }
   function prepare(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget),
@@ -126,6 +141,7 @@ export function OperationForm({
         }
         key.current = "";
         setReview(null);
+        requestAnimationFrame(() => disclosure.current?.focus());
       }
     } catch {
       setOutcome({
@@ -139,8 +155,8 @@ export function OperationForm({
     }
   }
   return (
-    <details className="fa-operation">
-      <summary>{title}</summary>
+    <details className="fa-operation" data-danger={revoking}>
+      <summary ref={disclosure}>{title}</summary>
       <div className="fa-inset">
         {note && <p>{note}</p>}
         <dl className="fa-facts">
@@ -206,14 +222,31 @@ export function OperationForm({
               </label>
             ))}
           </div>
-          <button className="fa-primary">Revisar dados</button>
+          <button ref={reviewButton} className="fa-primary">
+            Revisar dados
+          </button>
         </form>
         {review && (
-          <section aria-label="Revisão da operação">
-            <h3 tabIndex={-1} ref={heading}>
+          <dialog
+            ref={dialog}
+            className="fa-review"
+            aria-labelledby={reviewId}
+            onCancel={(event) => {
+              event.preventDefault();
+              returnToForm();
+            }}
+          >
+            <small>{title}</small>
+            <h3 id={reviewId} tabIndex={-1} ref={heading}>
               Conferir antes de confirmar
             </h3>
             <dl className="fa-facts">
+              {Object.entries(context).map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
               {fields.map((f) => (
                 <div key={f.name}>
                   <dt>{f.label}</dt>
@@ -227,27 +260,23 @@ export function OperationForm({
                 </div>
               ))}
             </dl>
-            <button
-              className="fa-primary"
-              type="button"
-              disabled={pending}
-              onClick={confirm}
-            >
-              {pending ? "Registrando…" : "Confirmar operação"}
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                setReview(null);
-                setOutcome(null);
-              }}
-            >
-              Voltar aos dados
-            </button>
-          </section>
+            {outcome && !outcome.ok && <p role="alert">{outcome.message}</p>}
+            <div className="fa-review-actions">
+              <button
+                className={destructive ? "fa-danger" : "fa-primary"}
+                type="button"
+                disabled={pending}
+                onClick={confirm}
+              >
+                {pending ? "Registrando…" : "Confirmar operação"}
+              </button>
+              <button type="button" disabled={pending} onClick={returnToForm}>
+                Voltar aos dados
+              </button>
+            </div>
+          </dialog>
         )}
-        {outcome && (
+        {!review && outcome && (
           <p role={outcome.ok ? "status" : "alert"}>{outcome.message}</p>
         )}
         {outcome?.ok && kind !== "pix" && (

@@ -114,7 +114,7 @@ function AppointmentCard({
         timeZone,
       )}, ${appointment.status}`}
     >
-      <span className="w-11 shrink-0 rounded-lg border border-border/80 bg-muted/30 py-1.5 text-center">
+      <span className="w-12 shrink-0 rounded-md border border-border bg-muted/60 py-1.5 text-center">
         <span className="block font-mono text-[11px] font-semibold leading-none">
           {formatTimeBR(appointment.startsAt, timeZone)}
         </span>
@@ -325,7 +325,7 @@ export function AgendaBoard({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border/80 bg-card p-4">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="inline-flex w-fit items-center rounded-lg border border-border/80 bg-muted/30 p-1">
@@ -466,7 +466,7 @@ export function AgendaBoard({
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/60 pt-2.5 text-[10px] text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Clock3 className="size-3 text-gold" />
             Fuso: {data.timeZone}
@@ -519,7 +519,7 @@ export function AgendaBoard({
             </div>
           ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
+          <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-7 lg:grid-cols-4">
             {data.weekDays.map((day) => (
               <Card
                 key={day.date}

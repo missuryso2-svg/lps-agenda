@@ -196,8 +196,7 @@ export function StartSubscriptionDialog({
           <div className="flex items-start gap-2 rounded-xl border border-border/80 bg-muted/25 p-3.5 text-[11px] leading-relaxed text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-gold" />
             <p>
-              O checkout é criado no servidor com as credenciais do Asaas
-              Sandbox. Nenhuma chave de API é enviada ao navegador.
+              Este ambiente de testes usa o Asaas Sandbox. Confira o plano e os dados do titular antes de continuar.
             </p>
           </div>
 

@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { demoBarbershops } from "@/features/public-barbershop/demo-data";
 import { CommercialContact, CommercialPlans } from "./commercial-plans";
 
+import {trialOffer,trialTerms} from "./plan-benefits";
+
 const demo = demoBarbershops[0];
 const demoPath = `/barbearia/${demo.slug}`;
 
@@ -52,7 +54,7 @@ const faq = [
   ],
   [
     "Existe teste gratuito?",
-    "O teste manual do Básico dura sete dias quando o cadastro com teste está habilitado. Consulte a disponibilidade para sua barbearia antes de contar com o período gratuito.",
+    trialOffer+" "+trialTerms,
   ],
   [
     "Posso mudar de plano?",
@@ -99,6 +101,8 @@ export function LandingPage() {
               <br />
               <em>Sua agenda.</em>
             </h1>
+            <p className="mt-5 text-sm font-semibold text-yellow-300">{trialOffer}</p>
+            <p className="mt-1 text-xs text-white/80">{trialTerms}</p>
             <p className="lp-lead">
               Organize agendamentos, serviços e clientes. Veja quem atende em
               cada horário e compartilhe a agenda da barbearia por link.

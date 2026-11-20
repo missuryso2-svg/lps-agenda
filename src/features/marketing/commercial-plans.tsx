@@ -1,4 +1,5 @@
 import "server-only";
+import { PlanBenefits, trialTerms } from "./plan-benefits";
 import { ArrowUpRight, CalendarDays, UsersRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export function CommercialPlans() {
         Escolha pelo tamanho da equipe. A LPS Solutions negocia a mensalidade e
         as condições diretamente com sua barbearia.
       </p>
+      <p className="mt-3 text-sm"><strong>7 dias grátis no plano Básico.</strong> {trialTerms}</p>
       <div className="lp-plan-grid">
         {commercialPlans.map((plan) => (
           <article
@@ -76,6 +78,7 @@ export function CommercialPlans() {
           </article>
         ))}
       </div>
+      <PlanBenefits/>
     </>
   );
 }

@@ -1,4 +1,5 @@
 "use client";
+import { BarberPhoto } from "./barber-photo";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
@@ -52,11 +53,13 @@ export function BarberFormDialog({
   open,
   onOpenChange,
   barber,
+  canEditPhoto,
   services,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   barber: ManagedBarber | null;
+  canEditPhoto: boolean;
   services: CatalogService[];
 }) {
   const form = useForm<BarberFormValues>({
@@ -131,6 +134,7 @@ export function BarberFormDialog({
               : "Cadastre quem atende na barbearia e vincule os serviços disponíveis."}
           </DialogDescription>
         </DialogHeader>
+        {barber && canEditPhoto && <BarberPhoto barber={barber} />}
 
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
           <FormError message={serverError} />

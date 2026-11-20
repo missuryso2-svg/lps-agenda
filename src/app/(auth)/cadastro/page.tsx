@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { SignUpForm } from "@/features/auth/components/signup-form";
 import { isSupabaseConfigured } from "@/lib/env/public";
 
+import {trialOffer,trialTerms} from "@/features/marketing/plan-benefits";
+
 export const metadata: Metadata = {
   title: "Criar conta",
   description:
@@ -27,6 +29,7 @@ export default function SignUpPage() {
         Use seu e-mail para acessar o painel. A contratação de um plano é combinada separadamente com a LPS Solutions.
       </p>
 
+      <p className="mt-3 text-sm">{trialOffer} {trialTerms}</p>
       {!configured ? (
         <div className="mt-6">
           <ConfigAlert />

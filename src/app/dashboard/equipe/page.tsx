@@ -62,6 +62,7 @@ export default async function TeamPage() {
     name: barber.name,
     phone: barber.phone,
     bio: barber.bio,
+    avatar_url: barber.avatar_url,
     is_active: barber.is_active,
     display_order: barber.display_order,
     serviceIds: servicesByBarber.get(barber.id) ?? [],
@@ -151,6 +152,7 @@ export default async function TeamPage() {
         barbers={managedBarbers}
         services={catalogServices}
         canManage={canManage}
+        canEditPhoto={context.active.role === "owner"}
       />
 
       <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">

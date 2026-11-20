@@ -1,0 +1,62 @@
+import {
+  CalendarDays,
+  UsersRound,
+  ContactRound,
+  Wallet,
+  LayoutDashboard,
+} from "lucide-react";
+
+export const trialOffer = "Experimente o LPS Agenda por 7 dias grátis.";
+export const trialTerms =
+  "O teste começa no Básico, com 1 profissional ativo. Consulte a disponibilidade com a LPS Solutions.";
+const benefits = [
+  [
+    CalendarDays,
+    "Agenda e horários",
+    "Organize o expediente e a disponibilidade de cada barbeiro. Confirme atendimentos e consulte o histórico da agenda.",
+  ],
+  [
+    UsersRound,
+    "Equipe e serviços",
+    "Cadastre profissionais, edite perfis com foto e escolha os serviços que cada pessoa atende.",
+  ],
+  [
+    ContactRound,
+    "Clientes",
+    "Mantenha os cadastros e contatos da barbearia atualizados e abra uma conversa individual pelo WhatsApp.",
+  ],
+  [
+    Wallet,
+    "Recebimentos de serviços",
+    "Acompanhe os recebimentos dos atendimentos da barbearia no painel financeiro de serviços.",
+  ],
+  [
+    LayoutDashboard,
+    "Gestão da operação",
+    "Acompanhe a rotina no dashboard, configure serviços e compartilhe o link de agendamento com seus clientes.",
+  ],
+] as const;
+
+export function PlanBenefits() {
+  return (
+    <section className="mt-8">
+      <h3 className="font-display text-xl font-semibold">
+        Incluído em todos os planos
+      </h3>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {benefits.map(([Icon, title, body]) => (
+          <article
+            key={title}
+            className="rounded-xl border border-border bg-card p-4"
+          >
+            <Icon className="mb-3 size-5 text-gold" aria-hidden />
+            <h4 className="text-sm font-semibold">{title}</h4>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {body}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}

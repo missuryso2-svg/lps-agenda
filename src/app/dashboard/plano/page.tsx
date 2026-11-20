@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 
+import {PlanBenefits} from "@/features/marketing/plan-benefits";
+import {getPlanBarberLimit} from "@/features/barbers/plan-limit";
+import {createClient} from "@/lib/supabase/server";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SubscriptionStatusBadge } from "@/components/dashboard/status-badge";
 import { BillingManager } from "@/features/billing/components/billing-manager";
@@ -36,7 +39,7 @@ export default async function PlanPage() {
   }
   const manual = owner ? await getOwnerManualPlan(shop.id) : null;
   if (manual) {
-    const invoices = await getLegacyInvoices(shop.id);
+    const [invoices,limit] = await Promise.all([getLegacyInvoices(shop.id),getPlanBarberLimit(await createClient(),shop.id)]);
     const date = (value: string) =>
       new Intl.DateTimeFormat("pt-BR", {
         timeZone: shop.timezone,
@@ -62,6 +65,7 @@ export default async function PlanPage() {
               <SubscriptionStatusBadge status={manual.status} />
             )}
           </h3>
+          {limit?.maxBarbers != null && <p className="text-sm">Limite de profissionais ativos: {limit.maxBarbers}</p>}
           {manual.trial_start && manual.trial_end && (
             <p className="text-sm">
               {manual.trial_state === "running"
@@ -122,6 +126,7 @@ export default async function PlanPage() {
             <CommercialContact />
           </div>
         </div>
+        <PlanBenefits/>
         {invoices.length > 0 && (
           <LegacyInvoices invoices={invoices} timezone={shop.timezone} />
         )}
@@ -141,11 +146,12 @@ export default async function PlanPage() {
         }
       />
       {data.subscription ? (
-        <BillingManager
+        <><BillingManager
           data={{ ...data, subscription: data.subscription }}
           timezone={shop.timezone}
           canManage={owner}
         />
+        {data.subscription.plan?.max_barbers != null && <p>Limite de profissionais ativos: {data.subscription.plan.max_barbers}</p>}<PlanBenefits/><CommercialContact/></>
       ) : (
         <>
           <div>

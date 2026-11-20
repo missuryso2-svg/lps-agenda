@@ -16,7 +16,8 @@ import { toast } from "sonner";
 
 import { ConfirmDeleteDialog } from "@/components/dashboard/confirm-delete-dialog";
 import { DashboardEmpty } from "@/components/dashboard/dashboard-empty";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { photoSrc } from "./barber-photo";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,10 +48,12 @@ export function BarbersManager({
   barbers,
   services,
   canManage,
+  canEditPhoto,
 }: {
   barbers: ManagedBarber[];
   services: CatalogService[];
   canManage: boolean;
+  canEditPhoto: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -226,6 +229,7 @@ export function BarbersManager({
                 >
                   <div className="flex items-start gap-3">
                     <Avatar size="lg">
+                      <AvatarImage src={photoSrc(barber.id,barber.avatar_url)} alt=""/>
                       <AvatarFallback className="bg-primary font-display text-xs text-primary-foreground">
                         {initialsFromName(barber.name)}
                       </AvatarFallback>
@@ -357,6 +361,7 @@ export function BarbersManager({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         barber={editing}
+        canEditPhoto={canEditPhoto}
         services={services}
       />
 

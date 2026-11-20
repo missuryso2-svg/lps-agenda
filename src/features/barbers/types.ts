@@ -3,6 +3,7 @@ export type ManagedBarber = {
   name: string;
   phone: string | null;
   bio: string | null;
+  avatar_url: string | null;
   is_active: boolean;
   display_order: number;
   serviceIds: string[];

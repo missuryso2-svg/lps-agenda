@@ -127,7 +127,7 @@ function mapBarbers(
     id: row.id,
     name: row.name,
     bio: row.bio,
-    avatarUrl: row.avatar_url,
+    avatarUrl: row.avatar_url?.startsWith("https://") ? row.avatar_url : null,
     serviceIds: assignments
       .filter((assignment) => assignment.barber_id === row.id)
       .map((assignment) => assignment.service_id),

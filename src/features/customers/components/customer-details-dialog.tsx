@@ -1,4 +1,5 @@
 "use client";
+import { CustomerWhatsApp } from "./customer-whatsapp";
 
 import {
   CalendarDays,
@@ -70,7 +71,7 @@ export function CustomerDetailsDialog({
                 </p>
                 <p className="mt-1.5 text-sm font-medium tabular-nums">
                   {formatPhoneBR(customer.phone)}
-                </p>
+                </p><CustomerWhatsApp phone={customer.phone} name={customer.full_name}/>
               </div>
 
               <div className="rounded-xl border border-border/80 bg-muted/20 p-3.5">

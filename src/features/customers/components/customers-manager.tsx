@@ -1,4 +1,5 @@
 "use client";
+import { CustomerWhatsApp } from "./customer-whatsapp";
 
 import {
   Archive,
@@ -372,7 +373,7 @@ export function CustomersManager({
                       <span className="inline-flex items-center gap-1.5 tabular-nums">
                         <Phone className="size-3" />
                         {formatPhoneBR(customer.phone)}
-                      </span>
+                      </span><CustomerWhatsApp phone={customer.phone} name={customer.full_name}/>
                     </TableCell>
                     <TableCell className="hidden max-w-[14rem] truncate text-xs text-muted-foreground lg:table-cell">
                       {customer.email ?? "—"}
@@ -493,7 +494,7 @@ export function CustomersManager({
                   <p className="inline-flex items-center gap-1.5 tabular-nums">
                     <Phone className="size-3 text-gold" />
                     {formatPhoneBR(customer.phone)}
-                  </p>
+                  </p><CustomerWhatsApp phone={customer.phone} name={customer.full_name}/>
                   <p className="inline-flex items-center gap-1.5">
                     <CalendarDays className="size-3 text-gold" />
                     Cadastrado em {formatDateBR(customer.created_at, timeZone)}

@@ -996,6 +996,7 @@ export type Database = {
         Returns: undefined;
       };
       get_owner_manual_trial: { Args: { p_shop: string }; Returns: Json };
+      finance_health: { Args: Record<string, never>; Returns: Json };
       get_shop_professional_limit: {
         Args: { p_shop: string };
         Returns: { plan_name: string; max_barbers: number | null }[];

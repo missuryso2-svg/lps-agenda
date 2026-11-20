@@ -1,4 +1,5 @@
 import "server-only";
+import { recoverableLegacy } from "./legacy-checkout";
 
 import { randomUUID } from "node:crypto";
 
@@ -127,19 +128,6 @@ function tomorrowDateOnly(): string {
   return dateOnlyInSaoPaulo(
     new Date(Date.now() + 24 * 60 * 60 * 1000),
   );
-}
-
-function addDays(date: Date, days: number): Date {
-  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
-}
-
-function trialEndLabel(date: Date): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
 }
 
 function isFreshLock(value: string | null): boolean {
@@ -312,25 +300,6 @@ async function findSubscriptionById(
   return data ?? null;
 }
 
-async function listSubscriptionHistory(
-  supabase: Supabase,
-  barbershopId: string,
-): Promise<Array<{ id: string; trial_ends_at: string | null }>> {
-  const { data, error } = await supabase
-    .from("subscriptions")
-    .select("id, trial_ends_at")
-    .eq("barbershop_id", barbershopId);
-
-  if (error) {
-    throw new BillingServiceError(
-      "gateway",
-      "Não foi possível consultar o histórico da assinatura agora.",
-    );
-  }
-
-  return data ?? [];
-}
-
 async function findActivePlan(
   supabase: Supabase,
   planId: string,
@@ -370,6 +339,10 @@ export async function resolveBillingCustomer(
   },
 ): Promise<string> {
   await requireLegacyBillingShop(supabase, input.barbershopId);
+  const contract = await findCurrentSubscription(supabase, input.barbershopId);
+  if (!contract || !recoverableLegacy(contract)) {
+    throw new BillingServiceError("conflict", "O pagador exige uma assinatura Asaas legada identificada.");
+  }
   const documentDigits = onlyDigits(input.document);
 
   if (documentDigits.length !== 11 && documentDigits.length !== 14) {
@@ -536,112 +509,6 @@ export async function resolveBillingCustomer(
   }
 
   return remote.id;
-}
-
-/**
- * Persiste o pagador localmente durante o trial, sem qualquer chamada ao
- * Asaas. A criação do cliente remoto acontece somente na finalização, quando
- * o período gratuito já terminou.
- */
-async function saveLocalBillingCustomer(
-  supabase: Supabase,
-  input: {
-    barbershopId: string;
-    holderName: string;
-    document: string;
-    email?: string | null;
-    phone?: string | null;
-  },
-): Promise<void> {
-  const documentDigits = onlyDigits(input.document);
-
-  if (documentDigits.length !== 11 && documentDigits.length !== 14) {
-    throw new BillingServiceError(
-      "validation",
-      "Informe um CPF ou CNPJ válido.",
-    );
-  }
-
-  const personType = personTypeFromDocument(documentDigits);
-  const holderName = input.holderName.trim().slice(0, 120);
-  const email = input.email?.trim().slice(0, 254) || null;
-  const rawPhone = input.phone ? onlyDigits(input.phone) : "";
-  const phoneDigits =
-    rawPhone.length === 10 || rawPhone.length === 11 ? rawPhone : null;
-
-  const { data: existing, error } = await supabase
-    .from("billing_customers")
-    .select("*")
-    .eq("gateway", "asaas")
-    .eq("barbershop_id", input.barbershopId)
-    .maybeSingle();
-
-  if (error) {
-    throw new BillingServiceError(
-      "gateway",
-      "Não foi possível consultar o cadastro do pagador agora.",
-    );
-  }
-
-  if (existing) {
-    if (existing.document_digits !== documentDigits) {
-      throw new BillingServiceError(
-        "validation",
-        "O documento do pagador já está cadastrado e não pode ser alterado por aqui.",
-      );
-    }
-
-    const { error: updateError } = await supabase
-      .from("billing_customers")
-      .update({
-        person_type: personType,
-        holder_name: holderName,
-        email,
-        phone_digits: phoneDigits,
-      })
-      .eq("id", existing.id);
-
-    if (updateError) {
-      throw new BillingServiceError(
-        "gateway",
-        "Não foi possível salvar o cadastro do pagador.",
-      );
-    }
-
-    return;
-  }
-
-  const { error: insertError } = await supabase
-    .from("billing_customers")
-    .insert({
-      barbershop_id: input.barbershopId,
-      gateway: "asaas",
-      gateway_customer_id: null,
-      person_type: personType,
-      document_digits: documentDigits,
-      holder_name: holderName,
-      email,
-      phone_digits: phoneDigits,
-    });
-
-  if (insertError) {
-    if (insertError.code === "23505") {
-      const { data: concurrent } = await supabase
-        .from("billing_customers")
-        .select("document_digits")
-        .eq("barbershop_id", input.barbershopId)
-        .maybeSingle();
-
-      if (concurrent?.document_digits === documentDigits) {
-        return;
-      }
-    }
-
-    throw new BillingServiceError(
-      "gateway",
-      "Não foi possível salvar o cadastro do pagador.",
-    );
-  }
 }
 
 function remoteBelongsToLocal(
@@ -986,6 +853,21 @@ async function clearRemoteSubscriptionLink(
   return data;
 }
 
+async function recoverLegacyReference(reference: string) {
+  const matches = await listAsaasSubscriptionsByExternalReference(reference);
+  if (
+    matches.length > 1 ||
+    (matches[0]?.externalReference &&
+      matches[0].externalReference !== reference)
+  ) {
+    throw new BillingServiceError(
+      "conflict",
+      "Os vínculos no Asaas exigem conciliação.",
+    );
+  }
+  return matches[0] ?? null;
+}
+
 export async function ensureRemoteSubscription(
   supabase: Supabase,
   local: SubscriptionRow,
@@ -995,7 +877,22 @@ export async function ensureRemoteSubscription(
 ): Promise<SubscriptionRow> {
   requireAsaasSubscription(local);
   await requireLegacyBillingShop(supabase, local.barbershop_id);
-  let current = local;
+  const persisted = await findSubscriptionById(supabase, local.id);
+  if (
+    !persisted ||
+    persisted.barbershop_id !== local.barbershop_id ||
+    isTerminalStatus(persisted.status) ||
+    persisted.external_reference !== local.external_reference ||
+    !recoverableLegacy(persisted) ||
+    !fencing?.token ||
+    persisted[fencing.column] !== fencing.token
+  ) {
+    throw new BillingServiceError(
+      "conflict",
+      "A assinatura legada não está disponível para retomada.",
+    );
+  }
+  let current = persisted;
   const existingGatewaySubscriptionId = current.gateway_subscription_id;
 
   if (existingGatewaySubscriptionId) {
@@ -1030,7 +927,13 @@ export async function ensureRemoteSubscription(
         );
       }
 
-      return persistRemoteSubscription(supabase, current, plan, remote, fencing);
+      return persistRemoteSubscription(
+        supabase,
+        current,
+        plan,
+        remote,
+        fencing,
+      );
     }
 
     current = await clearRemoteSubscriptionLink(
@@ -1044,10 +947,7 @@ export async function ensureRemoteSubscription(
   let recovered: AsaasSubscription | null = null;
 
   try {
-    const matches = await listAsaasSubscriptionsByExternalReference(
-      current.external_reference,
-    );
-    recovered = matches[0] ?? null;
+    recovered = await recoverLegacyReference(current.external_reference);
   } catch (error) {
     if (isAsaasTransientError(error)) {
       throw new BillingServiceError(
@@ -1060,13 +960,32 @@ export async function ensureRemoteSubscription(
   }
 
   if (recovered) {
-    return persistRemoteSubscription(supabase, current, plan, recovered, fencing);
+    return persistRemoteSubscription(
+      supabase,
+      current,
+      plan,
+      recovered,
+      fencing,
+    );
   }
 
   // Antes de criar uma nova recorrência, confirma que não existe outra linha
   // da mesma barbearia aguardando remoção remota. Isso evita duplicidade de
   // cobranças quando uma compensação anterior falhou.
   await assertNoPendingRemoteCleanup(supabase, current.barbershop_id);
+  const latest = await findSubscriptionById(supabase, current.id);
+  if (
+    !latest ||
+    isTerminalStatus(latest.status) ||
+    latest[fencing.column] !== fencing.token ||
+    latest.gateway_subscription_id ||
+    latest.external_reference !== current.external_reference
+  ) {
+    throw new BillingServiceError(
+      "conflict",
+      "A retomada perdeu o vínculo com o contrato legado.",
+    );
+  }
 
   if (current.billing_type !== "boleto" && current.billing_type !== "pix") {
     throw new BillingServiceError("validation", "Escolha boleto ou Pix.");
@@ -1087,16 +1006,16 @@ export async function ensureRemoteSubscription(
   } catch (error) {
     if (isAsaasTransientError(error)) {
       try {
-        const matches = await listAsaasSubscriptionsByExternalReference(
+        const matched = await recoverLegacyReference(
           current.external_reference,
         );
 
-        if (matches[0]) {
+        if (matched) {
           return persistRemoteSubscription(
             supabase,
             current,
             plan,
-            matches[0],
+            matched,
             fencing,
           );
         }
@@ -1429,259 +1348,81 @@ export async function startSubscription(input: {
   document: string;
   email?: string | null;
   phone?: string | null;
-}, mode: "resume-pending" | "legacy" = "legacy"): Promise<{ message: string; trialEndsAt?: string }> {
+}): Promise<{ message: string }> {
   const supabase = createAdminClient();
   await requireLegacyBillingShop(supabase, input.barbershopId);
-  const plan = await findActivePlan(supabase, input.planId);
-
-  assertChargeablePlan(plan);
-
-  if (input.billingType !== "boleto" && input.billingType !== "pix") {
-    throw new BillingServiceError("validation", "Escolha boleto ou Pix.");
-  }
-
   await assertNoPendingRemoteCleanup(supabase, input.barbershopId);
-
   const current = await findCurrentSubscription(supabase, input.barbershopId);
-
-  // Check the very row used by the fenced update before any Asaas call or write.
-  if (mode === "resume-pending" && (!current || current.status !== "pending" || current.plan_id !== plan.id)) {
-    throw new BillingServiceError("conflict", "Para contratar um plano, consulte a LPS Solutions.");
-  }
-
-  if (current && current.status !== "pending") {
+  if (
+    !current ||
+    current.status !== "pending" ||
+    current.plan_id !== input.planId ||
+    !recoverableLegacy(current)
+  ) {
     throw new BillingServiceError(
       "conflict",
-      "Esta barbearia já possui uma assinatura. Use a troca de plano ou o cancelamento.",
+      "Para contratar um plano, consulte a LPS Solutions.",
     );
   }
-
-  const history = await listSubscriptionHistory(
-    supabase,
-    input.barbershopId,
-  );
-  const hasTrialHistory = history.some((row) => row.trial_ends_at !== null);
-  const canStartTrial = plan.trial_days > 0 && !hasTrialHistory;
-
-  if (canStartTrial) {
-    if (current) {
-      throw new BillingServiceError(
-        "conflict",
-        "Já existe uma contratação em andamento para esta barbearia.",
-      );
-    }
-
-    // O trial é totalmente local nesta etapa. Nenhum cliente, assinatura ou
-    // cobrança é criado no Asaas antes do encerramento dos dias gratuitos.
-    await saveLocalBillingCustomer(supabase, input);
-
-    const startedAt = new Date();
-    const trialEndsAt = addDays(startedAt, plan.trial_days);
-
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .insert({
-        barbershop_id: input.barbershopId,
-        plan_id: plan.id,
-        status: "trialing",
-        current_period_start: startedAt.toISOString(),
-        current_period_end: trialEndsAt.toISOString(),
-        trial_started_at: startedAt.toISOString(),
-        trial_ends_at: trialEndsAt.toISOString(),
-        contracted_price_cents: plan.price_cents,
-        contracted_currency: plan.currency,
-        contracted_interval: plan.interval,
-        cancel_at_period_end: false,
-        gateway: "asaas",
-        gateway_subscription_id: null,
-        billing_type: input.billingType,
-        gateway_status: "pending_creation",
-        external_reference: randomUUID(),
-        next_due_date: dateOnlyInSaoPaulo(trialEndsAt),
-      })
-      .select("*")
-      .single();
-
-    if (error || !data) {
-      if (error?.code === "23505") {
-        throw new BillingServiceError(
-          "conflict",
-          "Já existe um teste gratuito ou uma contratação em andamento. Atualize a página para continuar.",
-        );
-      }
-
-      throw new BillingServiceError(
-        "gateway",
-        "Não foi possível iniciar o teste gratuito agora.",
-      );
-    }
-
-    return {
-      message: `Teste gratuito de ${plan.trial_days} dias iniciado. Nenhuma cobrança será feita antes de ${trialEndLabel(trialEndsAt)}.`,
-      trialEndsAt: trialEndsAt.toISOString(),
-    };
-  }
-
   if (
-    current?.trial_ends_at &&
+    current.trial_ends_at &&
     (!current.trial_finalized_at || !current.gateway_subscription_id)
   ) {
     throw new BillingServiceError(
       "conflict",
-      "O período de teste terminou e a primeira cobrança está sendo preparada. Tente novamente em instantes.",
+      "A finalização do teste legado está em andamento.",
     );
   }
-
-  let local: SubscriptionRow | null = null;
-  let checkoutFencing: SubscriptionFencing | null = null;
-
-  // Toda alteração de uma assinatura pending reivindica a linha antes de
-  // qualquer chamada ao Asaas. Isso inclui retomada de checkout e assinatura
-  // originada de trial já finalizado; trials ainda em finalização foram
-  // recusados acima e mantêm seu lease independente.
-  if (current) {
-    const now = new Date();
-    local = await claimPaidCheckout(
-      supabase,
-      current,
-      plan,
-      input.billingType,
-      now,
-    );
-
-    if (!local) {
-      return throwCheckoutClaimConflict(supabase, current.id);
-    }
-
-    if (!local.checkout_lease_token) {
-      throw new BillingServiceError(
-        "gateway",
-        "Não foi possível confirmar o controle de contratação. Tente novamente.",
-      );
-    }
-
-    checkoutFencing = {
-      column: "checkout_lease_token",
-      token: local.checkout_lease_token,
-    };
+  if (input.billingType !== "pix" && input.billingType !== "boleto") {
+    throw new BillingServiceError("validation", "Escolha boleto ou Pix.");
   }
-
+  const catalog = await findActivePlan(supabase, current.plan_id);
+  if (
+    current.contracted_price_cents == null ||
+    !current.contracted_currency ||
+    !current.contracted_interval
+  ) {
+    throw new BillingServiceError(
+      "conflict",
+      "Condições do contrato legado exigem conciliação.",
+    );
+  }
+  const plan = {
+    ...catalog,
+    price_cents: current.contracted_price_cents,
+    currency: current.contracted_currency,
+    interval: current.contracted_interval,
+  };
+  assertChargeablePlan(plan);
+  const local = await claimPaidCheckout(
+    supabase,
+    current,
+    plan,
+    input.billingType,
+    new Date(),
+  );
+  if (!local?.checkout_lease_token)
+    return throwCheckoutClaimConflict(supabase, current.id);
+  const fencing: SubscriptionFencing = {
+    column: "checkout_lease_token",
+    token: local.checkout_lease_token,
+  };
   try {
-    // Revalida após o claim. A leitura inicial evita trabalho desnecessário; o
-    // lease condicional impede corrida com outro checkout e protege o worker.
     await assertNoPendingRemoteCleanup(supabase, input.barbershopId);
     const customerId = await resolveBillingCustomer(supabase, input);
-
-    if (!local) {
-      if (current) {
-        // Defesa adicional para qualquer caminho futuro que chegue aqui com
-        // uma linha existente: nunca atualiza a assinatura sem primeiro
-        // adquirir o lease e propagar o token até a persistência remota.
-        const claimed = await claimPaidCheckout(
-          supabase,
-          current,
-          plan,
-          input.billingType,
-          new Date(),
-        );
-
-        if (!claimed?.checkout_lease_token) {
-          return throwCheckoutClaimConflict(supabase, current.id);
-        }
-
-        local = claimed;
-        checkoutFencing = {
-          column: "checkout_lease_token",
-          token: claimed.checkout_lease_token,
-        };
-      } else {
-        const lockTimestamp = new Date().toISOString();
-        const leaseToken = randomUUID();
-
-        const { data, error } = await supabase
-          .from("subscriptions")
-          .insert({
-            barbershop_id: input.barbershopId,
-            plan_id: plan.id,
-            status: "pending",
-            billing_type: input.billingType,
-            trial_started_at: null,
-            trial_ends_at: null,
-            contracted_price_cents: plan.price_cents,
-            contracted_currency: plan.currency,
-            contracted_interval: plan.interval,
-            gateway: "asaas",
-            gateway_subscription_id: null,
-            gateway_status: "pending_creation",
-            external_reference: randomUUID(),
-            next_due_date: tomorrowDateOnly(),
-            checkout_locked_at: lockTimestamp,
-            checkout_lease_token: leaseToken,
-            checkout_attempted_at: lockTimestamp,
-            checkout_attempts: 1,
-            checkout_error: null,
-          })
-          .select("*")
-          .single();
-
-        if (error || !data) {
-          if (error?.code === "23505") {
-            // Outra execução inseriu a contratação primeiro. Não chamar o
-            // Asaas é parte da garantia: a vaga já está ocupada.
-            throw new BillingServiceError(
-              "conflict",
-              "Já existe uma contratação em andamento. Atualize a página para continuar.",
-            );
-          }
-
-          throw new BillingServiceError(
-            "gateway",
-            "Não foi possível iniciar a contratação agora.",
-          );
-        }
-
-        local = data;
-        checkoutFencing = {
-          column: "checkout_lease_token",
-          token: leaseToken,
-        };
-      }
-    }
-
-    await applyPlanToRemote(
-      supabase,
-      local,
-      plan,
-      customerId,
-      checkoutFencing ?? undefined,
-    );
-
-    if (checkoutFencing) {
-      const released = await releaseCheckoutLease(
-        supabase,
-        local.id,
-        checkoutFencing,
+    await applyPlanToRemote(supabase, local, plan, customerId, fencing);
+    if (!(await releaseCheckoutLease(supabase, local.id, fencing))) {
+      throw new BillingServiceError(
+        "pending_confirmation",
+        "Aguarde a confirmação da retomada.",
       );
-
-      if (!released) {
-        throw new BillingServiceError(
-          "pending_confirmation",
-          "A assinatura foi criada, mas o controle de contratação não foi liberado. Atualize a página em instantes.",
-        );
-      }
     }
-
     return {
       message:
-        plan.trial_days > 0 && hasTrialHistory
-          ? "O período de teste desta barbearia já foi utilizado. Assinatura criada; o plano será ativado após a confirmação do primeiro pagamento."
-          : "Assinatura criada. O plano será ativado após a confirmação do primeiro pagamento.",
+        "Contratação legada retomada. O plano será ativado após a confirmação do primeiro pagamento.",
     };
   } catch (error) {
-    if (checkoutFencing && local) {
-      await releaseCheckoutLease(supabase, local.id, checkoutFencing, error);
-    }
-
+    await releaseCheckoutLease(supabase, local.id, fencing, error);
     throw error;
   }
 }
@@ -1703,6 +1444,10 @@ export async function changePlan(input: {
       "not_found",
       "Não há assinatura ativa ou pendente para alterar.",
     );
+  }
+
+  if (current.status === "pending" && !recoverableLegacy(current)) {
+    throw new BillingServiceError("conflict", "Assinatura legada pendente de conciliação.");
   }
 
   if (current.plan_id === plan.id) {

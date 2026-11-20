@@ -146,6 +146,19 @@ export function BillingManager({
 
   const actionBlocked = !canManage;
   const currentPlan = subscription?.plan ?? null;
+  const resumablePlan =
+    currentPlan &&
+    subscription.canResumeCheckout &&
+    subscription.contractedPriceCents !== null &&
+    subscription.contractedCurrency &&
+    subscription.contractedInterval
+      ? {
+          ...currentPlan,
+          price_cents: subscription.contractedPriceCents,
+          currency: subscription.contractedCurrency,
+          interval: subscription.contractedInterval,
+        }
+      : null;
   const hasPendingRemoteCreation =
     subscription?.status === "pending" && !subscription.hasRemoteSubscription;
   const isLocalTrial =
@@ -318,12 +331,12 @@ export function BillingManager({
                       : "A assinatura permanece pendente até o Asaas confirmar o pagamento por webhook. Nenhum evento de criação de assinatura ativa o plano."}
                   </p>
                 </div>
-                {canManage && asaasConfigured && currentPlan ? (
+                {canManage && asaasConfigured && resumablePlan ? (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setStartPlan(currentPlan)}
+                    onClick={() => setStartPlan(resumablePlan)}
                   >
                     {hasPendingRemoteCreation
                       ? "Retomar contratação"

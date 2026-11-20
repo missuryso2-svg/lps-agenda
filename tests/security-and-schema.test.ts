@@ -64,7 +64,7 @@ describe("migrações", () => {
     expect(migrationFiles).toContain(
       "20261115120000_subscription_cancel_reason.sql",
     );
-    expect(migrationFiles.slice(-8)).toEqual([
+    expect(migrationFiles.slice(-9)).toEqual([
       "20261117120000_asaas_payment_transition_guard.sql",
       "20261118120000_manual_billing_foundation.sql",
       "20261118130000_manual_trial_onboarding.sql",
@@ -73,6 +73,7 @@ describe("migrações", () => {
       "20261119160000_financial_operators.sql",
       "20261119200000_financial_dashboard.sql",
       "20261120142304_owner_manual_plan_details.sql",
+      "20261120160000_financial_cutover_health.sql",
     ]);
   });
 
@@ -1032,7 +1033,7 @@ describe("assinatura do SaaS via Asaas Sandbox", () => {
       /SUBSCRIPTION_CREATED[\s\S]{0,200}status: "active"/,
     );
     expect(billingService).toContain(
-      '"Assinatura criada. O plano será ativado após a confirmação do primeiro pagamento."',
+      '"Contratação legada retomada. O plano será ativado após a confirmação do primeiro pagamento."',
     );
   });
 

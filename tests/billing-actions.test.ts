@@ -99,7 +99,7 @@ describe("autorização das ações de cobrança", () => {
       document: "52998224725",
       email: "owner@example.com",
       phone: "(11) 99999-9999",
-    }, "resume-pending");
+    });
   });
 
   it("bloqueia staff mesmo em chamada direta", async () => {
@@ -153,7 +153,7 @@ describe("validação e configuração das ações", () => {
     const result = await startSubscriptionAction(validInput);
 
     expect(result.status).toBe("success");
-    expect(state.startSubscription).toHaveBeenCalledWith(expect.anything(), "resume-pending");
+    expect(state.startSubscription).toHaveBeenCalledWith(expect.anything());
   });
 
   it("valida o plano na troca e encaminha o cancelamento", async () => {

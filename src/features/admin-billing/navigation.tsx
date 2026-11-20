@@ -7,6 +7,7 @@ import {
   ReceiptText,
   History,
   UsersRound,
+  Activity,
 } from "lucide-react";
 import { adminPath } from "./validation";
 
@@ -15,6 +16,7 @@ const items = [
   { route: "/barbearias", label: "Barbearias", Icon: Store },
   { route: "/mensalidades", label: "Mensalidades", Icon: ReceiptText },
   { route: "/historico", label: "Histórico", Icon: History },
+  { route: "/saude", label: "Saúde financeira", Icon: Activity },
   { route: "/operadores", label: "Operadores", Icon: UsersRound },
 ];
 export function FinanceNav({ manager }: { manager: boolean }) {

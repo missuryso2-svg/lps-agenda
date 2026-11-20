@@ -239,56 +239,24 @@ afterEach(() => {
 });
 
 describe("início e operação do trial", () => {
-  it("inicia o trial local sem criar cliente, assinatura ou cobrança no Asaas", async () => {
+  it("bloqueia novo trial legado sem criar pagador", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-11-14T12:00:00.000Z"));
 
     const db = useDb({ billing_customers: [] });
 
-    const result = await startSubscription({
+    const previous = db.getRows("subscriptions").map(row => ({ ...row }));
+    await expect(startSubscription({
       barbershopId: SHOP_ID,
       planId: PLAN_ID,
       billingType: "pix",
       holderName: "Maria da Silva",
       document: "529.982.247-25",
-    });
-
-    const subscriptions = db.getRows("subscriptions");
-
-    expect(subscriptions).toHaveLength(1);
-    expect(subscriptions[0]).toMatchObject({
-      barbershop_id: SHOP_ID,
-      plan_id: PLAN_ID,
-      status: "trialing",
-      billing_type: "pix",
-      gateway: "asaas",
-      gateway_subscription_id: null,
-      gateway_status: "pending_creation",
-      trial_started_at: "2026-11-14T12:00:00.000Z",
-      trial_ends_at: "2026-11-21T12:00:00.000Z",
-      current_period_start: "2026-11-14T12:00:00.000Z",
-      current_period_end: "2026-11-21T12:00:00.000Z",
-      contracted_price_cents: 7990,
-      contracted_currency: "BRL",
-      contracted_interval: "month",
-      next_due_date: "2026-11-21",
-    });
-    expect(subscriptions[0]?.external_reference).toEqual(expect.any(String));
-    expect(result.message).toContain("7 dias");
-    expect(result.message).toContain("Nenhuma cobrança");
-
-    expect(db.getRows("billing_customers")[0]).toMatchObject({
-      barbershop_id: SHOP_ID,
-      gateway_customer_id: null,
-      document_digits: "52998224725",
-      holder_name: "Maria da Silva",
-    });
-
-    expect(asaas.findAsaasCustomerByDocument).not.toHaveBeenCalled();
+    })).rejects.toMatchObject({ kind: "conflict" });
+    expect(db.getRows("subscriptions")).toEqual(previous);
     expect(asaas.createAsaasCustomer).not.toHaveBeenCalled();
     expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
   });
-
   it("aplica o limite do plano contratado durante o trial", async () => {
     const db = useDb({ subscriptions: [trialRow()] });
 
@@ -446,7 +414,7 @@ describe("início e operação do trial", () => {
     expect(result.message).toContain("Assinatura cancelada");
   });
 
-  it("bloqueia um segundo trial e contrata o plano pago imediatamente", async () => {
+  it("preserva trial cancelado sem nova cobrança", async () => {
     const db = useDb({
       subscriptions: [
         trialRow({
@@ -463,27 +431,19 @@ describe("início e operação do trial", () => {
       nextDueDate: "2026-11-16",
     });
 
-    const result = await startSubscription({
+    const previous = db.getRows("subscriptions").map(row => ({ ...row }));
+    await expect(startSubscription({
       barbershopId: SHOP_ID,
       planId: PLAN_ID,
       billingType: "pix",
       holderName: "Maria da Silva",
       document: "52998224725",
-    });
-
-    const subscriptions = db.getRows("subscriptions");
-
-    expect(subscriptions).toHaveLength(2);
-    expect(subscriptions[1]).toMatchObject({
-      status: "pending",
-      trial_ends_at: null,
-      gateway_subscription_id: "sub_paid",
-    });
-    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(1);
-    expect(result.message).toContain("já foi utilizado");
+    })).rejects.toMatchObject({ kind: "conflict" });
+    expect(db.getRows("subscriptions")).toEqual(previous);
+    expect(asaas.createAsaasCustomer).not.toHaveBeenCalled();
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
   });
-
-  it("permite o primeiro trial após uma contratação paga sem teste", async () => {
+  it("preserva contrato pago anterior sem iniciar outro trial", async () => {
     const db = useDb({
       subscriptions: [
         trialRow({
@@ -497,28 +457,19 @@ describe("início e operação do trial", () => {
       ],
     });
 
-    const result = await startSubscription({
+    const previous = db.getRows("subscriptions").map(row => ({ ...row }));
+    await expect(startSubscription({
       barbershopId: SHOP_ID,
       planId: PLAN_ID,
       billingType: "pix",
       holderName: "Maria da Silva",
       document: "52998224725",
-    });
-
-    const subscriptions = db.getRows("subscriptions");
-
-    expect(subscriptions).toHaveLength(2);
-    expect(subscriptions[1]).toMatchObject({
-      status: "trialing",
-      gateway_subscription_id: null,
-      trial_started_at: expect.any(String),
-      trial_ends_at: expect.any(String),
-      contracted_price_cents: 7990,
-    });
-    expect(asaas.findAsaasCustomerByDocument).not.toHaveBeenCalled();
+    })).rejects.toMatchObject({ kind: "conflict" });
+    expect(db.getRows("subscriptions")).toEqual(previous);
+    expect(asaas.createAsaasCustomer).not.toHaveBeenCalled();
     expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
-    expect(result.message).toContain("Teste gratuito");
   });
+
 });
 
 describe("finalização do trial", () => {

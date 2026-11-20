@@ -1,4 +1,5 @@
 import "server-only";
+import { canResumeCheckout } from "./legacy-checkout";
 import { z } from "zod";
 
 import { isAsaasConfigured } from "@/lib/env/server";
@@ -139,6 +140,7 @@ export async function getBillingPageData(
       cancelAtPeriodEnd: row.cancel_at_period_end,
       canceledAt: row.canceled_at,
       hasRemoteSubscription: Boolean(row.gateway_subscription_id),
+      canResumeCheckout: canResumeCheckout(row),
       billingMutationInProgress:
         leaseIsActive(row.checkout_locked_at, row.checkout_lease_token) ||
         Boolean(

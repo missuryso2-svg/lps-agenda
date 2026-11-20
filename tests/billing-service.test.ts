@@ -80,7 +80,7 @@ function subscriptionRow(overrides: FakeRow = {}): FakeRow {
     gateway: "asaas",
     gateway_subscription_id: "sub_123",
     billing_type: "pix",
-    gateway_status: "active",
+    gateway_status: overrides.status === "pending" ? "pending_creation" : "active",
     external_reference: EXTERNAL_REFERENCE,
     next_due_date: "2026-12-01",
     canceled_at: null,
@@ -88,12 +88,19 @@ function subscriptionRow(overrides: FakeRow = {}): FakeRow {
     updated_at: "2026-11-01T12:00:00.000Z",
     checkout_locked_at: null,
     checkout_lease_token: null,
-    checkout_attempted_at: null,
-    checkout_attempts: 0,
+    checkout_attempted_at: "2026-11-01T00:00:00Z",
+    checkout_attempts: 1,
+    contracted_price_cents: 8990,
+    contracted_currency: "BRL",
+    contracted_interval: "month",
     checkout_error: null,
     remote_cleanup_pending: false,
     ...overrides,
   };
+}
+
+function pendingCheckout() {
+  return subscriptionRow({ status: "pending", gateway_status: "pending_creation", gateway_subscription_id: null });
 }
 
 function customerRow(overrides: FakeRow = {}): FakeRow {
@@ -118,6 +125,7 @@ function createDb(seed: Record<string, FakeRow[]> = {}): FakeSupabase {
       planRow({ id: OTHER_PLAN_ID, name: "Essencial", price_cents: 4990 }),
     ],
     billing_customers: seed.billing_customers ?? [customerRow()],
+    subscriptions: [pendingCheckout()],
     ...seed,
   });
 
@@ -186,14 +194,14 @@ beforeEach(() => {
 
 describe("contratação da assinatura", () => {
   it.each([0, 7])("a entrada comercial recusa loja sem contrato, inclusive com trial de %i dias", async (days) => {
-    const db = createDb({ plans: [planRow({ trial_days: days })], billing_customers: [] });
-    await expect(startSubscription(startInput(), "resume-pending")).rejects.toThrow(/LPS Solutions/);
+    const db = createDb({ plans: [planRow({ trial_days: days })], subscriptions: [], billing_customers: [] });
+    await expect(startSubscription(startInput())).rejects.toThrow(/LPS Solutions/);
     expect(db.getRows("subscriptions")).toHaveLength(0);
     expect(db.getRows("payments")).toHaveLength(0);
     expect(db.getRows("billing_customers")).toHaveLength(0);
     expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
   });
-  it("cria o registro local pendente antes e só então chama o Asaas", async () => {
+  it("retoma o registro Asaas pendente com evidência de tentativa anterior", async () => {
     const db = state.db as FakeSupabase;
 
     asaas.createAsaasSubscription.mockResolvedValue({
@@ -238,9 +246,10 @@ describe("contratação da assinatura", () => {
     expect(result.message).toContain("após a confirmação do primeiro pagamento");
   });
 
-  it("recusa plano sem valor de cobrança antes de chamar o gateway", async () => {
+  it("recusa retomada sem valor contratado antes de chamar o gateway", async () => {
     createDb({
       plans: [planRow({ price_cents: 0 })],
+      subscriptions: [{ ...pendingCheckout(), contracted_price_cents: 0 }],
       billing_customers: [customerRow()],
     });
 
@@ -365,6 +374,14 @@ describe("contratação da assinatura", () => {
       status: "pending",
     });
     expect(result.message).toContain("após a confirmação");
+  });
+
+  it("encaminha vínculos remotos ambíguos para conciliação antes de criar ou adotar recorrência", async () => {
+    const db = createDb({ subscriptions: [pendingCheckout()] });
+    asaas.listAsaasSubscriptionsByExternalReference.mockResolvedValue([{ id: "sub_a" }, { id: "sub_b" }]);
+    await expect(startSubscription(startInput())).rejects.toMatchObject({ kind: "conflict" });
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")[0].gateway_subscription_id).toBeNull();
   });
 });
 
@@ -492,8 +509,8 @@ describe("troca e cancelamento", () => {
 });
 
 describe("concorrência da contratação paga (P3-B)", () => {
-  it("permite apenas uma contratação concorrente quando não há linha pendente", async () => {
-    const db = createDb();
+  it("bloqueia ambas as aquisições concorrentes sem pendência legada", async () => {
+    const db = createDb({ subscriptions: [] });
 
     asaas.createAsaasSubscription.mockResolvedValue({
       id: "sub_once",
@@ -509,22 +526,10 @@ describe("concorrência da contratação paga (P3-B)", () => {
     const fulfilled = results.filter((result) => result.status === "fulfilled");
     const rejected = results.filter((result) => result.status === "rejected");
 
-    expect(fulfilled).toHaveLength(1);
-    expect(rejected).toHaveLength(1);
-    expect(rejected[0]).toMatchObject({
-      status: "rejected",
-      reason: { kind: "conflict" },
-    });
-    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(1);
-
-    const rows = db.getRows("subscriptions");
-
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({
-      status: "pending",
-      gateway_subscription_id: "sub_once",
-      checkout_locked_at: null,
-    });
+    expect(fulfilled).toHaveLength(0);
+    expect(rejected).toHaveLength(2);
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")).toHaveLength(0);
   });
 
   it("não permite que duas execuções reutilizem a mesma contratação pendente", async () => {
@@ -580,21 +585,15 @@ describe("concorrência da contratação paga (P3-B)", () => {
       status: "pending",
       gateway_subscription_id: "sub_once",
       checkout_locked_at: null,
-      checkout_attempts: 1,
+      checkout_attempts: 2,
     });
   });
 
-  it("trata 23505 no insert como conflito controlado, sem chamar o Asaas", async () => {
-    const db = createDb();
-
-    db.failNext("subscriptions", "23505", "insert");
-
-    await expect(startSubscription(startInput())).rejects.toMatchObject({
-      kind: "conflict",
-    });
-
+  it("recusa uma linha pendente sem evidência de checkout legado", async () => {
+    const db = createDb({ subscriptions: [{ ...pendingCheckout(), checkout_attempts: 0, checkout_attempted_at: null }] });
+    await expect(startSubscription(startInput())).rejects.toMatchObject({ kind: "conflict" });
     expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
-    expect(db.getRows("subscriptions")).toHaveLength(0);
+    expect(db.getRows("subscriptions")[0].checkout_attempts).toBe(0);
   });
 
   it("não inicia outra execução enquanto o lease de checkout está válido", async () => {
@@ -657,7 +656,7 @@ describe("concorrência da contratação paga (P3-B)", () => {
       gateway_subscription_id: "sub_existing",
       gateway_status: "active",
       checkout_locked_at: null,
-      checkout_attempts: 1,
+      checkout_attempts: 2,
     });
     expect(result.message).toContain("após a confirmação");
   });
@@ -1019,7 +1018,7 @@ describe("preservação de estados terminais e migração P3-B", () => {
       nextDueDate: "2026-11-16",
     });
 
-    await startSubscription(startInput());
+    await expect(startSubscription(startInput())).rejects.toMatchObject({ kind: "conflict" });
 
     const rows = db.getRows("subscriptions");
     const canceled = rows.find((row) => row.id === "canceled-old");
@@ -1036,7 +1035,7 @@ describe("preservação de estados terminais e migração P3-B", () => {
     });
     expect(
       rows.filter((row) => row.status === "pending"),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
   });
 
   it("mantém migration aditiva e pré-checagem, sem índice redundante", () => {

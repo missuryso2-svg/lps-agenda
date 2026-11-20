@@ -84,7 +84,7 @@ export async function startSubscriptionAction(
       document: parsed.data.document,
       email: context.user.email ?? null,
       phone: context.active.barbershop.phone,
-    }, "resume-pending");
+    });
 
     revalidateBilling();
     return actionSuccess(result.message);

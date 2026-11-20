@@ -23,7 +23,7 @@ Com um número válido, cada CTA abre `https://wa.me/` com uma única mensagem c
 | Premium | Olá! Tenho interesse no plano Premium do LPS Agenda, para até 10 profissionais. Gostaria de conhecer os valores e as condições. |
 | Geral | Olá! Gostaria de conhecer o LPS Agenda e entender como ele pode ajudar na gestão da minha barbearia. |
 
-**Pendência comercial.** A LPS Solutions ainda precisa informar e confirmar um número oficial. Até lá a variável fica vazia e a interface exibe “Canal comercial em configuração”. A mesma mensagem aparece para uma configuração inválida. Não há um segundo canal confirmado. Na ativação, confira com a equipe o destinatário das quatro conversas em celular e desktop. O teste automatizado usa um número fictício reservado e intercepta a navegação localmente.
+**Canal oficial.** A LPS Solutions aprovou +55 71 99955-5390. Configure `LPS_COMMERCIAL_WHATSAPP=5571999555390` no servidor Next.js de cada ambiente. A interface informa “Canal comercial em configuração” quando o valor está ausente ou inválido. Antes do lançamento, a equipe deve confirmar o destinatário no WhatsApp. Os testes interceptam a navegação e não enviam mensagens.
 
 ## Da proposta à confirmação
 

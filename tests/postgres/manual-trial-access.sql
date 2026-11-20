@@ -26,6 +26,8 @@ insert into public.subscriptions(barbershop_id,plan_id,gateway,status)
 values (:'shop',:'plan','asaas','active') returning id as legacy \gset
 select pg_temp.check_access(:'shop',now(),'blocked','mixed_origin');
 update public.subscriptions set status='canceled' where id=:'legacy';
+-- Coverage and grace are tested on a separate tenant. Mixed history is now held for reconciliation.
+insert into public.barbershops(name,slug) values ('QA Cobertura','qa-b2a2-coverage') returning id as shop \gset
 insert into public.subscriptions(barbershop_id,plan_id,gateway,status,invoice_link_key,
     agreement_at,coverage_starts_at,current_period_start,current_period_end,first_competence,
     first_due_at,renewal_anchor_day,due_anchor_day,due_month_offset,due_local_time,contract_timezone,agreement_terms,

@@ -701,7 +701,7 @@ describe("outbox de compensação remota (P3-E)", () => {
     );
   });
 
-  it("bloqueia nova contratação por job aberto e libera após a conclusão", async () => {
+  it("concilia o job sem reabrir a aquisição Asaas", async () => {
     const db = createDb({
       subscriptions: [subscriptionRow()],
       billing_remote_cleanup_jobs: [
@@ -741,17 +741,15 @@ describe("outbox de compensação remota (P3-E)", () => {
       nextDueDate: "2026-11-16",
     });
 
-    const started = await startSubscription({
+    await expect(startSubscription({
       barbershopId: SHOP_ID,
       planId: PLAN_ID,
       billingType: "pix",
       holderName: "Maria da Silva",
       document: "52998224725",
-    });
-
-    expect(started.message).toContain("Assinatura");
-    expect(asaas.createAsaasSubscription).toHaveBeenCalledTimes(1);
-    expect(db.getRows("subscriptions")).toHaveLength(2);
+    })).rejects.toMatchObject({ kind: "conflict" });
+    expect(asaas.createAsaasSubscription).not.toHaveBeenCalled();
+    expect(db.getRows("subscriptions")).toHaveLength(1);
     expect(
       db
         .getRows("subscriptions")

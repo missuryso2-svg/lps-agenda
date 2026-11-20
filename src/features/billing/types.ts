@@ -31,6 +31,7 @@ export type BillingSubscriptionView = {
   cancelAtPeriodEnd: boolean;
   canceledAt: string | null;
   hasRemoteSubscription: boolean;
+  canResumeCheckout: boolean;
   billingMutationInProgress: boolean;
   remoteCleanupPending: boolean;
   plan: BillingPlan | null;

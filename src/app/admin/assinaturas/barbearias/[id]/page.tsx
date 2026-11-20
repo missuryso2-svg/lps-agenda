@@ -1,0 +1,122 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireFinancialAdmin } from "@/lib/auth/financial-admin";
+import {
+  directory,
+  invoices,
+  recentActivity,
+  plans,
+  size,
+  pageURL,
+  param,
+  type PageProps,
+} from "@/features/admin-billing/data";
+import { AgreementForm, ContractForms } from "@/features/admin-billing/forms";
+import { Facts, Invoices, Paging, Badge } from "@/features/admin-billing/lists";
+import { InvoiceFilters } from "@/features/admin-billing/invoice-filters";
+import {
+  adminPath,
+  instant,
+  money,
+  labels,
+  period,
+} from "@/features/admin-billing/validation";
+
+export default async function Detail({
+  params,
+  searchParams,
+}: PageProps & { params: Promise<{ id: string }> }) {
+  const { user } = await requireFinancialAdmin(),
+    { id } = await params,
+    q = await searchParams;
+  const [shop] = await directory({}, id);
+  if (!shop) notFound();
+  const canAgree =
+    (shop.origin === "trial" || shop.origin === "manual") &&
+    ["canceled", "expired"].includes(shop.status ?? "");
+  const [bills, trail, catalog] = await Promise.all([
+    invoices(q, id),
+    recentActivity(id),
+    canAgree ? plans() : Promise.resolve([]),
+  ]);
+  const path = adminPath + "/barbearias/" + id,
+    history = adminPath + "/historico?barbearia=" + id;
+  return (
+    <>
+      <Link href={adminPath + "/barbearias"}>← Barbearias</Link>
+      <h1>{shop.name}</h1>
+      <div className="fa-panel">
+        <Badge value={shop.origin} /> <Badge value={shop.status} />{" "}
+        {shop.suspended && <Badge value="suspended" />}
+        <Facts
+          values={{
+            Barbearia: id,
+            Proprietário: shop.owner,
+            Contato: shop.contact,
+            Contrato: shop.contract,
+            Plano: shop.plan,
+            "Mensalidade contratada": money(shop.monthly_cents),
+            "Início da cobertura": instant(shop.coverage_start),
+            "Competência inicial": period(shop.first_competence),
+            "Primeiro vencimento": instant(shop.first_due_at),
+            "Dia de renovação": shop.renewal_anchor_day,
+            "Dia de vencimento": shop.due_day,
+            Fuso: shop.contract_timezone,
+            "Início do período": instant(shop.current_period_start),
+            "Fim do período": instant(shop.current_period_end),
+            "Fim do trial manual": instant(shop.trial_end),
+            "Último Pix conferido": instant(shop.last_verified_at),
+          }}
+        />
+      </div>
+      {shop.origin === "reconcile" && (
+        <p>
+          Este cadastro requer conciliação antes de uma nova operação
+          contratual.
+        </p>
+      )}
+      {canAgree && (
+        <AgreementForm shop={shop} actor={user.id} plans={catalog} />
+      )}
+      {shop.origin === "manual" && (
+        <ContractForms shop={shop} actor={user.id} />
+      )}
+      <h2>Mensalidades</h2>
+      <InvoiceFilters
+        optionalMonth
+        month={param(q, "mes") ?? ""}
+        state={param(q, "situacao") ?? ""}
+      />
+      <Invoices rows={bills} actor={user.id} />
+      <Paging
+        first={q.parcela ? pageURL(path, q, { parcela: null }) : null}
+        next={
+          bills.length > size
+            ? pageURL(path, q, { parcela: bills[size - 1].id })
+            : null
+        }
+      />
+      <h2>Amostra do histórico financeiro</h2>
+      {!trail.history.length && !trail.events.length && (
+        <p className="fa-empty">Nenhum registro financeiro.</p>
+      )}
+      <ul>
+        {trail.history.map((j) => (
+          <li key={j.op}>
+            {instant(j.at)} · {labels[j.result.action ?? j.action] ?? j.action}{" "}
+            · {j.reason ?? j.actor}
+          </li>
+        ))}
+        {trail.events.map((e) => (
+          <li key={e.id}>
+            {instant(e.at)} · {labels[e.action] ?? e.action} ·{" "}
+            {labels[e.state ?? ""] ?? e.state}
+          </li>
+        ))}
+      </ul>
+      <p className="fa-paging">
+        <Link href={history}>Consultar histórico completo</Link>
+      </p>
+    </>
+  );
+}

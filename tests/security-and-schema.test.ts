@@ -64,13 +64,14 @@ describe("migrações", () => {
     expect(migrationFiles).toContain(
       "20261115120000_subscription_cancel_reason.sql",
     );
-    expect(migrationFiles.slice(-6)).toEqual([
+    expect(migrationFiles.slice(-7)).toEqual([
       "20261117120000_asaas_payment_transition_guard.sql",
       "20261118120000_manual_billing_foundation.sql",
       "20261118130000_manual_trial_onboarding.sql",
       "20261118140000_manual_trial_access.sql",
       "20261119120000_manual_billing_operations.sql",
       "20261119160000_financial_operators.sql",
+      "20261119200000_financial_dashboard.sql",
     ]);
   });
 

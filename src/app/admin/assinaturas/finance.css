@@ -1,0 +1,341 @@
+.fa-shell {
+  --fa-bg: #141515;
+  --fa-surface: #1d1e1e;
+  --fa-border: #393a37;
+  --fa-gold: #e4c688;
+  --fa-muted: #b7b8b2;
+  min-height: 100svh;
+  background: var(--fa-bg);
+  color: #f7f4ec;
+  color-scheme: dark;
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  font-size: 0.9375rem;
+}
+.fa-rail {
+  background: #191a19;
+  border-right: 1px solid var(--fa-border);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1rem;
+  gap: 2rem;
+}
+.fa-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 650;
+}
+.fa-brand > span {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  background: var(--fa-gold);
+  color: #191a19;
+  padding: 0.6rem 0.35rem;
+  border-radius: 0.25rem;
+}
+.fa-shell small,
+.fa-rail footer span,
+.fa-shell dt {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--fa-muted);
+}
+.fa-rail nav {
+  display: grid;
+  gap: 0.25rem;
+}
+.fa-rail nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.68rem 0.8rem;
+  border-radius: 0.4rem;
+  text-decoration: none;
+  color: var(--fa-muted);
+}
+.fa-rail nav a[aria-current] {
+  color: var(--fa-gold);
+  background: #302c23;
+}
+.fa-rail footer {
+  margin-top: auto;
+  border-top: 1px solid var(--fa-border);
+  padding-top: 1rem;
+  overflow-wrap: anywhere;
+}
+.fa-main {
+  min-width: 0;
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 3.5rem);
+}
+.fa-main h1,
+.fa-main h2 {
+  font-family: var(--font-display);
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.fa-main h1 {
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  margin: 0.6rem 0 1.5rem;
+}
+.fa-main h2 {
+  font-size: 1.6rem;
+  margin: 2rem 0 1rem;
+}
+.fa-main h3 {
+  font-weight: 650;
+}
+.fa-shell a {
+  color: var(--fa-gold);
+  text-underline-offset: 0.2em;
+}
+.fa-main a:hover,
+.fa-main a:focus-visible {
+  text-decoration: underline;
+}
+.fa-shell :focus-visible {
+  outline: 2px solid var(--fa-gold);
+  outline-offset: 3px;
+}
+.fa-skip {
+  position: absolute;
+  left: -100vw;
+}
+.fa-skip:focus {
+  left: 1rem;
+  top: 1rem;
+  background: #191a19;
+  z-index: 5;
+}
+.fa-filters,
+.fa-fields,
+.fa-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+}
+.fa-filters {
+  margin: 1rem 0 1.5rem;
+}
+.fa-shell label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #e2e0d9;
+}
+.fa-shell input,
+.fa-shell select,
+.fa-shell textarea {
+  max-width: 100%;
+  min-width: 0;
+  background: #151615;
+  border: 1px solid #565852;
+  border-radius: 0.35rem;
+  padding: 0.55rem 0.7rem;
+  color: #fff;
+}
+.fa-shell textarea {
+  min-height: 5rem;
+}
+.fa-shell button,
+.fa-paging a {
+  border: 1px solid #57584f;
+  border-radius: 0.35rem;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+}
+.fa-shell button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.fa-shell .fa-primary {
+  background: var(--fa-gold);
+  color: #211c14;
+  border-color: transparent;
+  font-weight: 650;
+}
+.fa-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  align-items: start;
+  margin: 1rem 0;
+}
+.fa-check {
+  display: flex !important;
+  align-items: start;
+  grid-column: 1/-1;
+}
+.fa-check input {
+  margin-top: 0.2rem;
+}
+.fa-main button + button {
+  margin-left: 0.5rem;
+}
+.fa-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 0.75rem;
+}
+.fa-metric,
+.fa-record,
+.fa-inset,
+.fa-panel {
+  background: var(--fa-surface);
+  border: 1px solid var(--fa-border);
+  border-radius: 0.55rem;
+  padding: 1.15rem;
+}
+.fa-metric strong {
+  display: block;
+  font-size: 1.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.fa-money .fa-metric {
+  padding: 1.5rem;
+}
+.fa-money strong {
+  color: var(--fa-gold);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+.fa-metric span,
+.fa-inset > p {
+  color: var(--fa-muted);
+}
+.fa-facts {
+  align-items: start;
+  margin: 1rem 0;
+}
+.fa-facts > div {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+.fa-facts dd,
+.fa-record,
+.fa-inset {
+  overflow-wrap: anywhere;
+}
+.fa-facts dd {
+  margin-top: 0.2rem;
+}
+.fa-table {
+  overflow-x: auto;
+}
+.fa-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.fa-table th {
+  text-align: left;
+  color: var(--fa-muted);
+  font-size: 0.8rem;
+}
+.fa-table td,
+.fa-table th {
+  padding: 0.8rem;
+  border-bottom: 1px solid var(--fa-border);
+  vertical-align: top;
+}
+.fa-table td:first-child {
+  min-width: 10rem;
+}
+.fa-badge {
+  display: inline-block;
+  border: 1px solid #51534e;
+  border-radius: 0.35rem;
+  padding: 0.08rem 0.4rem;
+  font-size: 0.78rem;
+}
+.fa-badge[data-state="paid"],
+.fa-badge[data-state="active"] {
+  color: #b7e0c3;
+}
+.fa-badge[data-state="past_due"],
+.fa-badge[data-state="overdue"],
+.fa-badge[data-state="reconcile"] {
+  color: var(--fa-gold);
+}
+.fa-records {
+  display: grid;
+  gap: 0.75rem;
+}
+.fa-record header,
+.fa-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.fa-empty {
+  padding: 1.5rem;
+  border: 1px dashed var(--fa-border);
+  color: var(--fa-muted);
+  border-radius: 0.5rem;
+}
+.fa-paging {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.fa-operation {
+  margin: 0.8rem 0;
+}
+.fa-operation summary {
+  color: var(--fa-gold);
+  cursor: pointer;
+  width: fit-content;
+  padding: 0.4rem 0;
+}
+.fa-inset {
+  margin-top: 0.4rem;
+}
+.fa-inset [role="alert"] {
+  color: #ffc8bd;
+}
+.fa-shell [hidden] {
+  display: none;
+}
+@media (max-width: 800px) {
+  .fa-shell {
+    display: block;
+  }
+  .fa-rail {
+    padding: 1rem;
+    gap: 0.75rem;
+    border-right: none;
+    border-bottom: 1px solid var(--fa-border);
+  }
+  .fa-rail nav {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .fa-rail nav a {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.82rem;
+  }
+  .fa-rail footer {
+    margin: 0;
+    padding-top: 0.6rem;
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .fa-main {
+    padding-bottom: 3rem;
+  }
+  .fa-filters label {
+    max-width: 100%;
+  }
+  .fa-table {
+    border: 1px solid var(--fa-border);
+    border-radius: 0.4rem;
+  }
+  .fa-table td {
+    min-width: 8rem;
+  }
+}

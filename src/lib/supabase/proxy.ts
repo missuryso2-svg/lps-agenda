@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicEnv } from "@/lib/env/public";
 import type { Database } from "@/types/database";
 
-const protectedPrefixes = ["/dashboard", "/onboarding"];
+const protectedPrefixes = ["/dashboard", "/onboarding", "/admin"];
 const authPrefixes = ["/login", "/cadastro", "/recuperar-senha"];
 
 function matchesPrefix(pathname: string, prefixes: string[]): boolean {

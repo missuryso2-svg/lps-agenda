@@ -965,6 +965,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      finance_capability: { Args: Record<never, never>; Returns: "operator" | "manager" };
+      finance_directory: { Args: { shop_id?: string | null; name_prefix?: string | null; origin_filter?: string | null;
+        after_id?: string | null; page_size?: number }; Returns: Json[] };
+      finance_overview: { Args: { bill_month: string }; Returns: Json };
+      finance_operator_list: { Args: { after_id?: string | null; page_size?: number }; Returns: Json[] };
+      finance_activity: { Args: { source_name: "journal" | "events"; tenant?: string | null; kind?: string | null;
+        who?: string | null; since_at?: string | null; until_at?: string | null; before_at?: string | null;
+        before_id?: string | null; page_size?: number }; Returns: Json[] };
       finance_operator: { Args: { target: string; permission: "operator" | "manager" | "revoke"; reason: string }; Returns: string };
       finance_agreement: { Args: { op: string; shop: string; terms: Json; reference: string; reason: string }; Returns: Json };
       finance_invoice: { Args: { op: string; shop: string; contract: string; competence: string }; Returns: Json };

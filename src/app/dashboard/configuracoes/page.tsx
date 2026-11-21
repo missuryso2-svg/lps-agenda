@@ -2,6 +2,7 @@ import {
   CalendarDays,
   ExternalLink,
   Globe2,
+  QrCode,
   LockKeyhole,
   ShieldCheck,
   UserRound,
@@ -44,12 +45,13 @@ export default async function SettingsPage() {
         title="Configurações"
         description="Os dados que identificam a barbearia no LPS Agenda. Alterações são validadas no servidor e gravadas conforme as permissões do banco."
         actions={
+          <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href="/dashboard/qr"><QrCode/>QR Code de agendamento</Link></Button>
           <Button asChild variant="outline" size="lg">
             <Link href={`/agendar/${shop.slug}`} target="_blank">
               <ExternalLink className="size-4" />
               Abrir página pública
             </Link>
-          </Button>
+          </Button></div>
         }
       />
 

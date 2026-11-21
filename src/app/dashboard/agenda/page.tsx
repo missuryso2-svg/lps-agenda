@@ -10,6 +10,9 @@ import {
 import type { Metadata } from "next";
 
 import { NoticeCard } from "@/components/dashboard/notice-card";
+import Link from "next/link";
+import {QrCode} from "lucide-react";
+import {Button} from "@/components/ui/button";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -113,10 +116,11 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
         title={data.view === "week" ? "Agenda semanal" : "Agenda diária"}
         description="Visualize compromissos, bloqueios e horários livres por profissional. A disponibilidade é calculada no servidor e a gravação é protegida contra sobreposição no banco."
         actions={
+          <div className="flex flex-wrap items-center gap-2"><Button asChild variant="outline" size="sm"><Link href="/dashboard/qr"><QrCode/>QR Code de agendamento</Link></Button>
           <Badge variant="outline" className="w-fit">
             <CalendarCheck2 className="size-3.5 text-gold" />
             {visibleAppointments.length} agendamento(s) {periodLabel}
-          </Badge>
+          </Badge></div>
         }
       />
 

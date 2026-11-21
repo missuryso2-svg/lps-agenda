@@ -77,6 +77,15 @@ function rangesFromWorkingHours(
     }));
 }
 
+function dayBreaks(db: Supabase, shop: string, weekday: number) {
+  return db
+    .from("barber_breaks")
+    .select("barber_id,starts_at,ends_at")
+    .eq("barbershop_id", shop)
+    .eq("weekday", weekday)
+    .eq("is_active", true);
+}
+
 function sanitizeSearch(value: string): string {
   return value
     .replace(/[%,()\\]/g, " ")
@@ -361,8 +370,9 @@ export async function getAgendaPageData({
 
   if (view === "day") {
     const weekday = weekdayFromDateString(date);
-    const [businessHoursResult, workingHoursResult, blocksResult] =
+    const [breaks, businessHoursResult, workingHoursResult, blocksResult] =
       await Promise.all([
+        dayBreaks(supabase, barbershopId, weekday),
         supabase
           .from("business_hours")
           .select("weekday, opens_at, closes_at, is_active")
@@ -385,9 +395,12 @@ export async function getAgendaPageData({
     if (
       businessHoursResult.error ||
       workingHoursResult.error ||
+      breaks.error ||
       blocksResult.error
     ) {
-      throw new Error("Não foi possível consultar a disponibilidade da agenda.");
+      throw new Error(
+        "Não foi possível consultar a disponibilidade da agenda.",
+      );
     }
 
     const businessRanges = rangesFromBusinessHours(
@@ -401,6 +414,22 @@ export async function getAgendaPageData({
       endsAt: block.ends_at,
       reason: block.reason,
     }));
+    for (const pause of breaks.data ?? [])
+      blocks.push({
+        id: "break-" + pause.barber_id,
+        barberId: pause.barber_id,
+        startsAt: localDateTimeToUtc(
+          date,
+          pause.starts_at.slice(0, 5),
+          timeZone,
+        ).toISOString(),
+        endsAt: localDateTimeToUtc(
+          date,
+          pause.ends_at.slice(0, 5),
+          timeZone,
+        ).toISOString(),
+        reason: "Pausa do profissional",
+      });
     const visibleBarbers = selectedBarberId
       ? barbers.filter((barber) => barber.id === selectedBarberId)
       : barbers;
@@ -577,6 +606,7 @@ export async function loadAvailability({
     workingHoursResult,
     blocksResult,
     appointmentsResult,
+    breaks,
   ] = await Promise.all([
     supabase
       .from("business_hours")
@@ -603,12 +633,14 @@ export async function loadAvailability({
       .in("status", activeAppointmentStatuses)
       .lt("starts_at", dayEnd)
       .gt("ends_at", dayStart),
+    dayBreaks(supabase, barbershopId, weekday).eq("barber_id", barberId),
   ]);
 
   if (
     businessHoursResult.error ||
     workingHoursResult.error ||
     blocksResult.error ||
+    breaks.error ||
     appointmentsResult.error
   ) {
     return {
@@ -627,6 +659,18 @@ export async function loadAvailability({
     weekday,
   );
   const busy = [
+    ...(breaks.data ?? []).map((p) => ({
+      start: localDateTimeToUtc(
+        date,
+        p.starts_at.slice(0, 5),
+        timeZone,
+      ).toISOString(),
+      end: localDateTimeToUtc(
+        date,
+        p.ends_at.slice(0, 5),
+        timeZone,
+      ).toISOString(),
+    })),
     ...(blocksResult.data ?? [])
       .filter(
         (block) => block.barber_id === null || block.barber_id === barberId,

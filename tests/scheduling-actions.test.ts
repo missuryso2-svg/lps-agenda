@@ -708,10 +708,17 @@ describe("transições de status", () => {
       baseSeed({ appointments: [appointmentRow({ status: "in_progress" })] }),
     );
 
+    const completion = vi.fn(() => null);
+    db.setRpcHandler("complete_rated_appointment", completion);
     const result = await completeAppointmentAction(APPOINTMENT_A1);
 
     expect(result.status).toBe("success");
-    expect(db.getRows("appointments")[0]?.status).toBe("completed");
+    expect(completion).toHaveBeenCalledWith({
+      shop: SHOP_A,
+      booking: APPOINTMENT_A1,
+      barber_score: null,
+      shop_score: null,
+    });
   });
 
   it("registra ausência de um agendamento confirmado", async () => {

@@ -13,6 +13,8 @@ import { getSupabasePublicEnv } from "@/lib/env/public";
 import { createClient } from "@/lib/supabase/server";
 import {
   appointmentFormSchema,
+  walkInFormSchema,
+  ratingSchema,
   appointmentIdSchema,
   availabilityQuerySchema,
   cancelAppointmentSchema,
@@ -107,7 +109,11 @@ export async function createAppointmentAction(
     return authorization.error;
   }
 
-  const parsed = appointmentFormSchema.safeParse(values);
+  const schema =
+    values && typeof values === "object" && "newCustomerName" in values
+      ? walkInFormSchema
+      : appointmentFormSchema;
+  const parsed = schema.safeParse(values);
 
   if (!parsed.success) {
     return actionError(
@@ -123,13 +129,17 @@ export async function createAppointmentAction(
   const blocked = await bookingRestriction(barbershopId);
   if (blocked) return actionError(blocked);
 
-  const customerPromise = supabase
-    .from("customers")
-    .select("id")
-    .eq("id", parsed.data.customerId)
-    .eq("barbershop_id", barbershopId)
-    .eq("is_active", true)
-    .maybeSingle();
+  const existingId =
+    "customerId" in parsed.data ? parsed.data.customerId : null;
+  const customerPromise = existingId
+    ? supabase
+        .from("customers")
+        .select("id")
+        .eq("id", existingId)
+        .eq("barbershop_id", barbershopId)
+        .eq("is_active", true)
+        .maybeSingle()
+    : null;
 
   const availability = await loadAvailability({
     supabase,
@@ -142,11 +152,11 @@ export async function createAppointmentAction(
 
   const customerResult = await customerPromise;
 
-  if (customerResult.error) {
+  if (customerResult?.error) {
     return actionError(genericError);
   }
 
-  if (!customerResult.data) {
+  if (existingId && !customerResult?.data) {
     return actionError(
       "Selecione um cliente ativo cadastrado nesta barbearia.",
       {
@@ -171,18 +181,28 @@ export async function createAppointmentAction(
     });
   }
 
-  const { error } = await supabase.from("appointments").insert({
-    barbershop_id: barbershopId,
-    customer_id: parsed.data.customerId,
-    barber_id: parsed.data.barberId,
-    service_id: parsed.data.serviceId,
-    starts_at: slot.startsAt,
-    ends_at: slot.endsAt,
-    status: "scheduled",
-    price_cents: availability.data.priceCents,
-    notes: parsed.data.notes.length > 0 ? parsed.data.notes : null,
-    created_by: authorization.context.user.id,
-  });
+  const { error } =
+    "newCustomerName" in parsed.data
+      ? await supabase.rpc("book_new_walk_in", {
+          shop: barbershopId,
+          professional: parsed.data.barberId,
+          service: parsed.data.serviceId,
+          customer_name: parsed.data.newCustomerName,
+          starts: slot.startsAt,
+          note: parsed.data.notes,
+        })
+      : await supabase.from("appointments").insert({
+          barbershop_id: barbershopId,
+          customer_id: parsed.data.customerId,
+          barber_id: parsed.data.barberId,
+          service_id: parsed.data.serviceId,
+          starts_at: slot.startsAt,
+          ends_at: slot.endsAt,
+          status: "scheduled",
+          price_cents: availability.data.priceCents,
+          notes: parsed.data.notes.length > 0 ? parsed.data.notes : null,
+          created_by: authorization.context.user.id,
+        });
 
   if (error) {
     return actionError(appointmentMutationMessage(error));
@@ -414,8 +434,29 @@ export async function startAppointmentAction(
 
 export async function completeAppointmentAction(
   id: unknown,
+  ratings: unknown = { barberScore: null, shopScore: null },
 ): Promise<ActionState> {
-  return transitionAppointment(id, "complete");
+  const booking = appointmentIdSchema.safeParse(id);
+  const scores = ratingSchema.safeParse(ratings);
+  if (!booking.success || !scores.success)
+    return actionError("Confira o atendimento e as notas de 0 a 10.");
+  const authorization = await authorizeAppointmentManagement();
+  if (authorization.error) return authorization.error;
+  const db = await createClient();
+  const { error } = await db.rpc("complete_rated_appointment", {
+    shop: authorization.context.active.barbershop_id,
+    booking: booking.data,
+    barber_score: scores.data.barberScore,
+    shop_score: scores.data.shopScore,
+  });
+  if (error)
+    return actionError(
+      error.code === "23514"
+        ? "A conclusão conflita com o estado atual do atendimento. Atualize a agenda."
+        : appointmentMutationMessage(error),
+    );
+  revalidateAppointments();
+  return actionSuccess("Atendimento concluído.");
 }
 
 export async function markAppointmentNoShowAction(

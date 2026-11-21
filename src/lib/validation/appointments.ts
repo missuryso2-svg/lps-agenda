@@ -31,6 +31,14 @@ export const appointmentFormSchema = z.object({
   notes: appointmentNotesSchema,
 });
 
+export const walkInFormSchema = appointmentFormSchema
+  .omit({ customerId: true })
+  .extend({ newCustomerName: z.string().trim().min(2).max(120) });
+export const ratingSchema = z.object({
+  barberScore: z.number().int().min(0).max(10).nullable(),
+  shopScore: z.number().int().min(0).max(10).nullable(),
+});
+
 export const rescheduleAppointmentSchema = z.object({
   date: dateFieldSchema,
   time: timeSchema,

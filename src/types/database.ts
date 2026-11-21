@@ -9,6 +9,40 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      barber_breaks: {
+        Row: {
+          barbershop_id: string;
+          barber_id: string;
+          weekday: number;
+          starts_at: string;
+          ends_at: string;
+          is_active: boolean;
+        };
+        Insert: {
+          barbershop_id: string;
+          barber_id: string;
+          weekday: number;
+          starts_at: string;
+          ends_at: string;
+          is_active?: boolean;
+        };
+        Update: { starts_at?: string; ends_at?: string; is_active?: boolean };
+        Relationships: [];
+      };
+      appointment_ratings: {
+        Row: {
+          appointment_id: string;
+          barbershop_id: string;
+          barber_id: string;
+          barber_score: number | null;
+          shop_score: number | null;
+          recorded_by: string | null;
+          recorded_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
@@ -881,6 +915,7 @@ export type Database = {
       };
       notifications: {
         Row: {
+          appointment_id: string | null;
           id: string;
           barbershop_id: string;
           user_id: string | null;
@@ -894,6 +929,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          appointment_id?: string | null;
           id?: string;
           barbershop_id: string;
           user_id?: string | null;
@@ -907,6 +943,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          appointment_id?: string | null;
           id?: string;
           barbershop_id?: string;
           user_id?: string | null;
@@ -965,6 +1002,47 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      booking_notices: {
+        Args: { shop: string; page_size?: number };
+        Returns: {
+          notice_id: string;
+          booking_id: string;
+          customer_name: string;
+          service_name: string;
+          barber_name: string;
+          starts: string;
+          booking_status: Database["public"]["Enums"]["appointment_status"];
+          is_read: boolean;
+        }[];
+      };
+      book_new_walk_in: {
+        Args: {
+          shop: string;
+          professional: string;
+          service: string;
+          customer_name: string;
+          starts: string;
+          note: string;
+        };
+        Returns: string;
+      };
+      complete_rated_appointment: {
+        Args: {
+          shop: string;
+          booking: string;
+          barber_score: number | null;
+          shop_score: number | null;
+        };
+        Returns: undefined;
+      };
+      rating_summary: {
+        Args: { shop: string };
+        Returns: {
+          barber_id: string | null;
+          average_score: number | null;
+          votes: number;
+        }[];
+      };
       finance_capability: { Args: Record<never, never>; Returns: "operator" | "manager" };
       finance_directory: { Args: { shop_id?: string | null; name_prefix?: string | null; origin_filter?: string | null;
         after_id?: string | null; page_size?: number }; Returns: Json[] };

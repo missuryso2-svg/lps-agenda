@@ -13,7 +13,7 @@ const benefits = [
   [
     CalendarDays,
     "Agenda e horários",
-    "Organize o expediente e a disponibilidade de cada barbeiro. Confirme atendimentos e consulte o histórico da agenda.",
+    "Organize horários e pausas por barbeiro. Agende clientes presenciais, confirme novas reservas e consulte o histórico da agenda.",
   ],
   [
     UsersRound,
@@ -33,7 +33,7 @@ const benefits = [
   [
     LayoutDashboard,
     "Gestão da operação",
-    "Acompanhe a rotina no dashboard, configure serviços e compartilhe o link de agendamento com seus clientes.",
+    "Acompanhe a rotina no dashboard, consulte as avaliações registradas pela equipe e compartilhe o link de agendamento.",
   ],
 ] as const;
 

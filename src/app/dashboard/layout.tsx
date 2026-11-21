@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { BookingAccessNotice } from "@/components/dashboard/booking-access-notice";
 import { ConfigRequiredPage } from "@/components/config-required-page";
+import { createClient } from "@/lib/supabase/server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import type { BarbershopBookingAccess } from "@/features/scheduling/booking-access";
@@ -48,6 +49,10 @@ export default async function DashboardLayout({
     bookingAccessCheckFailed = true;
   }
 
+  const db = await createClient();
+  const notices = await db.rpc("booking_notices", {
+    shop: active.barbershop_id,
+  });
   const displayName =
     profile?.full_name?.trim() ||
     (typeof user.user_metadata?.full_name === "string"
@@ -65,6 +70,8 @@ export default async function DashboardLayout({
 
   return (
     <DashboardShell
+      notices={notices.data}
+      timeZone={active.barbershop.timezone || "America/Sao_Paulo"}
       userName={displayName}
       userEmail={user.email ?? "E-mail não informado"}
       memberships={membershipSummaries}

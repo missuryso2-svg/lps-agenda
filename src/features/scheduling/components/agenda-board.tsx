@@ -12,7 +12,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { AppointmentStatusBadge } from "@/components/dashboard/status-badge";
@@ -273,7 +273,18 @@ export function AgendaBoard({
   const [isNavigating, startNavigation] = useTransition();
   const [newOpen, setNewOpen] = useState(openNewOnMount);
   const [newKey, setNewKey] = useState(0);
-  const [selected, setSelected] = useState<AgendaAppointment | null>(null);
+  const query = useSearchParams();
+  const bookingId = query.get("atendimento");
+  const [selectedRow, setSelected] = useState<AgendaAppointment | null>(null);
+  const selected = selectedRow ?? data.appointments.find((a) => a.id === bookingId) ?? null;
+  function closeDetails() {
+    setSelected(null);
+    if (bookingId) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("atendimento");
+      window.history.replaceState(null, "", url);
+    }
+  }
   const [cancelTarget, setCancelTarget] = useState<AgendaAppointment | null>(
     null,
   );
@@ -284,10 +295,7 @@ export function AgendaBoard({
     data.date,
     data.view === "week" ? -7 : -1,
   );
-  const nextDate = addDaysToDateString(
-    data.date,
-    data.view === "week" ? 7 : 1,
-  );
+  const nextDate = addDaysToDateString(data.date, data.view === "week" ? 7 : 1);
   const selectedWeekday = weekdayFromDateString(data.date);
   const dateDescription =
     data.view === "week"
@@ -456,7 +464,7 @@ export function AgendaBoard({
                 disabled={!canCreateAppointments}
               >
                 <Plus className="size-4" />
-                Novo agendamento
+                Agendar cliente presencial
               </Button>
             ) : (
               <Badge variant="outline" className="w-fit text-muted-foreground">
@@ -493,7 +501,7 @@ export function AgendaBoard({
               canCreateAppointments ? (
                 <Button type="button" variant="gold" onClick={openNew}>
                   <CalendarPlus className="size-4" />
-                  Novo agendamento
+                  Agendar cliente presencial
                 </Button>
               ) : undefined
             }
@@ -591,20 +599,21 @@ export function AgendaBoard({
       />
 
       <AppointmentDetailsDialog
+        key={selected?.id ?? "closed"}
         appointment={selected}
         timeZone={data.timeZone}
         canCreateAppointments={canCreateAppointments}
         onOpenChange={(open) => {
           if (!open) {
-            setSelected(null);
+            closeDetails();
           }
         }}
         onCancelRequest={(appointment) => {
-          setSelected(null);
+          closeDetails();
           setCancelTarget(appointment);
         }}
         onRescheduleRequest={(appointment) => {
-          setSelected(null);
+          closeDetails();
           setRescheduleTarget(appointment);
         }}
       />

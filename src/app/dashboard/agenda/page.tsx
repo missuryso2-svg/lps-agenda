@@ -150,6 +150,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
       </div>
 
       <AgendaBoard
+        key={[date, view, barberId].join("/")}
         data={data}
         options={options}
         initialCustomers={customers}
@@ -171,7 +172,11 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
           agendamentos ativos, horário atual e fuso são cruzados pela mesma
           função no servidor, usada na consulta e na gravação.
         </NoticeCard>
-        <NoticeCard icon={CalendarPlus} title="Histórico preservado" tone="gold">
+        <NoticeCard
+          icon={CalendarPlus}
+          title="Histórico preservado"
+          tone="gold"
+        >
           Cancelar libera o horário e mantém o registro com motivo opcional.
           Concluir e registrar ausência encerram o atendimento sem apagar o
           histórico.

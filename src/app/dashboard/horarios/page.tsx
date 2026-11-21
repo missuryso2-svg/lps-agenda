@@ -19,6 +19,8 @@ import {
   getBlockedSlots,
   getBusinessHours,
 } from "@/features/dashboard/queries";
+import { BarberBreaks } from "@/features/schedule/components/barber-breaks";
+import { createClient } from "@/lib/supabase/server";
 import { ScheduleTabs } from "@/features/schedule/components/schedule-tabs";
 import {
   isCurrentUserPlatformAdmin,
@@ -38,14 +40,15 @@ export default async function SchedulePage() {
     canManageShop(context.active.role) ||
     isCurrentUserPlatformAdmin(context.user);
 
-  const [businessHours, workingHours, blockedSlots, barbers] = await Promise.all(
-    [
+  const db = await createClient();
+  const [businessHours, workingHours, blockedSlots, barbers, pauses] =
+    await Promise.all([
       getBusinessHours(shop.id),
       getBarberWorkingHours(shop.id),
       getBlockedSlots(shop.id),
       getBarbers(shop.id),
-    ],
-  );
+      db.from("barber_breaks").select("*").eq("barbershop_id", shop.id),
+    ]);
 
   const openDays = businessHours.filter((row) => row.is_active);
   const weeklyMinutes = openDays.reduce((total, row) => {
@@ -117,8 +120,8 @@ export default async function SchedulePage() {
         <CardHeader className="border-b border-border/70 pb-4">
           <CardTitle>Configuração semanal</CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Alterações em {shop.name} são gravadas no Supabase e revalidadas para
-            toda a equipe. A jornada precisa caber no funcionamento da
+            Alterações em {shop.name} são gravadas no Supabase e revalidadas
+            para toda a equipe. A jornada precisa caber no funcionamento da
             barbearia.
           </p>
         </CardHeader>
@@ -134,13 +137,23 @@ export default async function SchedulePage() {
         </CardContent>
       </Card>
 
+      {context.active.role === "owner" &&
+        (pauses.error ? (
+          <p>Não foi possível carregar as pausas.</p>
+        ) : (
+          <BarberBreaks barbers={scheduleBarbers} pauses={pauses.data ?? []} />
+        ))}
       <div className="grid gap-4 lg:grid-cols-2">
         <NoticeCard icon={Clock3} title="Horários locais da barbearia">
           O funcionamento e a jornada usam horários locais, sem conversão
           indevida para UTC. Apenas os bloqueios são gravados como instantes,
           convertidos pelo fuso da barbearia.
         </NoticeCard>
-        <NoticeCard icon={ShieldCheck} title="Permissões de horários" tone="gold">
+        <NoticeCard
+          icon={ShieldCheck}
+          title="Permissões de horários"
+          tone="gold"
+        >
           Proprietários e administradores da plataforma configuram horários e
           bloqueios. A equipe consulta em modo somente leitura, e a RLS aplica a
           mesma regra no banco.

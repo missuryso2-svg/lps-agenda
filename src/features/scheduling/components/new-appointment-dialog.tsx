@@ -81,8 +81,14 @@ export function NewAppointmentDialog({
     term: string;
     result: CustomerSearchResult;
   } | null>(null);
-  const [selectedCustomer, setSelectedCustomer] =
+  const [quickName, setQuickName] = useState("");
+  const [existingCustomer, setSelectedCustomer] =
     useState<CustomerOption | null>(null);
+  const selectedCustomer =
+    existingCustomer ??
+    (quickName.trim().length >= 2
+      ? { id: null, fullName: quickName.trim() }
+      : null);
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [barberId, setBarberId] = useState<string | null>(null);
   const [date, setDate] = useState(
@@ -224,7 +230,9 @@ export function NewAppointmentDialog({
 
     startTransition(async () => {
       const result = await createAppointmentAction({
-        customerId: selectedCustomer.id,
+        ...(selectedCustomer.id
+          ? { customerId: selectedCustomer.id }
+          : { newCustomerName: selectedCustomer.fullName }),
         serviceId: selectedService.id,
         barberId: selectedBarber.id,
         date,
@@ -252,7 +260,7 @@ export function NewAppointmentDialog({
     <Dialog open={open} onOpenChange={closeDialog}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Novo agendamento</DialogTitle>
+          <DialogTitle>Agendar cliente presencial</DialogTitle>
           <DialogDescription>
             Cliente, serviço e profissional são validados na barbearia ativa. A
             disponibilidade é calculada no servidor e confirmada novamente ao
@@ -260,7 +268,10 @@ export function NewAppointmentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ol className="grid grid-cols-4 gap-2" aria-label="Etapas do agendamento">
+        <ol
+          className="grid grid-cols-4 gap-2"
+          aria-label="Etapas do agendamento"
+        >
           {steps.map((item, index) => {
             const complete = index < step;
             const active = index === step;
@@ -307,8 +318,20 @@ export function NewAppointmentDialog({
         {step === 0 ? (
           <div className="space-y-3">
             <div className="space-y-2">
+              <Label htmlFor="quick-name">Novo cliente presencial</Label>
+              <Input
+                id="quick-name"
+                placeholder="Nome do novo cliente"
+                maxLength={120}
+                value={quickName}
+                onChange={(e) => {
+                  setQuickName(e.target.value);
+                  setSelectedCustomer(null);
+                  clearError();
+                }}
+              />
               <Label htmlFor="appointment-customer-search">
-                Pesquisar cliente
+                Ou selecionar cliente cadastrado
               </Label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -341,7 +364,8 @@ export function NewAppointmentDialog({
                     Nenhum cliente ativo encontrado
                   </p>
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    Cadastre o cliente em Clientes ou ajuste a busca.
+                    Preencha o nome acima para cadastrá-lo ao confirmar a
+                    reserva.
                   </p>
                 </div>
               ) : (
@@ -355,6 +379,7 @@ export function NewAppointmentDialog({
                       role="option"
                       aria-selected={selected}
                       onClick={() => {
+                        setQuickName("");
                         setSelectedCustomer(customer);
                         clearError();
                       }}

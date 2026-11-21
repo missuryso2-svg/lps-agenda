@@ -17,6 +17,7 @@ import { PrototypeAction } from "@/components/prototype-action";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/server";
 import { BarbersManager } from "@/features/barbers/components/barbers-manager";
 import {
   getBarberServiceAssignments,
@@ -42,11 +43,15 @@ export default async function TeamPage() {
     canManageShop(context.active.role) ||
     isCurrentUserPlatformAdmin(context.user);
 
-  const [team, barbers, services, assignments] = await Promise.all([
+  const db = await createClient();
+  const [team, barbers, services, assignments, ratings] = await Promise.all([
     getTeam(shop.id),
     getBarbers(shop.id),
     getServices(shop.id),
     getBarberServiceAssignments(shop.id),
+    context.active.role === "owner"
+      ? db.rpc("rating_summary", { shop: shop.id })
+      : null,
   ]);
 
   const servicesByBarber = new Map<string, string[]>();
@@ -148,6 +153,34 @@ export default async function TeamPage() {
         />
       </div>
 
+      {ratings && (
+        <section className="space-y-3 rounded-2xl border bg-card p-5">
+          <h2 className="font-display text-xl">Avaliações dos atendimentos</h2>
+          <p className="text-sm text-muted-foreground">
+            Avaliações informadas pelos clientes e registradas pela equipe.
+          </p>
+          {ratings.error ? (
+            <p>Não foi possível carregar as avaliações.</p>
+          ) : (
+            <dl className="grid gap-3 sm:grid-cols-3">
+              {[{ id: null, name: "Barbearia" }, ...barbers].map((b) => {
+                const row = ratings.data?.find((r) => r.barber_id === b.id);
+                return (
+                  <div key={b.id ?? "shop"} className="rounded-xl border p-3">
+                    <dt>{b.name}</dt>
+                    <dd className="text-sm">
+                      {row?.votes
+                        ? row.average_score?.toLocaleString("pt-BR") + " / 10"
+                        : "Sem notas"}{" "}
+                      · {row?.votes ?? 0} {row?.votes === 1 ? "avaliação" : "avaliações"}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          )}
+        </section>
+      )}
       <BarbersManager
         barbers={managedBarbers}
         services={catalogServices}

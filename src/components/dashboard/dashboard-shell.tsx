@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   CalendarClock,
   CalendarDays,
   Check,
@@ -101,7 +100,14 @@ function isActive(pathname: string, item: NavItem) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
+import {
+  BookingNotices,
+  type BookingNotice,
+} from "@/features/scheduling/components/booking-notices";
+
 export function DashboardShell({
+  notices,
+  timeZone,
   children,
   userName,
   userEmail,
@@ -110,6 +116,8 @@ export function DashboardShell({
   role,
   isPlatformAdmin,
 }: {
+  notices: BookingNotice[] | null;
+  timeZone: string;
   children: React.ReactNode;
   userName: string;
   userEmail: string;
@@ -130,11 +138,11 @@ export function DashboardShell({
     items.filter((item) => !item.ownerOnly || canManage);
 
   const allNav = [...visibleNav(operationNav), ...visibleNav(managementNav)];
-  const current =
-    allNav.find((item) => isActive(pathname, item)) ?? allNav[0];
+  const current = allNav.find((item) => isActive(pathname, item)) ?? allNav[0];
 
   const activeMembership =
-    memberships.find((item) => item.id === activeBarbershopId) ?? memberships[0];
+    memberships.find((item) => item.id === activeBarbershopId) ??
+    memberships[0];
 
   const changeShop = (barbershopId: string) => {
     if (barbershopId === activeBarbershopId) {
@@ -316,28 +324,7 @@ export function DashboardShell({
             <div className="ml-auto flex items-center gap-1">
               <ThemeToggle />
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative"
-                    aria-label="Notificações"
-                  >
-                    <Bell className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-72">
-                  <DropdownMenuLabel>Notificações</DropdownMenuLabel>
-                  <div className="px-2 py-5 text-center">
-                    <Bell className="mx-auto size-5 text-muted-foreground/60" />
-                    <p className="mt-2 text-xs font-medium">
-                      Nenhuma notificação por aqui
-                    </p>
-
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <BookingNotices notices={notices} tz={timeZone} />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

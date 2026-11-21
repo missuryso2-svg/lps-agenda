@@ -48,12 +48,11 @@ import {
 } from "@/lib/format";
 
 const directActions: Record<
-  Exclude<AppointmentAction, "cancel">,
+  Exclude<AppointmentAction, "cancel" | "complete">,
   (id: string) => Promise<ActionState>
 > = {
   confirm: confirmAppointmentAction,
   start: startAppointmentAction,
-  complete: completeAppointmentAction,
   no_show: markAppointmentNoShowAction,
 };
 
@@ -89,6 +88,9 @@ export function AppointmentDetailsDialog({
   const [activeAction, setActiveAction] = useState<AppointmentAction | null>(
     null,
   );
+  const [ratingOpen, setRatingOpen] = useState(false);
+  const [barberScore, setBarberScore] = useState("");
+  const [shopScore, setShopScore] = useState("");
   const [isPending, startTransition] = useTransition();
 
   if (!appointment) {
@@ -99,7 +101,12 @@ export function AppointmentDetailsDialog({
   const rescheduleAllowed =
     canCreateAppointments && canRescheduleAppointment(appointment.status);
 
-  const runAction = (action: AppointmentAction) => {
+  const runAction = (action: AppointmentAction, skipRatings = false) => {
+    if (action === "complete" && !ratingOpen) {
+      setRatingOpen(true);
+      setServerError(null);
+      return;
+    }
     if (action === "cancel") {
       setServerError(null);
       onCancelRequest(appointment);
@@ -110,7 +117,15 @@ export function AppointmentDetailsDialog({
     setActiveAction(action);
 
     startTransition(async () => {
-      const result = await directActions[action](appointment.id);
+      const result =
+        action === "complete"
+          ? await completeAppointmentAction(appointment.id, {
+              barberScore:
+                skipRatings || barberScore === "" ? null : Number(barberScore),
+              shopScore:
+                skipRatings || shopScore === "" ? null : Number(shopScore),
+            })
+          : await directActions[action](appointment.id);
 
       if (result.status === "error") {
         setServerError(
@@ -140,11 +155,15 @@ export function AppointmentDetailsDialog({
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <div className="flex flex-wrap items-center gap-2">
-            <DialogTitle>{appointment.customerName}</DialogTitle>
+            <DialogTitle>
+              {ratingOpen ? "Concluir atendimento" : appointment.customerName}
+            </DialogTitle>
             <AppointmentStatusBadge status={appointment.status} />
           </div>
           <DialogDescription>
-            Detalhes do atendimento e ações permitidas para o status atual.
+            {ratingOpen
+              ? appointment.customerName
+              : "Detalhes do atendimento e ações permitidas para o status atual."}
           </DialogDescription>
         </DialogHeader>
 
@@ -230,7 +249,60 @@ export function AppointmentDetailsDialog({
           </div>
         ) : null}
 
-        {actions.length > 0 || rescheduleAllowed ? (
+        {ratingOpen ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Avaliações informadas pelos clientes e registradas pela equipe.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                {
+                  label: "Avaliação do barbeiro",
+                  value: barberScore,
+                  set: setBarberScore,
+                },
+                {
+                  label: "Avaliação da barbearia",
+                  value: shopScore,
+                  set: setShopScore,
+                },
+              ].map((field) => (
+                <label key={field.label} className="grid gap-1 text-sm">
+                  {field.label}
+                  <select
+                    className="rounded-md border bg-background p-2"
+                    value={field.value}
+                    onChange={(e) => field.set(e.target.value)}
+                    disabled={isPending}
+                  >
+                    <option value="">Sem nota</option>
+                    {Array.from({ length: 11 }, (_, score) => (
+                      <option key={score} value={score}>
+                        {score}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                disabled={isPending}
+                onClick={() => runAction("complete", true)}
+              >
+                Não avaliar
+              </Button>
+              <Button
+                variant="gold"
+                disabled={isPending}
+                onClick={() => runAction("complete")}
+              >
+                Concluir atendimento
+              </Button>
+            </div>
+          </div>
+        ) : actions.length > 0 || rescheduleAllowed ? (
           <div className="space-y-2">
             <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               <CalendarClock className="size-3 text-gold" />
@@ -253,7 +325,9 @@ export function AppointmentDetailsDialog({
                   ) : (
                     <Clock3 className="size-3.5" />
                   )}
-                  {appointmentTransitions[action].label}
+                  {action === "complete"
+                    ? "Concluir atendimento"
+                    : appointmentTransitions[action].label}
                 </Button>
               ))}
 

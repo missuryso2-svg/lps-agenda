@@ -198,11 +198,18 @@ try {
               value: pair.slice(i + 1),
               url: nextURL,
             };
-          }),
+        }),
       );
       const tab = await context.newPage();
-      await tab.goto(nextURL + detail);
-      await tab.getByText("Conferir Pix", { exact: true }).click();
+      await tab.goto(nextURL + detail, { waitUntil: "networkidle" });
+      const pixSummary = tab
+        .locator("article.fa-record")
+        .filter({ hasText: contract })
+        .locator("summary")
+        .filter({ hasText: "Conferir Pix" });
+      await pixSummary.waitFor();
+      assert.equal(await pixSummary.count(), 1, "Pix control for this contract");
+      await pixSummary.click();
       const form = tab
         .locator("details[open]")
         .filter({ hasText: "Confirmo que conferi" });

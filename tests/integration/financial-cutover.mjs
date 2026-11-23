@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
+import { createClient } from "@supabase/supabase-js";
 import {
   action,
   ids,
@@ -9,6 +10,40 @@ import {
   startNext,
   stopNext,
 } from "./local-next-qa.mjs";
+
+function responseCookies(response) {
+  return response.headers.getSetCookie().map((cookie) => cookie.split(";")[0]);
+}
+
+function mergeCookies(...cookieSets) {
+  const jar = new Map();
+  for (const cookie of cookieSets.flat()) {
+    const separator = cookie.indexOf("=");
+    if (separator > 0)
+      jar.set(cookie.slice(0, separator), cookie.slice(separator + 1));
+  }
+  return Array.from(jar, ([name, value]) => `${name}=${value}`).join("; ");
+}
+
+async function waitForMail(email, expectedType) {
+  const inbox = "http://127.0.0.1:59124/api/v1";
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const list = await (
+      await fetch(inbox + "/search?query=" + encodeURIComponent("to:" + email))
+    ).json();
+    for (const mail of list.messages ?? []) {
+      if (!mail.To.some((recipient) => recipient.Address === email)) continue;
+      const html = (await (await fetch(inbox + "/message/" + mail.ID)).json()).HTML;
+      if (
+        !expectedType ||
+        new RegExp("type(?:=|%3D)" + expectedType, "i").test(html)
+      )
+        return html;
+    }
+    await delay(250);
+  }
+  assert.fail("local Mailpit must receive the expected email type");
+}
 
 async function confirmSignup() {
   const email = ids() + "@example.test";
@@ -31,22 +66,9 @@ async function confirmSignup() {
     signup.body.includes("Cadastro recebido"),
     "signup must request email confirmation",
   );
-  const cookies = signup.res.headers
-    .getSetCookie()
-    .map((c) => c.split(";")[0])
-    .join("; ");
-  const inbox = "http://127.0.0.1:59124/api/v1";
-  let mail;
-  for (let attempt = 0; attempt < 20 && !mail; attempt++) {
-    const list = await (
-      await fetch(inbox + "/search?query=" + encodeURIComponent("to:" + email))
-    ).json();
-    mail = list.messages?.find((m) => m.To.some((t) => t.Address === email));
-    if (!mail) await delay(250);
-  }
-  assert.ok(mail, "local Mailpit must receive the confirmation");
-  const message = await (await fetch(inbox + "/message/" + mail.ID)).json();
-  const href = message.HTML.match(
+  const cookies = mergeCookies(responseCookies(signup.res));
+  const message = await waitForMail(email, "signup");
+  const href = message.match(
     /href="([^"]*\/auth\/v1\/verify\?[^"]+)"/i,
   )?.[1];
   assert.ok(href, "local confirmation link");
@@ -74,6 +96,146 @@ async function confirmSignup() {
   console.log(
     "PASS signup, confirmation email via local Mailpit and Next PKCE callback",
   );
+  return { email, password };
+}
+
+async function recoverPassword(account) {
+  const anonymous = { cookies: () => "" };
+  const requested = await action(
+    anonymous,
+    "forgotPasswordAction",
+    [{ email: account.email }],
+    "/recuperar-senha",
+  );
+  assert.match(requested.body, /Se existir uma conta/);
+
+  const nonexistent = await action(
+    anonymous,
+    "forgotPasswordAction",
+    [{ email: ids() + "@example.test" }],
+    "/recuperar-senha",
+  );
+  assert.match(nonexistent.body, /Se existir uma conta/);
+
+  const message = await waitForMail(account.email, "recovery");
+  const href = message.match(
+    /href="([^"]*\/auth\/v1\/verify\?[^"]+)"/i,
+  )?.[1];
+  assert.ok(href, "local password recovery link");
+  const verification = new URL(href.replaceAll("&amp;", "&"));
+  assert.ok(
+    ["127.0.0.1", "localhost"].includes(verification.hostname) &&
+      verification.port === "59121",
+  );
+  const verified = await fetch(verification, { redirect: "manual" });
+  const callback = new URL(verified.headers.get("location"));
+  assert.equal(callback.origin, nextURL);
+  assert.equal(callback.pathname, "/auth/callback");
+  assert.ok(
+    callback.searchParams.has("code") || callback.searchParams.has("token_hash"),
+  );
+
+  const recoveryCookies = mergeCookies(responseCookies(requested.res));
+  const callbackResponse = await fetch(callback, {
+    headers: { cookie: recoveryCookies },
+    redirect: "manual",
+  });
+  assert.equal(
+    new URL(callbackResponse.headers.get("location")).pathname,
+    "/redefinir-senha",
+    "recovery callback must establish a session for the reset screen",
+  );
+  let authenticatedCookies = mergeCookies(
+    recoveryCookies,
+    responseCookies(callbackResponse),
+  );
+
+  const newPassword = ids() + "Aa!";
+  const reset = await action(
+    { cookies: () => authenticatedCookies },
+    "resetPasswordAction",
+    [{ password: newPassword, confirmPassword: newPassword }],
+    "/redefinir-senha",
+  );
+  assert.match(
+    reset.res.headers.get("x-action-redirect") ?? "",
+    /\/dashboard/,
+  );
+  authenticatedCookies = mergeCookies(
+    authenticatedCookies,
+    responseCookies(reset.res),
+  );
+
+  const auth = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  const newLogin = await auth.auth.signInWithPassword({
+    email: account.email,
+    password: newPassword,
+  });
+  assert.ifError(newLogin.error);
+  const oldPasswordLogin = await createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  ).auth.signInWithPassword({ email: account.email, password: account.password });
+  assert.ok(oldPasswordLogin.error, "the previous password must stop working");
+
+  const signedInPage = await fetch(nextURL + "/dashboard", {
+    headers: { cookie: authenticatedCookies },
+    redirect: "manual",
+  });
+  assert.ok(
+    !new URL(signedInPage.headers.get("location") ?? nextURL).pathname.includes(
+      "/login",
+    ),
+    "the verified recovery session must reach the protected dashboard flow",
+  );
+
+  const signedOut = await action(
+    { cookies: () => authenticatedCookies },
+    "signOutAction",
+    [],
+    "/dashboard",
+  );
+  assert.match(
+    signedOut.res.headers.get("x-action-redirect") ?? "",
+    /\/login/,
+  );
+  const clearedCookies = mergeCookies(
+    authenticatedCookies,
+    responseCookies(signedOut.res),
+  );
+  const afterLogout = await fetch(nextURL + "/dashboard", {
+    headers: { cookie: clearedCookies },
+    redirect: "manual",
+  });
+  assert.match(afterLogout.headers.get("location") ?? "", /\/login\?proximo=/);
+
+  const staleCookies = authenticatedCookies
+    .split("; ")
+    .map((cookie) => {
+      const separator = cookie.indexOf("=");
+      const name = cookie.slice(0, separator);
+      return name.includes("auth-token")
+        ? `${name}=invalid-expired-session`
+        : cookie;
+    })
+    .join("; ");
+  const expiredSession = await fetch(nextURL + "/dashboard", {
+    headers: { cookie: staleCookies },
+    redirect: "manual",
+  });
+  assert.match(
+    expiredSession.headers.get("location") ?? "",
+    /\/login\?proximo=/,
+    "an expired/invalid session must not pass the protected route",
+  );
+  console.log(
+    "PASS password recovery email, generic response, verified reset, old password rejection, logout and stale-session redirect",
+  );
 }
 
 const [manager, ordinary] = await Promise.all([session(), session()]);
@@ -87,7 +249,8 @@ const before = snapshot();
 try {
   process.env.LPS_COMMERCIAL_WHATSAPP = "5571999555390";
   await startNext(false);
-  await confirmSignup();
+  const account = await confirmSignup();
+  await recoverPassword(account);
   const rpc = await manager.client.rpc("finance_health");
   assert.ifError(rpc.error);
   assert.equal(rpc.data.worker_state, "disabled");

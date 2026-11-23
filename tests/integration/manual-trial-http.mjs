@@ -80,12 +80,20 @@ try {
   assert.deepEqual(raw.data,[]);
   pass("PostgREST exposes owner projection only and preserves financial RLS");
   const barber = ids(), service = ids(), customer = ids(), appointment = ids();
+  const bookingDate = sql(
+    "select to_char((now() at time zone 'America/Sao_Paulo')::date + 2,'YYYY-MM-DD')",
+  );
   sql(`insert into public.barbers(id,barbershop_id,name) values ('${barber}','${shop}','QA Barber');
     insert into public.services(id,barbershop_id,name,duration_minutes,price_cents) values ('${service}','${shop}','QA Service',30,1000);
+    insert into public.barber_services(barbershop_id,barber_id,service_id) values ('${shop}','${barber}','${service}');
+    insert into public.business_hours(barbershop_id,weekday,opens_at,closes_at)
+      select '${shop}',d,'08:00','18:00' from generate_series(0,6) d;
+    insert into public.barber_working_hours(barbershop_id,barber_id,weekday,starts_at,ends_at)
+      select '${shop}','${barber}',d,'08:00','18:00' from generate_series(0,6) d;
     insert into public.customers(id,barbershop_id,full_name) values ('${customer}','${shop}','QA Client');`);
   denied(await owner.client.from("barbers").insert({barbershop_id:shop,name:"QA second"}),"23514");
   const booking = {id:appointment, barbershop_id:shop, barber_id:barber,service_id:service,customer_id:customer,
-    starts_at:"2031-01-02T12:00:00Z",ends_at:"2031-01-02T12:30:00Z",price_cents:1000};
+    starts_at:`${bookingDate}T15:00:00.000Z`,ends_at:`${bookingDate}T15:30:00.000Z`,price_cents:1000};
   assert.ifError((await owner.client.from("appointments").insert(booking)).error);
   sql(`update public.subscriptions set trial_started_at='2020-01-01Z',trial_ends_at='2020-01-08Z' where barbershop_id='${shop}'`);
   const expiredPage = await fetch(nextURL + "/dashboard/plano", { headers: { cookie: owner.cookies() } });

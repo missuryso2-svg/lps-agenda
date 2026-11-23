@@ -1,9 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "crons": [
-    {
-      "path": "/api/cron/trial-finalization",
-      "schedule": "0 3 * * *"
-    }
-  ]
+  "regions": ["iad1"],
+  "git": {
+    "deploymentEnabled": false
+  }
 }

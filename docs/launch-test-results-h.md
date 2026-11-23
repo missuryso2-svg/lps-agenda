@@ -4,6 +4,17 @@
 **Ambientes de escrita:** Supabase local QA descartável; nunca o projeto hospedado.
 **Deploy:** não executado.
 
+## Complemento I1 — preparação Vercel (23/11/2026)
+
+- Decisão do proprietário registrada: Vercel exclusivamente; Supabase hospedado preservado; repo `missuryso2-svg/lps-agenda`, branch Production pretendida `main`.
+- `vercel.json` preparado com região `iad1`, `git.deploymentEnabled=false` para todas as branches e sem `crons`. O teste `tests/billing-scheduler.test.ts` agora verifica auto-deploy Git/Cron desligados, região e rota protegida legada.
+- Não existe link local `.vercel/`, Vercel token, projeto remoto confirmado, importação GitHub, build remoto ou deployment. A documentação oficial da Vercel indica que o primeiro deployment é sempre Production; `git.deploymentEnabled=false` não impede deploy manual ou inicial.
+- Nenhuma alteração foi feita no Supabase hospedado, configuração Auth, DNS/domínio, plano/faturamento Vercel, variáveis de ambiente, credenciais, onboarding, automações financeiras ou AdSense. Nenhum secret foi exibido.
+- `npm run typecheck`: passou. `npm run lint`: passou. `npm test`: 36 arquivos/763 testes passaram, incluindo os 3 testes de segurança operacional Vercel.
+- `git diff --check`: passou; o checkout Windows só reportou os avisos normais de conversão LF/CRLF.
+- `npm run build`: passou em uma cópia temporária do repositório sem arquivos `.env*`, Vercel link ou secrets; Next.js 16.4.5 completou build TypeScript e geração estática em Node `v26.13.0`. O build é local, não foi enviado à Vercel.
+- Observação: o Next carrega `.env.local` automaticamente em builds do checkout. Um build inicial local não imprimiu valores e nenhuma escrita Supabase ocorreu; a validação final foi repetida na cópia sem `.env*` para evitar carregar essas variáveis.
+
 ## Resumo dos comandos
 
 | Comando | Resultado H |
@@ -56,7 +67,7 @@
 
 ## Não executado ou limitado
 
-- Sem hostname/domínio definitivo, provedor, DNS, HTTPS hospedado, SMTP transacional ou redirect real: recuperação/cadastro foram provados apenas no Supabase local/Mailpit.
+- Sem hostname/domínio definitivo, projeto/deployment Vercel, DNS, HTTPS hospedado, SMTP transacional ou redirect real: recuperação/cadastro foram provados apenas no Supabase local/Mailpit.
 - Não houve smoke test pós-deploy, confirmação de e-mail real, leitura física do QR, confirmação humana do WhatsApp, teste de backup/restore, monitoramento, WAF ou incidente real.
 - A expiração natural de um JWT de uma hora não foi aguardada; foi testado o redirect seguro com cookie inválido/expirado-simulado. Sessões múltiplas foram usadas pelos testes, sem teste de carga de sessões concorrentes.
 - Não foi testado o fluxo da flag de onboarding habilitada no Supabase hospedado; ambas as flags permaneceram desligadas.

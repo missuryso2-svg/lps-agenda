@@ -6,6 +6,8 @@ A versão atual entrega a base de produto: identidade visual, site institucional
 
 > **Estado:** fundação `v0.1` com as Etapas 2.1, 2.2, 2.3, 3.1, 3.2 e 4 implementadas. Serviços, profissionais, horários, jornadas, bloqueios, clientes, agendamentos e reserva pública estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. A cobrança recorrente da plataforma está integrada ao **Asaas Sandbox** e o teste gratuito é local. Cobrança dos serviços da barbearia, convites de equipe, notificações e pagamento antecipado ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.
 
+> **Atualização operacional I1 (23/11/2026):** o proprietário escolheu Vercel, mas conta/projeto/domínio ainda não foram configurados e não houve deploy. `vercel.json` desativa deployments automáticos de Git e não agenda crons; a finalização Asaas abaixo permanece uma rota legada sem agendamento ativo. A regra prevista de trial é de 168 horas no Básico, mas o onboarding continua desligado e depende de autorização separada.
+
 ---
 
 ## O que está pronto
@@ -348,7 +350,7 @@ A mensalidade do LPS Agenda é cobrada pelo **Asaas Sandbox** (boleto ou Pix, se
 1. **Início (local).** `startSubscription` grava a assinatura com status `trialing`, `trial_started_at`, `trial_ends_at` (7 dias, conforme `plans.trial_days`) e o snapshot do valor contratado (`contracted_price_cents`, `contracted_currency`, `contracted_interval`). Nenhum cliente, assinatura ou cobrança é criado no Asaas — a chamada ao gateway não existe nesse caminho.
 2. **Operação livre.** A assinatura `trialing` já vale para o limite de profissionais do plano (`getPlanBarberLimit`). Trocar de plano durante o teste é local e só muda o valor da primeira cobrança futura.
 3. **Cancelamento local.** Cancelar durante o teste encerra o período, grava `canceled_at` e `cancel_reason` (motivo opcional de até 500 caracteres), cancela cobranças locais pendentes e não chama o Asaas. O cancelamento disputa o mesmo estado da rotina de finalização por atualização condicional, para não deixar assinatura remota órfã.
-4. **Fim do trial (rotina).** `/api/cron/trial-finalization` busca trials vencidos, reivindica cada linha por `update` condicional (trava atômica), cria/recupera a assinatura no Asaas e só então libera a linha para pagamento.
+4. **Fim do trial legado (rotina protegida).** `/api/cron/trial-finalization` busca trials Asaas vencidos, reivindica cada linha por `update` condicional (trava atômica), cria/recupera a assinatura no Asaas e só então libera a linha para pagamento. A rota permanece no código, mas não há agendamento automático configurado nesta versão.
 5. **Ativação.** O plano passa a `active` somente quando o webhook do Asaas confirma o pagamento da primeira cobrança.
 
 ### Garantias do fluxo
@@ -362,21 +364,15 @@ A mensalidade do LPS Agenda é cobrada pelo **Asaas Sandbox** (boleto ou Pix, se
 - **Webhook:** eventos financeiros recebidos durante o trial (sem assinatura remota) são ignorados; estados terminais (`canceled`, `expired`) não voltam a ficar ativos por evento atrasado; falha de pagamento leva a `past_due`.
 - **Segurança:** o endpoint da rotina exige `BILLING_CRON_SECRET` e/ou `CRON_SECRET` com no mínimo 32 caracteres, comparado em tempo constante; nenhuma chave do Asaas chega ao navegador; toda validação acontece no servidor.
 
-### Agendamento em produção
+### Agendamento em produção — desativado por padrão
 
-O repositório declara um **Vercel Cron** em `vercel.json` para chamar `GET /api/cron/trial-finalization` todos os dias às `03:00` UTC (meia-noite em São Paulo), com `"schedule": "0 3 * * *"`. A Vercel envia automaticamente `Authorization: Bearer <CRON_SECRET>` quando a variável `CRON_SECRET` existe no projeto; o endpoint também aceita `BILLING_CRON_SECRET`. Se os dois segredos estiverem configurados, qualquer um dos dois é aceito.
+`vercel.json` mantém `git.deploymentEnabled=false` e não declara `crons`. Portanto, pushes Git não devem iniciar deployments automáticos e a rota legada `/api/cron/trial-finalization` não recebe invocações agendadas por Vercel. A Vercel instala Cron Jobs declarados em `vercel.json` quando há deployment de produção; a remoção desta entrada impede que um deploy futuro agende a rotina automaticamente. Se já existir um projeto Vercel/deployment anterior, conferir e desativar qualquer Cron Job no Dashboard — a alteração local não apaga jobs já implantados.
 
-O horário diário é intencional: o plano **Hobby da Vercel** só permite cron uma vez por dia e rejeita expressões mais frequentes no deploy. Em projeto **Pro/Enterprise**, a expressão pode ser alterada para `*/15 * * * *` (a cada 15 minutos) para reduzir a latência entre o fim do trial e a criação da cobrança. A rotina é idempotente, então execuções duplicadas ou atrasadas não geram assinatura/cobrança extra.
+A rota permanece protegida e aceita `GET`/`POST`; sem segredo válido responde `401`, sem Asaas configurado responde `503` e falhas inesperadas respondem `500`. Uma eventual ativação de agendador, `CRON_SECRET`/`BILLING_CRON_SECRET` e credenciais Asaas exige autorização escrita, QA e monitoramento próprios. Não adicionar Cron Jobs, chamadas manuais ou agendador externo para testar em produção.
 
-Para outra hospedagem, o `vercel.json` é ignorado; configure o agendador nativo (Cloud Scheduler, GitHub Actions etc.) para chamar a mesma URL com o bearer. O endpoint aceita `GET` e `POST`, responde `401` sem segredo válido, `503` sem o Asaas configurado e `500` em falha inesperada; nunca expõe identificadores internos na resposta.
+Se for aprovada uma automação futura, fazer uma mudança separada: revisar frequência compatível com o plano Vercel, idempotência, secret, alertas e responsável; atualizar `vercel.json` em commit aprovado ou provisionar o executor externo descrito no runbook. O deploy necessário para criar um Vercel Cron também requer autorização explícita.
 
-```bash
-# Execução manual (produção ou diagnóstico)
-curl -H "Authorization: Bearer $BILLING_CRON_SECRET" \
-  https://SEU-DOMINIO/api/cron/trial-finalization
-```
-
-> **Pendência operacional:** o arquivo está versionado, mas o cron só entra em funcionamento depois que o projeto for implantado na Vercel (ou o endpoint for agendado no provedor escolhido) e as variáveis de produção forem configuradas. Sem isso, os trials vencidos ficam em `trialing` e não são cobrados.
+> **Estado I1:** o arquivo não contém schedule; nenhum Vercel Cron está configurado nesta release. Os trials legados vencidos não são finalizados automaticamente até que o proprietário aprove e configure uma rotina. O onboarding manual atual permanece desligado.
 
 ### Principais arquivos
 
@@ -385,7 +381,7 @@ curl -H "Authorization: Bearer $BILLING_CRON_SECRET" \
 - `src/features/billing/trial.ts` (rotina de finalização, claim, lock e retry)
 - `src/features/billing/webhook.ts` (transições de pagamento e assinatura)
 - `src/features/billing/cron-auth.ts` e `src/app/api/cron/trial-finalization/route.ts`
-- `vercel.json` (cron diário da finalização)
+- `vercel.json` (região Vercel `iad1`; deployments Git e cron financeiro desligados por padrão)
 - `src/features/billing/components/` (tela de plano, trial e diálogos)
 - `tests/billing-trial.test.ts`, `tests/billing-cron-auth.test.ts`, `tests/billing-scheduler.test.ts`, `tests/asaas-webhook.test.ts`
 
@@ -878,7 +874,7 @@ O que **não** foi testado:
 15. **Uma faixa por dia na interface.** `business_hours` e `barber_working_hours` aceitam múltiplas faixas, mas a edição atual mantém uma faixa por dia e consolida duplicatas legadas ao salvar.
 16. **Duplicidade de cliente.** O fluxo público usa `find_or_create_public_customer` com `pg_advisory_xact_lock` por barbearia + telefone normalizado, mas o CRUD autenticado continua validando na aplicação. Como `customers` não tem índice único geral de telefone/e-mail, escritas internas concorrentes ainda podem gerar duplicatas; uma migration futura pode unificar essa garantia.
 17. **Clientes não têm exclusão física na interface.** O arquivamento preserva histórico e relacionamentos. Atender a um pedido de eliminação da LGPD exige procedimento administrativo no banco, verificando antes se não há agendamentos vinculados.
-18. **A finalização do trial depende de agendador ativo.** O `vercel.json` declara um cron diário e o endpoint é idempotente/protegido por segredo, mas o agendamento só funciona depois do deploy na Vercel (ou da configuração equivalente no provedor escolhido) e da definição de `CRON_SECRET`/`BILLING_CRON_SECRET` em produção. Enquanto isso, os trials vencidos permanecem em `trialing` e não são cobrados.
+18. **A finalização automática do trial está desligada por padrão.** A rota legada é idempotente/protegida, mas `vercel.json` não declara Cron e os deployments Git estão desabilitados. Trials Asaas vencidos permanecem sem finalização automática até uma ativação separada, aprovada e monitorada.
 19. **Falha permanente de finalização não gera alerta.** `trial_finalization_error` e `trial_finalization_attempts` ficam registrados para diagnóstico, mas não há painel operacional nem notificação quando a criação remota falha de forma repetida (por exemplo, cadastro do pagador removido durante o teste).
 
 ---
@@ -891,7 +887,7 @@ O que **não** foi testado:
 4. **Implementar convites de acesso ao painel**, incluindo aceite, reenvio e revogação; o cadastro de profissionais já está concluído.
 5. **Validar a agenda com dados reais**, aplicando as migrações e testando criação, reagendamento e concorrência em PostgreSQL.
 6. **Configurar o Asaas Sandbox no servidor** (`ASAAS_ENV=sandbox`, `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN`), apontar o webhook para `/api/webhooks/asaas` e validar o fluxo real do trial: início, vencimento, criação da assinatura, pagamento e ativação.
-7. **Ativar o cron de `/api/cron/trial-finalization`** no ambiente de produção. Na Vercel, o `vercel.json` já declara a execução diária; defina `CRON_SECRET` (e/ou `BILLING_CRON_SECRET`) com no mínimo 32 caracteres e confirme a primeira execução nos logs. Em outro provedor, agende a mesma URL com o bearer.
+7. **Somente após aprovação separada, avaliar a rotina legada** `/api/cron/trial-finalization`. `vercel.json` não a agenda. Para ativá-la, revisar Asaas legado, segredo, frequência, idempotência, monitoramento e rollback; só então incluir um schedule ou configurar executor externo em uma mudança autorizada e confirmar a primeira execução.
 8. **Adicionar confirmação e lembretes** por e-mail ou WhatsApp usando o link com token, sem expor o `id` interno nem dados desnecessários.
 9. **Adicionar testes E2E** (Playwright ou similar) para a reserva pública, o painel e o trial, além de um pipeline de CI com typecheck, lint, testes e build.
 10. **Configurar observabilidade e limites de borda**: logs, alertas, CAPTCHA/WAF, backup e política de retenção.
@@ -916,10 +912,10 @@ O que **não** foi testado:
 | `docker` não encontrado | Docker Desktop não instalado/aberto | Instale/abra o Docker ou use um projeto Supabase na nuvem. |
 | Build falha por ambiente | Variáveis públicas inválidas | Verifique se a URL é válida e a chave `anon` está preenchida. |
 | “Cobrança online não configurada” no painel | `ASAAS_ENV`, `ASAAS_API_KEY` ou `ASAAS_WEBHOOK_TOKEN` ausentes | Preencha as três variáveis no servidor. O teste gratuito funciona mesmo sem elas; a finalização do trial e a cobrança remota ficam pendentes até a configuração. |
-| `/api/cron/trial-finalization` responde `401` | Segredo ausente, curto ou divergente | Use `BILLING_CRON_SECRET` e/ou `CRON_SECRET` com no mínimo 32 caracteres e envie `Authorization: Bearer <segredo>`. Na Vercel, o `CRON_SECRET` é enviado automaticamente. |
+| `/api/cron/trial-finalization` responde `401` | Segredo ausente, curto ou divergente | Não configure nem chame essa rota em produção nesta fase. Uma futura rotina aprovada poderá usar `BILLING_CRON_SECRET`/`CRON_SECRET` com no mínimo 32 caracteres; a Vercel envia o bearer quando um Vercel Cron autorizado está configurado com `CRON_SECRET`. |
 | `/api/cron/trial-finalization` responde `503` | Asaas Sandbox não configurado no servidor | Configure `ASAAS_ENV=sandbox` e `ASAAS_API_KEY`; a rotina falha fechada sem tocar em cobrança. |
-| Trial vencido sem assinatura criada | Cron não ativo, cron diário ainda não executou ou falha remota registrada em `trial_finalization_error` | Confirme o cron nos logs da Vercel (ou no provedor escolhido), rode a rotina manualmente e leia `trial_finalization_error`/`trial_finalization_attempts` da assinatura. |
-| Cron da Vercel não aparece | `vercel.json` não foi implantado ou o plano Hobby rejeitou uma expressão mais frequente que diária | Faça um novo deploy e mantenha a expressão diária no Hobby; use `*/15 * * * *` somente em Pro/Enterprise. |
+| Trial vencido sem assinatura criada | Não há schedule nesta versão; em ambiente legado também pode haver falha registrada em `trial_finalization_error` | Não execute a rotina manualmente em produção. Mantenha automação desligada até aprovação financeira; diagnóstico de dados apenas por acesso autorizado, leitura segura e QA isolado. |
+| Cron da Vercel não aparece | Não há `crons` em `vercel.json` por decisão de segurança I1, ou o job ainda não foi autorizado | Não é falha: mantenha desativado. Só inclua um schedule e faça deploy com autorização financeira explícita. |
 
 ---
 

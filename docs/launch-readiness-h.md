@@ -4,11 +4,15 @@
 **Decisão:** **NO-GO para receber barbearias reais ou iniciar operação comercial.**
 **Deploy, ativação e escrita financeira hospedada:** não realizados.
 
+## Adendo I1 — hospedagem definida
+
+O proprietário escolheu **Vercel exclusivamente** para Next.js; o Supabase hospedado existente permanece. Repositório/branch pretendidos: `missuryso2-svg/lps-agenda` / `main`. `vercel.json` fixa Functions em `iad1`, desliga deployments automáticos Git e não declara `crons`. Conta/projeto/domínio não foram configurados, não houve importação nem deployment e o plano Pro não foi contratado. A Vercel trata o primeiro deployment de projeto novo como Production; qualquer import/deploy futuro exige autorização explícita. O NO-GO permanece.
+
 ## Resumo executivo
 
 As funcionalidades existentes foram exercitadas em stacks locais de QA com dados sintéticos, inclusive Auth, isolamento entre barbearias, agenda, trial, operação financeira, fotos privadas, notificações, QR/PDF e a integração AdSense desligada. Não foi confirmado defeito P0/P1 no código durante os cenários executados. A comunicação pública do trial foi ajustada para não prometer disponibilidade imediata, e dois fixtures/seletor de testes foram estabilizados.
 
-Isso não equivale a autorização de lançamento. Faltam condições essenciais de infraestrutura e operação: não há provedor de hospedagem nem domínio definitivo definidos, o SMTP hospedado não foi verificado, a credencial administrativa disponível na configuração local foi rejeitada pelo projeto hospedado, a proteção contra senhas vazadas está desativada e a revisão jurídica/privacidade e os canais de suporte ainda não foram concluídos. Portanto, a decisão geral permanece **NO-GO**, embora a homologação funcional em QA tenha sido aprovada no escopo executado.
+Isso não equivale a autorização de lançamento. Vercel foi escolhida, mas conta/projeto/domínio definitivo ainda não estão configurados; o SMTP hospedado não foi verificado, a credencial administrativa disponível na configuração local foi rejeitada pelo projeto hospedado, a proteção contra senhas vazadas está desativada e a revisão jurídica/privacidade e os canais de suporte ainda não foram concluídos. Portanto, a decisão geral permanece **NO-GO**, embora a homologação funcional em QA tenha sido aprovada no escopo executado.
 
 ## Estado confirmado por ambiente
 
@@ -49,7 +53,7 @@ Isso não equivale a autorização de lançamento. Faltam condições essenciais
 - `npm audit --omit=dev`: zero vulnerabilidades. Auditoria completa: 10 vulnerabilidades moderadas em dependências de desenvolvimento associadas a `minimatch`/`shadcn`/`typescript-eslint`; o conserto sugerido por `--force` introduziria troca major do `shadcn` e não foi aplicado.
 - Advisors hospedados: 20 avisos de `SECURITY DEFINER` executável por `authenticated` (RPCs intencionais com autorização interna), 1 de proteção contra senhas vazadas desativada e 1 de plano de inicialização RLS (desempenho). Nenhum `SECURITY DEFINER` listado é executável por `anon`; os guards foram validados em QA. A proteção de senha requer decisão/configuração no Supabase Auth antes de abrir cadastro real. O aviso de desempenho deve ser medido antes de eventual ajuste de política.
 - Chaves `service_role`, Asaas e cron devem ser fornecidas pelo secret manager do host, exclusivamente ao processo servidor. `.env.local` é ignorado pelo Git e não deve ser usado como fonte de build/produção. Os testes de segurança da suíte verificam que segredos privados não são referenciados pelos bundles client.
-- Não há confirmação de domínio, hospedagem, região/contratos dos subprocessadores, backup restaurável, monitoramento, recuperação de desastre ou teste de produção pós-deploy.
+- Vercel foi escolhida, mas ainda não há conta/projeto/deployment nem domínio final; região/contratos dos subprocessadores, backup restaurável, monitoramento, recuperação de desastre e teste pós-deploy também não foram confirmados.
 
 ## Achados e correções
 
@@ -58,7 +62,7 @@ Isso não equivale a autorização de lançamento. Faltam condições essenciais
 | H-01 | P2, informação comercial | A vitrine afirmava teste grátis imediato mesmo com onboarding manual desligado. | Corrigido: agora informa 168 horas no Básico, sujeitas à liberação da LPS Solutions, e que criar conta não inicia o trial. Teste unitário e browser assertion adicionados. |
 | H-02 | QA, não defeito de produto | O seletor C2 encontrava o `<summary>` e o título homônimo do diálogo fechado, e o teste podia consultar antes da hidratação. | Estabilizado por escopo ao artigo da fatura, espera pelo elemento e `networkidle`; a jornada financeira repetiu e passou. |
 | H-03 | QA, não defeito de produto | O fixture HTTP do trial usava horário no passado e não criava cobertura real de serviço/profissional/expediente. | Corrigido fixture para criar vínculos e horário válidos dentro das 168 horas. |
-| H-04 | P1, operação | Host/domínio definitivos, SMTP e credencial `service_role` válida no processo hospedado não foram confirmados. | Bloqueia lançamento até escolha/provisionamento e validação pelo responsável; nenhuma credencial foi substituída. |
+| H-04 | P1, operação | Vercel foi definida na I1, mas conta/projeto/domínio, SMTP e credencial `service_role` válida no processo hospedado não foram confirmados. | Bloqueia lançamento até provisionamento/validação autorizados; nenhum plano foi contratado e nenhuma credencial foi substituída. |
 | H-05 | P1, privacidade/jurídico | A política declara canal de direitos/exclusão ainda indisponível; os termos ainda descrevem ambiente de desenvolvimento. O papel controlador/operador, bases legais, retenção e transferência internacional precisam de revisão. | Não alterado silenciosamente. Aprovação jurídica e canais reais são pré-requisito. |
 | H-06 | P1, segurança/operação | Advisor indica proteção contra senhas vazadas desativada. | Habilitar/decidir em Auth e repetir teste antes de cadastro hospedado. |
 | H-07 | P2, desempenho | Um aviso de inicialização RLS. | Sem alteração automática; medir em staging/produção após hospedagem escolhida. |
@@ -79,7 +83,7 @@ Revisar também o [Regulamento de Comunicação de Incidente — Res. ANPD 15/20
 | --- | --- | --- |
 | Produto | Jornadas sintéticas e telas responsivas passaram; trial testado, mas flags continuam off. | **Parcial** — trial requer aprovação e smoke test real após deploy autorizado. |
 | Financeiro | Operação manual e inadimplência testadas somente em QA; zero escrituração hospedada; sem conflitos Asaas no snapshot. | **NO-GO operacional** — nomear conferentes, provisionar executor/segredo, alertas e testar procedimento/recuperação. |
-| Infraestrutura | Build passa em QA; domínio e provedor não escolhidos; origem atual é loopback; SMTP e backup não comprovados. | **NO-GO essencial** — escolha e prepare host/domínio, Auth, backup, monitoramento e teste pós-deploy. |
+| Infraestrutura | Build passa em QA; Vercel escolhida, mas conta/projeto/domínio ainda não configurados; origem atual é loopback; SMTP e backup não comprovados. Git deploy e Cron foram desligados em código para evitar publicação/automação prematuras. | **NO-GO essencial** — aprovar custo/primeiro deploy, configurar host/domínio, Auth, backup, monitoramento e teste pós-deploy. |
 | Segurança | RLS, grants, guards, Storage e autorização financeira exercitados. | **Parcial** — credencial administrativa válida não confirmada; leaked-password protection desligada; revisar advisors após configuração. |
 | Privacidade e jurídico | Páginas públicas existem e fluxos foram inventariados. | **NO-GO essencial** — revisar política/termos, canais, papéis, retenção, subprocessadores, incidentes e ECA Digital. |
 | Comercial | Links `wa.me` para número configurado e mensagens foram testados sem envio. | **Parcial** — pessoa da LPS deve conferir titularidade do WhatsApp; suporte e responsável de cobrança precisam ser designados. |
@@ -87,7 +91,7 @@ Revisar também o [Regulamento de Comunicação de Incidente — Res. ANPD 15/20
 
 ### Aprovações para mudar a decisão
 
-1. Proprietário escolhe provedor e domínio e autoriza explicitamente o deploy.
+1. Proprietário confirma orçamento/plano Vercel Pro, escolhe domínio e autoriza explicitamente a janela do primeiro deployment, que a Vercel classifica como Production.
 2. Operações valida segredo Supabase, URL pública, redirects, SMTP, backups restauráveis e monitoramento.
 3. Segurança revisa proteção de senha, rotação de credenciais de teste, alertas e acesso operacional.
 4. Jurídico/privacidade aprova termos, política, canais de titular/encarregado, contratos e escopo ECA Digital.

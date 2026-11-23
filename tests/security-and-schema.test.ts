@@ -393,6 +393,17 @@ describe("ambiente e segredos", () => {
       "NEXT_PUBLIC_APP_URL=",
       "BILLING_CRON_SECRET=",
       "LPS_COMMERCIAL_WHATSAPP=",
+      "",
+      "# Não ativar até a aprovação do domínio, revisão jurídica e integração de CMP certificada.",
+      "ADSENSE_ENABLED=false",
+      "ADSENSE_PUBLISHER_ID=",
+      "ADSENSE_BOOKING_SLOT=",
+      "ADSENSE_DOMAIN_APPROVED=false",
+      "ADSENSE_APPROVED_ORIGIN=",
+      "ADSENSE_REVIEWED_SHOPS=",
+      "ADSENSE_PRIVACY_REVIEWED=false",
+      "ADSENSE_CMP_READY=false",
+      "ADSENSE_CMP_ID=",
     ]);
   });
 

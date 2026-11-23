@@ -1,0 +1,31 @@
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: #151515; color: #faf9f6; font: 1rem/1.6 system-ui, sans-serif; }
+main { max-width: 52rem; padding: 1.25rem clamp(1rem, 4vw, 3rem) 4rem; margin: auto; }
+header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #454545; padding-bottom: 1rem; }
+footer { border-top: 1px solid #454545; padding-top: 1rem; font-size: .875rem; }
+a { color: inherit; text-underline-offset: .2em; }
+.brand { color: #ffd12d; font-weight: 750; text-decoration: none; }
+article { margin: 3rem 0; overflow-wrap: anywhere; }
+h1 { font-size: clamp(2.25rem, 7vw, 4rem); line-height: 1.08; letter-spacing: -.035em; }
+.intro { color: #ddd; white-space: pre-line; }
+.booking { display: inline-block; margin-top: .75rem; background: #ffd12d; color: #181818; padding: .55rem 1rem; border-radius: .6rem; font-weight: 650; text-decoration: none; }
+h2 { margin: 2.5rem 0 .6rem; }
+dl { margin: 0; }
+dl div { padding: .75rem 0; border-bottom: 1px solid #404040; }
+dt { font-weight: 650; }
+dd { margin: .25rem 0 0; color: #d4d4d4; }
+small { color: #ddd; font-weight: 400; }
+#preferences { margin: 2rem 0 1rem; padding: 1rem; border: 1px solid #454545; border-radius: .75rem; font-size: .875rem; }
+#preferences button { min-height: 2.75rem; margin: .35rem .5rem .35rem 0; padding: .55rem .8rem; border: 1px solid #777; border-radius: .5rem; background: #242424; color: inherit; font: inherit; cursor: pointer; }
+#preferences button:focus-visible { outline: 3px solid #ffd12d; outline-offset: 2px; }
+#choice-status { min-height: 1.5em; }
+#advertising { max-width: 100%; margin: 1.5rem 0 2rem; padding: .75rem; overflow: hidden; border: 1px solid #454545; border-radius: .75rem; text-align: center; font-size: .75rem; color: #ddd; }
+#advertising .adsbygoogle { width: 100%; max-width: 100%; min-width: 0; }
+@media (min-width: 48rem) { #advertising { margin: 2rem auto 3rem; padding: 1rem; } }
+.hours div { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+button { cursor: pointer; margin: .25rem .5rem .25rem 0; background: #262626; color: #fafafa; border: 1px solid #757575; border-radius: .5rem; padding: .6rem; font: inherit; }
+:focus-visible { outline: 3px solid #ffd12d; outline-offset: 3px; }
+#preferences { padding-top: .75rem; color: #ddd; }
+#advertising { margin: 2rem auto; width: 100%; max-width: 100%; min-height: 0; color: #ccc; text-align: center; font-size: .75rem; }
+#advertising ins { display: block; width: 100%; max-width: 100%; min-width: 0; min-height: 250px; height: auto; }

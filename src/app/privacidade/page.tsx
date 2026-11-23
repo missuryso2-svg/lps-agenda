@@ -16,7 +16,7 @@ const sections: LegalSection[] = [
     id: "escopo",
     title: "1. Escopo desta política",
     paragraphs: [
-      "Esta política descreve o tratamento de dados no LPS Agenda, produto da LPS Solutions. Ela cobre a landing page, a autenticação, o onboarding e o painel administrativo.",
+      "Esta política descreve o tratamento de dados no LPS Agenda, produto da LPS Solutions. Ela cobre a landing page, a autenticação, o onboarding, o painel administrativo, o agendamento público e a ficha informativa da barbearia.",
       "A página da Barbearia Aurora é uma demonstração estática com dados fictícios. Nenhum dado pessoal é coletado nela.",
     ],
   },
@@ -60,10 +60,13 @@ const sections: LegalSection[] = [
   },
   {
     id: "cookies",
-    title: "6. Cookies e sessão",
+    title: "6. Cookies, sessão e publicidade",
     paragraphs: [
       "O sistema usa cookies para manter a sessão autenticada e lembrar a barbearia ativa no painel. Esses cookies são necessários para o funcionamento da área restrita e não são usados para publicidade.",
       "A preferência de tema claro ou escuro é armazenada localmente no navegador. A demonstração pública não depende de cookies de autenticação.",
+      "A integração com Google AdSense está preparada, mas desativada: nesta versão, nenhuma tag publicitária é inserida e nenhuma requisição de anúncio é iniciada. O formulário de reserva e as áreas privadas não fazem parte do posicionamento planejado.",
+      "Se a publicidade vier a ser ativada após as revisões e aprovações necessárias, o Google e seus parceiros poderão receber o endereço IP, identificadores do navegador, a URL e o conteúdo público da ficha para selecionar, entregar e medir anúncios, conforme as escolhas registradas por uma CMP certificada e as configurações de privacidade aplicáveis. Nome, telefone, e-mail, dados de clientes, reservas e histórico de uso do LPS Agenda não serão enviados para criar públicos de anúncios.",
+      "A CMP, os fornecedores, as finalidades, os prazos e os mecanismos de alteração ou retirada do consentimento deverão estar identificados aqui antes de qualquer ativação. Ainda não há CMP integrada nem coleta de consentimento publicitário nesta versão.",
     ],
   },
   {
@@ -114,7 +117,7 @@ export default function PrivacyPage() {
       eyebrow="Legal"
       title="Política de privacidade"
       intro="Como o LPS Agenda trata dados de conta e de barbearia com isolamento entre barbearias e segurança no banco de dados."
-      updatedAt="20 de novembro de 2026"
+      updatedAt="22 de novembro de 2026"
       sections={sections}
     />
   );

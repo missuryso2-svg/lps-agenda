@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { hasGuideContent } from "@/features/monetization/placement";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/brand/theme-toggle";
 import { ConfigRequiredPage } from "@/components/config-required-page";
@@ -362,6 +363,15 @@ export default async function PublicBookingPage({
             {shop.name} · agendamento online com LPS Agenda
           </p>
           <div className="flex items-center gap-4">
+            {hasGuideContent(result.data) ? (
+              <a
+                href={`/agendar/${shop.slug}/sobre`}
+                rel="noreferrer"
+                className="hover:text-foreground"
+              >
+                Sobre a barbearia
+              </a>
+            ) : null}
             <Link href="/termos" className="hover:text-foreground">
               Termos
             </Link>

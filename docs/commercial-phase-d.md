@@ -8,7 +8,7 @@ A LPS Solutions define a mensalidade e as condições com cada barbearia. A vitr
 | Profissional | Até 5 |
 | Premium | Até 10 |
 
-A recomendação visual do Profissional identifica a opção para equipes de até cinco pessoas. Os benefícios apresentados incluem agenda por profissional, agendamento por link, gestão de serviços, horários e clientes. Os valores de `public.plans` continuam atendendo o catálogo legado. O preço do acordo manual vem de `subscriptions.contracted_price_cents`.
+A recomendação visual do Profissional identifica a opção para equipes de até cinco pessoas. Os benefícios apresentados incluem agenda por profissional, agendamento por link, gestão de serviços, horários e clientes. Os valores de `public.plans` continuam atendendo o catálogo legado. O preço do acordo manual vem de `subscriptions.contracted_price_cents`. A comunicação do teste informa 168 horas no Básico, sujeitas à liberação pela LPS Solutions; a criação de conta não promete nem inicia o teste.
 
 ## Canal comercial
 
@@ -39,13 +39,13 @@ O clique usa um link comum. Não há webhook comercial, emissão de Pix ou autom
 | Situação | Experiência em `/dashboard/plano` |
 | --- | --- |
 | Sem assinatura atual | Vitrine sem preços públicos, contato por plano e histórico Asaas anterior quando existente. A entrada pública de checkout exige uma assinatura Asaas pendente para retomar uma contratação existente. |
-| Trial manual | Plano, estado e período conforme o relógio do banco, acesso da agenda e contato. O teste previsto é de 168 horas no Básico e depende das ativações de onboarding existentes. |
+| Trial manual | Plano, estado e período conforme o relógio do banco, acesso da agenda e contato. Quando liberado, dura 168 horas no Básico com 1 profissional e depende das ativações de onboarding existentes. |
 | Acordo manual | O proprietário ativo consulta o valor negociado, o período contratual, o primeiro vencimento e a data da parcela em aberto mais antiga, quando disponível. Período acordado e liberação de agendamentos são informações distintas. |
 | Asaas existente | Consulta privada de situação, valores contratados e faturas históricas. Troca, cancelamento e retomada de pendência permanecem sujeitos às validações legadas. Preços apresentados para troca vêm do catálogo legado. |
 
 A migration local `20261120142304_owner_manual_plan_details.sql` estende a RPC de leitura `get_owner_manual_trial`, preservando assinatura, permissões e verificação do vínculo de proprietário no tenant. Projeta somente os campos necessários. As tabelas manuais continuam protegidas. O painel operacional de gestores e operadores mantém a autorização C1/C2.
 
-**Ativação futura.** Até a aplicação aprovada da migration 26 no ambiente de destino, a RPC anterior continua atendendo o painel com plano, trial e acesso. Os campos adicionais do acordo aparecem após a atualização. Mantenha `MANUAL_TRIAL_ONBOARDING_ENABLED=false` e a configuração de ativação do banco no estado vigente durante a adoção comercial. A publicação dos links e a adesão financeira são decisões independentes. Configure também `NEXT_PUBLIC_APP_URL` com a origem pública confirmada ao hospedar o site, para os metadados de compartilhamento.
+**Estado atual e ativação futura.** A leitura somente de leitura da Fase H confirmou a migration 29 (`20261120180000`) no projeto hospedado; a migration 26 e as extensões posteriores do painel já estão disponíveis nesse destino. Isso não habilita onboarding: mantenha `MANUAL_TRIAL_ONBOARDING_ENABLED=false` e `private.manual_trial_activation.enabled=false` até aprovação operacional separada. A publicação dos links, a adesão financeira e o trial são decisões independentes. Configure `NEXT_PUBLIC_APP_URL` com a origem HTTPS definitiva somente depois de o domínio e o provedor de hospedagem serem escolhidos e validados.
 
 ## Homologação
 

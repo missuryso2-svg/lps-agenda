@@ -1,5 +1,11 @@
 # Fase E · preparação da operação Pix
 
+> **Atualização operacional da Fase H — 23/11/2026.** O inventário datado de 20/11 abaixo é histórico e foi preservado; não deve ser usado como snapshot atual. A consulta hospedada somente de leitura confirmou 29 migrations até `20261120180000`, 1 gestor e 0 operadores; não há trial, acordo manual, mensalidade, Pix confirmado, assinatura Asaas vigente, conflito de origem, item de conciliação/retentativa/compensação, fila de webhook ou `pg_cron`. As flags de onboarding e do executor seguem desligadas. No catálogo, 22/22 tabelas públicas têm RLS, não há privilégio efetivo de tabela para `anon`, e o bucket de fotos é privado. O resumo de segurança encontrou 25 funções públicas `SECURITY DEFINER`: 20 executáveis por `authenticated`, nenhuma por `anon`, todas com `search_path` vazio; os avisos de execução autenticada correspondem a RPCs intencionais com autorização interna e foram exercitados em QA.
+>
+> A rodada de advisors também apontou proteção contra senhas vazadas desativada e um aviso de plano de inicialização RLS (desempenho). O primeiro exige decisão/configuração no Auth hospedado antes do lançamento; o segundo requer acompanhamento de desempenho, não uma alteração automática. A chave administrativa atualmente disponível na configuração local foi rejeitada pelo PostgREST hospedado e não foi alterada; ela não pode ser considerada credencial de produção. `NEXT_PUBLIC_APP_URL` local é loopback. Hospedagem/domínio e SMTP hospedado continuam sem confirmação. Nenhuma escrita financeira, ativação, migration hospedada ou deploy foi realizada na Fase H.
+
+> A comunicação do trial foi corrigida para informar 168 horas no Básico, sujeitas à liberação da LPS Solutions e com 1 profissional; o cadastro de conta não inicia o teste automaticamente. Consulte `docs/launch-readiness-h.md`, `docs/launch-test-results-h.md` e `docs/launch-runbook-h.md` para a decisão e as evidências atuais.
+
 **Decisão operacional em 20/11/2026: NO-GO para cobrança real.** A mudança de código pode ser publicada separadamente. A LPS Solutions deve registrar a aprovação de ambiente, responsáveis e horário antes de qualquer ativação.
 
 ## Inventário por ambiente

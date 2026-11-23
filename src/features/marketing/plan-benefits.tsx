@@ -6,9 +6,10 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-export const trialOffer = "Experimente o LPS Agenda por 7 dias grátis.";
+export const trialOffer =
+  "Teste de 168 horas no plano Básico, sujeito à liberação pela LPS Solutions.";
 export const trialTerms =
-  "O teste começa no Básico, com 1 profissional ativo. Consulte a disponibilidade com a LPS Solutions.";
+  "Confirme a disponibilidade antes de criar sua barbearia. Quando liberado, começa com 1 profissional ativo.";
 const benefits = [
   [
     CalendarDays,

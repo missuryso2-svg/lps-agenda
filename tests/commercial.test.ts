@@ -4,6 +4,7 @@ import {
   commercialWhatsApp,
   type Inquiry,
 } from "@/features/marketing/commercial";
+import { trialOffer, trialTerms } from "@/features/marketing/plan-benefits";
 
 describe("consulta comercial", () => {
   const testNumber = "12025550123"; // Fictional NANP subscriber reserved for examples.
@@ -60,6 +61,18 @@ describe("consulta comercial", () => {
     );
     expect(commercialWhatsApp("5511998765432", "premium")).toContain(
       "https://wa.me/55",
+    );
+  });
+});
+
+describe("divulgação do trial", () => {
+  it("explicita duração, liberação comercial e limite do plano inicial", () => {
+    expect(trialOffer).toContain("168 horas");
+    expect(trialOffer).toContain("sujeito à liberação pela LPS Solutions");
+    expect(trialTerms).toContain("Confirme a disponibilidade");
+    expect(trialTerms).toContain("1 profissional ativo");
+    expect(`${trialOffer} ${trialTerms}`).not.toMatch(
+      /disponível imediatamente|7 dias grátis/i,
     );
   });
 });

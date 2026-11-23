@@ -115,12 +115,29 @@ try {
       if (route === "/") {
         assert.ok(
           await page
-            .getByText("Experimente o LPS Agenda por 7 dias grátis.", {
-              exact: true,
-            })
+            .getByText(
+              "Teste de 168 horas no plano Básico, sujeito à liberação pela LPS Solutions.",
+              {
+                exact: true,
+              },
+            )
             .count(),
         );
+        assert.match(
+          await page.locator("body").innerText(),
+          /Confirme a disponibilidade antes de criar sua barbearia/,
+        );
         await page.locator("#planos").scrollIntoViewIfNeeded();
+      }
+      if (route === "/cadastro") {
+        assert.match(
+          await page.locator("body").innerText(),
+          /sujeito à liberação pela LPS Solutions/,
+        );
+        assert.match(
+          await page.locator("body").innerText(),
+          /Confirme a disponibilidade antes de criar sua barbearia/,
+        );
       }
       if (["/", "/dashboard/plano"].includes(route)) {
         assert.equal(await page.locator(".lp-plan-grid article").count(), 3);

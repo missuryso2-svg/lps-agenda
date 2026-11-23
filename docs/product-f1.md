@@ -1,6 +1,6 @@
 # F1 · Planos, fotos da equipe e contato com clientes
 
-A landing page, o cadastro e o painel do proprietário explicam o teste de 168 horas no Básico. A apresentação compartilhada dos planos reúne os benefícios disponíveis e os limites de 1, 5 e 10 profissionais. A área do proprietário consulta a assinatura, a cobertura e o limite efetivos. A consulta comercial usa o WhatsApp configurado e uma mensagem por plano. O visitante escolhe se quer enviá-la. A divulgação não inicia onboarding nem cria cobrança.
+A landing page, o cadastro e o painel do proprietário informam que o teste de 168 horas no Básico depende de liberação pela LPS Solutions e não começa automaticamente ao criar a conta. Quando liberado, começa com 1 profissional ativo. A apresentação compartilhada dos planos reúne os benefícios disponíveis e os limites de 1, 5 e 10 profissionais. A área do proprietário consulta a assinatura, a cobertura e o limite efetivos. A consulta comercial usa o WhatsApp configurado e uma mensagem por plano. O visitante escolhe se quer enviá-la. A divulgação não inicia onboarding nem cria cobrança.
 
 Em Equipe, o proprietário edita a foto de um profissional já cadastrado. O formulário exibe a imagem atual, uma prévia local e o resultado de salvar, substituir ou remover. A API exige sessão, vínculo ativo, origem da aplicação e versão esperada da imagem. O banco verifica novamente o proprietário e a versão. Um funcionário com acesso à equipe pode ver a foto. As novas fotos são privadas e não integram o catálogo público.
 

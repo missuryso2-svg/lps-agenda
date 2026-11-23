@@ -995,6 +995,12 @@ describe("finalização do trial", () => {
   it("recusa persistência remota com token antigo e preserva o lease atual", async () => {
     const nowA = new Date("2026-11-22T12:00:00.000Z");
     const nowB = new Date(nowA.getTime() + 10 * 60 * 1000);
+    // The immediate cleanup worker calls new Date() internally. Keep its wall
+    // clock aligned with the injected finalization clock so this race test is
+    // deterministic regardless of when the suite runs.
+    vi.useFakeTimers();
+    vi.setSystemTime(nowB);
+
     const db = useDb({
       subscriptions: [trialRow()],
       billing_customers: [customerRow({ gateway_customer_id: "cus_shared" })],

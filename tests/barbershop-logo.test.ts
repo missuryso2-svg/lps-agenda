@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/security/upload-limit", () => ({ limitImageMutation: vi.fn(async () => null) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/env/server", () => ({
   getAppUrl: () => "https://lpsagenda.com.br",

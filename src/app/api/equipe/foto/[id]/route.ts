@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { limitImageMutation } from "@/lib/security/upload-limit";
 import { revalidatePath } from "next/cache";
 import { boundedPhoto } from "@/features/barbers/photo";
 import { getActiveDashboardContext } from "@/lib/auth/dal";
@@ -61,6 +62,8 @@ async function change(req: Request, params: Params, remove: boolean) {
     encodeURIComponent(row.previous ?? "")
   )
     return fail("A foto mudou. Atualize a equipe.", 409);
+  const limited = await limitImageMutation(row.shop);
+  if (limited) return limited;
   const admin = createAdminClient(),
     storage = admin.storage.from(bucket);
   const prefix = row.shop + "/" + row.id + "/";

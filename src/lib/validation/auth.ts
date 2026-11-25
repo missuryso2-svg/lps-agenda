@@ -4,6 +4,7 @@ const emailSchema = z
   .string()
   .trim()
   .min(1, "Informe seu e-mail.")
+  .max(254, "Informe um e-mail de até 254 caracteres.")
   .email("Informe um e-mail válido.");
 
 export const passwordSchema = z
@@ -15,7 +16,7 @@ export const passwordSchema = z
 
 export const loginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, "Informe sua senha."),
+  password: z.string().min(1, "Informe sua senha.").max(4096, "Senha muito longa."),
 });
 
 export const signUpSchema = z

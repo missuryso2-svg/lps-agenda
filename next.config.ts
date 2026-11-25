@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
+import { baselineCsp } from "./src/lib/security/csp";
 
 const securityHeaders = [
+  { key: "Content-Security-Policy", value: baselineCsp },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -13,7 +15,7 @@ const securityHeaders = [
 if (process.env.NODE_ENV === "production") {
   securityHeaders.push({
     key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
+    value: "max-age=31536000",
   });
 }
 

@@ -4,9 +4,10 @@ import { ThemeProvider } from "next-themes";
 
 import { Toaster } from "@/components/ui/sonner";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, nonce }: { children: React.ReactNode; nonce?: string }) {
   return (
     <ThemeProvider
+      nonce={nonce}
       attribute="class"
       defaultTheme="dark"
       enableSystem

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { limitImageMutation } from "@/lib/security/upload-limit";
 
 import {
   boundedBarbershopLogo,
@@ -154,6 +155,8 @@ async function changeLogo(request: Request, remove: boolean): Promise<Response> 
   const authorized = await authorize(request);
   if (!authorized.ok) return authorized.response;
   const { db, shopId, current, slug } = authorized;
+  const limited = await limitImageMutation(shopId);
+  if (limited) return limited;
 
   let replacement: string | null = null;
   if (!remove) {

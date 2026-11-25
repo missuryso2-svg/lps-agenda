@@ -34,6 +34,14 @@ describe("permissões", () => {
 });
 
 describe("navegação segura", () => {
+  it.each(["/\t/evil.example", "/\t\\evil.example", "/dashboard\u0000", "\t/dashboard", "/dashboard\u007f"])(
+    "rejeita controles antes da resolução de URL: %j",
+    (path) => {
+      const result = safeNextPath(path);
+      expect(result).toBe("/dashboard");
+      expect(new URL(result, "https://agenda.example").origin).toBe("https://agenda.example");
+    },
+  );
   it("aceita caminhos internos", () => {
     expect(safeNextPath("/dashboard/agenda")).toBe("/dashboard/agenda");
     expect(safeNextPath("/onboarding")).toBe("/onboarding");
@@ -54,6 +62,7 @@ describe("navegação segura", () => {
   it("usa fallback quando o valor é vazio", () => {
     expect(safeNextPath(undefined)).toBe("/dashboard");
     expect(safeNextPath(null, "/login")).toBe("/login");
+    expect(safeNextPath({ path: "/admin" }, "/login")).toBe("/login");
     expect(safeNextPath("   ", "/login")).toBe("/login");
   });
 });

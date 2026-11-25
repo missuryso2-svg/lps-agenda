@@ -426,6 +426,8 @@ describe("ambiente e segredos", () => {
       "ASAAS_API_KEY=",
       "ASAAS_WEBHOOK_TOKEN=",
       "NEXT_PUBLIC_APP_URL=",
+      "# Ative a política completa de scripts somente após homologar a CSP.",
+      "CSP_ENFORCE=false",
       "BILLING_CRON_SECRET=",
       "LPS_COMMERCIAL_WHATSAPP=",
       "",

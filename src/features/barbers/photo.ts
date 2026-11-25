@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { rasterFormat } from "@/lib/security/image-signature";
 
 export const maxPhotoBytes = 2 * 1024 * 1024;
 const formats = {
@@ -11,7 +12,8 @@ export async function normalizePhoto(bytes: Uint8Array, mime: string) {
   if (
     !bytes.length ||
     bytes.length > maxPhotoBytes ||
-    !Object.hasOwn(formats, mime)
+    !Object.hasOwn(formats, mime) ||
+    rasterFormat(bytes) !== formats[mime as keyof typeof formats]
   )
     throw new Error("invalid photo");
   const image = sharp(bytes, {
@@ -32,7 +34,8 @@ export async function normalizePhoto(bytes: Uint8Array, mime: string) {
 }
 
 export async function boundedPhoto(request: Request) {
-  if (Number(request.headers.get("content-length")) > maxPhotoBytes)
+  const length = request.headers.get("content-length");
+  if (length !== null && (!/^\d+$/.test(length) || Number(length) > maxPhotoBytes))
     throw new Error("too large");
   const reader = request.body?.getReader();
   if (!reader) throw new Error("missing photo");

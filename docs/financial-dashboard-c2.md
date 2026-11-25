@@ -12,6 +12,8 @@ A entrada do painel é `/admin/assinaturas`. O operador pode abrir essa URL ante
 
 ## Operação
 
+A I3 amplia a elegibilidade descrita na C2 para incluir barbearias sem histórico contratual. Na lista **Barbearias**, localize o cadastro e selecione **Aplicar assinatura manual**. O detalhe exibe os campos do acordo ou o motivo do bloqueio. Consulte as regras e a homologação no [checkpoint I3](recuperacao-i3.md).
+
 O registro do acordo exige uma adesão manual elegível e preço negociado explícito. No detalhe da barbearia, o operador seleciona o plano, registra as condições, as âncoras e o fuso contratual e revisa os dados. O contrato fica pendente. Para emitir, abre o contrato, escolhe a competência e confirma. A emissão preserva o valor contratado e o vencimento.
 
 Para conferir um Pix, o operador abre a parcela, confere barbearia, plano, contrato, competência, vencimento e valor integral. Em seguida, informa o valor efetivamente recebido e o instante do crédito, marca a declaração de conferência do extrato e revisa os dados antes do envio. A referência de conciliação é opcional. O PostgreSQL verifica a sessão e a elegibilidade da baixa, registra o recibo e determina se há cobertura. Uma competência antiga, uma dívida vencida e uma suspensão independente seguem as regras da C1.

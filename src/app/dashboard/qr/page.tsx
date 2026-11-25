@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import QRCode from "qrcode";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { requireDashboardContext } from "@/lib/auth/dal";
+import { publicBarbershopLogoUrl } from "@/features/barbershop/logo";
 import {
   bookingAddress,
   printableLogo,
@@ -40,7 +41,7 @@ export default async function BookingQrPage() {
           address={address}
           image={image}
           logo={printableLogo(
-            shop.logo_url,
+            publicBarbershopLogoUrl(shop.id, shop.logo_url),
             address.url,
             process.env.NEXT_PUBLIC_SUPABASE_URL,
           )}

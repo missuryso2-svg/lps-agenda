@@ -29,7 +29,7 @@ Com um número válido, cada CTA abre `https://wa.me/` com uma única mensagem c
 
 1. O visitante compara os limites, consulta o plano e decide se envia a mensagem no WhatsApp. Cadastro, demonstração e login continuam independentes da proposta.
 2. A LPS Solutions combina plano, mensalidade, competência, vencimento e condições com a barbearia.
-3. Um operador financeiro autorizado registra o acordo em `/admin/assinaturas` para uma barbearia elegível. A fase B2-B exige histórico de adesão manual e conciliação de conflitos. Uma conta recém-cadastrada com onboarding manual desligado pode solicitar proposta, mas isso, por si só, não habilita o registro do acordo.
+3. Um operador financeiro autorizado abre **Barbearias** em `/admin/assinaturas`, seleciona o cadastro e usa **Aplicar assinatura manual**. A I3 aceita uma barbearia existente sem histórico contratual e preserva a conciliação dos legados. Uma conta Auth precisa ter uma barbearia cadastrada para constar no diretório. [Elegibilidade e homologação I3](recuperacao-i3.md)
 4. O operador emite a mensalidade por competência. Depois de conferir o crédito no extrato, confirma a parcela Pix no painel. O PostgreSQL registra o evento e determina a cobertura. Agendamento, carência, suspensão e retomada seguem as regras existentes.
 
 O clique usa um link comum. Não há webhook comercial, emissão de Pix ou automação de baixa. O canal funciona sem credenciais administrativas, flags financeiras ou worker.

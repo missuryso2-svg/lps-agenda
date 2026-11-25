@@ -20,6 +20,7 @@ import {
   money,
   labels,
   period,
+  manualAgreementEligibility,
 } from "@/features/admin-billing/validation";
 
 export default async function Detail({
@@ -31,9 +32,8 @@ export default async function Detail({
     q = await searchParams;
   const [shop] = await directory({}, id);
   if (!shop) notFound();
-  const canAgree =
-    (shop.origin === "trial" || shop.origin === "manual") &&
-    ["canceled", "expired"].includes(shop.status ?? "");
+  const agreement = manualAgreementEligibility(shop);
+  const canAgree = agreement.eligible;
   const [bills, trail, catalog] = await Promise.all([
     invoices(q, id),
     recentActivity(id),
@@ -69,14 +69,19 @@ export default async function Detail({
           }}
         />
       </div>
-      {shop.origin === "reconcile" && (
-        <p>
-          Este cadastro requer conciliação antes de uma nova operação
-          contratual.
-        </p>
+      {shop.origin === "none" && !shop.contract && (
+        <p className="fa-empty">Nenhuma assinatura cadastrada.</p>
       )}
-      {canAgree && (
+      {canAgree && catalog.length > 0 ? (
         <AgreementForm shop={shop} actor={user.id} plans={catalog} />
+      ) : canAgree ? (
+        <p className="fa-guidance" role="status">
+          Nenhum plano ativo está disponível no catálogo para aplicar uma assinatura.
+        </p>
+      ) : (
+        <p className="fa-guidance" role="status">
+          {agreement.message}
+        </p>
       )}
       {shop.origin === "manual" && (
         <ContractForms shop={shop} actor={user.id} />

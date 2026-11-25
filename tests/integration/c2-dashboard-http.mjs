@@ -45,11 +45,13 @@ try {
     ],
   );
   const shop = ids(),
+    uncontractedShop = ids(),
     plan = sql("select id from public.plans where code='basico'");
   sql(`insert into private.financial_operators(user_id,level,infrastructure_identity,grant_reason)
     values('${manager.id}','manager',session_user,'QA C2');
-    insert into public.barbershops(id,name,slug) values ('${shop}','QA C2 Cobrança','qa-${shop}');
-    insert into public.barbershop_members(barbershop_id,user_id,role) values ('${shop}','${owner.id}','owner'),('${shop}','${staff.id}','staff');
+     insert into public.barbershops(id,name,slug) values ('${shop}','QA C2 Cobrança','qa-${shop}');
+     insert into public.barbershops(id,name,slug) values ('${uncontractedShop}','QA C2 Sem contrato','qa-${uncontractedShop}');
+     insert into public.barbershop_members(barbershop_id,user_id,role) values ('${shop}','${owner.id}','owner'),('${shop}','${staff.id}','staff'),('${uncontractedShop}','${owner.id}','owner');
     insert into public.subscriptions(barbershop_id,plan_id,gateway,gateway_status,status,invoice_link_key,trial_started_at,trial_ends_at)
     values ('${shop}','${plan}','manual_pix','inactive','trialing','uncontracted','2019-01-01Z','2019-01-08Z');`);
   await startNext(false);
@@ -104,9 +106,16 @@ try {
   const month = new Date().toISOString().slice(0, 7),
     first = month + "-01T00:00",
     detail = root + "/barbearias/" + shop;
+  const eligibleList = await page(
+    operator,
+    root + "/barbearias?nome=QA%20C2%20Sem%20contrato",
+  );
+  assert.match(eligibleList.html, /Ações/);
+  assert.match(eligibleList.html, /Aplicar assinatura manual/);
+  assert.match(eligibleList.html, new RegExp(uncontractedShop));
   assert.match(
     (await page(operator, detail)).html,
-    /Registrar acordo comercial/,
+    /Aplicar assinatura manual/,
   );
   const agreement = {
     kind: "agreement",
@@ -127,11 +136,29 @@ try {
     reference: "QA contrato",
     reason: "QA acordo",
   };
-  await mutate(operator, agreement, /Acordo registrado/);
+  const firstManual = {
+    ...agreement,
+    op: ids(),
+    shop: uncontractedShop,
+    reference: "QA primeira assinatura",
+    reason: "QA barbearia sem contrato",
+  };
+  await mutate(operator, firstManual, /Contrato registrado com sucesso/);
+  assert.match(
+    sql(`select status || ':' || gateway from public.subscriptions where barbershop_id='${uncontractedShop}' and agreement_at is not null`),
+    /^pending:manual_pix$/,
+  );
+  await mutate(operator, agreement, /Contrato registrado com sucesso/);
+  await mutate(operator, agreement, /Contrato registrado com sucesso/);
   const contract = sql(
     `select id from public.subscriptions where barbershop_id='${shop}' and agreement_at is not null and contracted_price_cents=4321`,
   );
   assert.match(contract, /^[\da-f-]{36}$/);
+  await mutate(
+    operator,
+    { ...agreement, op: ids() },
+    /contrato vigente|contrato pendente/i,
+  );
   const issue = {
     kind: "invoice",
     op: ids(),

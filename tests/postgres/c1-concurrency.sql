@@ -14,6 +14,12 @@ select extensions.dblink_exec(peer,'set session authorization authenticator') fr
 select extensions.dblink_exec(peer,'set role authenticated') from unnest(array['c1_a','c1_b']) peer;
 select extensions.dblink_exec(peer,format('set request.jwt.claims=%L',jsonb_build_object('sub',:'actor','role','authenticated')::text))
 from unnest(array['c1_a','c1_b']) peer;
+insert into public.barbershops(name,slug)
+values('QA I3 concorrência','i3-'||gen_random_uuid()) returning id as first_manual_shop \gset
+select gen_random_uuid() as first_manual_op, to_jsonb(pg_temp.terms())::text as first_manual_terms \gset
+select format('select public.finance_agreement(%L,%L,%L::jsonb,%L,%L)',
+  :'first_manual_op',:'first_manual_shop',:'first_manual_terms','QA I3 replay','QA concurrency')
+  as first_manual_sql \gset
 create function pg_temp.wait_blocked(holder text) returns void language plpgsql as $$
 declare deadline timestamptz:=clock_timestamp()+interval '10 seconds';
 begin
@@ -26,6 +32,33 @@ begin
   end loop;
   raise notice 'PASS real waiter behind %',holder;
 end $$;
+select extensions.dblink_exec('c1_a','begin');
+select result::text as first_manual_result
+from extensions.dblink('c1_a',:'first_manual_sql') as r(result jsonb) \gset
+select extensions.dblink_send_query('c1_b',:'first_manual_sql');
+select pg_temp.wait_blocked('c1_a');
+select extensions.dblink_exec('c1_a','commit');
+select pg_temp.verify('parallel first agreements replay one pending contract',
+  result=:'first_manual_result'::jsonb and
+  (select count(*)=1 from public.subscriptions where barbershop_id=:'first_manual_shop'
+    and agreement_at is not null and status='pending'))
+from extensions.dblink_get_result('c1_b') as r(result jsonb);
+select * from extensions.dblink_get_result('c1_b') as r(result jsonb);
+-- Two tabs can send distinct operation IDs for the same unenrolled shop.
+insert into public.barbershops(name,slug) values('QA I3 duas abas','i3-'||gen_random_uuid())
+returning id as competing_shop \gset
+select format('select public.finance_agreement(gen_random_uuid(),%L,%L::jsonb,%L,%L)',
+  :'competing_shop', :'first_manual_terms', 'QA I3', 'QA duas abas') as competing_sql \gset
+select extensions.dblink_exec('c1_a','begin');
+select * from extensions.dblink('c1_a',:'competing_sql') as r(result jsonb);
+select extensions.dblink_send_query('c1_b',:'competing_sql');
+select pg_temp.wait_blocked('c1_a');
+select extensions.dblink_exec('c1_a','commit');
+select * from extensions.dblink_get_result('c1_b',false) as r(result jsonb);
+select pg_temp.verify('different operation IDs cannot create duplicate first agreements',
+  extensions.dblink_error_message('c1_b') like '%Coverage overlaps%'
+  and (select count(*)=1 from public.subscriptions where barbershop_id=:'competing_shop'));
+select * from extensions.dblink_get_result('c1_b') as r(result jsonb);
 select format('select public.finance_invoice(gen_random_uuid(),%L,%L,%L)',:'shop',:'contract',:'month') as issue \gset
 select extensions.dblink_exec('c1_a','begin');
 select result->>'invoice' as invoice from extensions.dblink('c1_a',:'issue') as r(result jsonb) \gset

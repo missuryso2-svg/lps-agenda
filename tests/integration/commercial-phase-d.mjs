@@ -101,7 +101,9 @@ try {
   ];
   const plan = sql("select id from public.plans where code='basico'");
   const oldContract = ids();
+  const firstContractShop = ids();
   sql(`insert into public.barbershops(id,name,slug) values
+    ('${firstContractShop}','QA Primeira assinatura','qa-${firstContractShop}'),
     ('${emptyShop}','QA Nova','qa-${emptyShop}'),('${manualShop}','QA Acordo','qa-${manualShop}'),
     ('${trialShop}','QA Teste','qa-${trialShop}'),('${oldShop}','QA Legado','qa-${oldShop}');
     insert into public.barbershop_members(barbershop_id,user_id,role) values
@@ -145,7 +147,69 @@ try {
     ],
     finance,
   );
-  assert.match(fixture.body, /Acordo registrado/);
+  assert.match(fixture.body, /Contrato registrado com sucesso/);
+  const firstManual = await action(
+    manager,
+    "submitFinancialOperation",
+    [
+      {
+        kind: "agreement",
+        op: ids(),
+        confirmed: true,
+        shop: firstContractShop,
+        plan,
+        amount: "43,21",
+        coverage: first,
+        first_month: month,
+        due: first,
+        renewal_day: "1",
+        due_day: "1",
+        offset: "0",
+        time: "00:00",
+        zone: "UTC",
+        terms: "QA primeira contratação",
+        reference: "QA novo contrato",
+        reason: "Sem assinatura anterior",
+      },
+    ],
+    finance,
+  );
+  assert.match(firstManual.body, /Contrato registrado com sucesso/);
+  assert.equal(
+    sql(`select status || ':' || gateway from public.subscriptions where barbershop_id='${firstContractShop}' and agreement_at is not null`),
+    "pending:manual_pix",
+  );
+  const liveTrialAgreement = await action(
+    manager,
+    "submitFinancialOperation",
+    [
+      {
+        kind: "agreement",
+        op: ids(),
+        confirmed: true,
+        shop: trialShop,
+        plan,
+        amount: "43,21",
+        coverage: first,
+        first_month: month,
+        due: first,
+        renewal_day: "1",
+        due_day: "1",
+        offset: "0",
+        time: "00:00",
+        zone: "UTC",
+        terms: "QA conversão segura",
+        reference: "QA trial ativo",
+        reason: "Aguardando o fim do trial",
+      },
+    ],
+    finance,
+  );
+  assert.match(liveTrialAgreement.body, /teste ainda válido/i);
+  assert.equal(
+    sql(`select status from public.subscriptions where barbershop_id='${trialShop}' and gateway='manual_pix'`),
+    "trialing",
+  );
   const agreementId = sql(
     `select id from public.subscriptions where barbershop_id='${manualShop}' and agreement_at is not null`,
   );

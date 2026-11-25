@@ -16,6 +16,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarbershopSettingsForm } from "@/features/settings/components/barbershop-settings-form";
+import { BarbershopLogoCard } from "@/features/settings/components/barbershop-logo-card";
+import {
+  barbershopLogoVersion,
+  publicBarbershopLogoUrl,
+} from "@/features/barbershop/logo";
+import { safeHttpUrl } from "@/features/public-booking/format";
 import { requireOwnerDashboardContext } from "@/lib/auth/dal";
 import { roleLabels } from "@/lib/auth/permissions";
 import { formatDateBR } from "@/lib/format";
@@ -37,6 +43,7 @@ const barbershopStatusLabels: Record<
 export default async function SettingsPage() {
   const context = await requireOwnerDashboardContext();
   const shop = context.active.barbershop;
+  const logoUrl = safeHttpUrl(publicBarbershopLogoUrl(shop.id, shop.logo_url));
 
   return (
     <div className="space-y-7">
@@ -79,6 +86,14 @@ export default async function SettingsPage() {
         </Card>
 
         <div className="space-y-5">
+          <BarbershopLogoCard
+            key={shop.id}
+            shopId={shop.id}
+            shopName={shop.name}
+            logoUrl={logoUrl}
+            logoVersion={barbershopLogoVersion(shop.logo_url)}
+            canManage={context.active.role === "owner"}
+          />
           <Card>
             <CardHeader className="border-b border-border/70 pb-4">
               <CardTitle className="flex items-center gap-2 text-base">

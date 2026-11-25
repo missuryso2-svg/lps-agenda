@@ -1,6 +1,12 @@
 import { OperationForm, type Field } from "./operation-form";
 import type { Shop, Invoice } from "./data";
-import { instant, labels, money, period } from "./validation";
+import {
+  canIssueManualInvoice,
+  instant,
+  labels,
+  money,
+  period,
+} from "./validation";
 
 const reason: Field = {
   name: "reason",
@@ -32,9 +38,12 @@ export function AgreementForm({
       kind="agreement"
       actor={actor}
       ids={{ shop: shop.shop }}
-      title="Registrar acordo comercial"
+      title="Aplicar assinatura manual"
       context={{ Barbearia: shop.name, Identificador: shop.shop }}
-      note="Informe o preço negociado. O acordo aguarda cobertura paga."
+      note="O contrato será registrado como pendente. O início da nova cobertura será validado contra testes e contratos anteriores; esta ação não confirma pagamento. Depois, emita a mensalidade e confira o Pix no extrato oficial."
+      featured
+      sectionId="aplicar-assinatura"
+      openInitially
       fields={[
         select(
           "plan",
@@ -116,19 +125,30 @@ export function ContractForms({ shop, actor }: { shop: Shop; actor: string }) {
   const commands = shop.suspended
     ? ["resume", "cancel"]
     : ["suspend", "cancel"];
+  const canIssue = canIssueManualInvoice(shop);
   return (
     <>
-      <OperationForm
-        actor={actor}
-        kind="invoice"
-        title="Emitir competência"
-        ids={ids}
-        context={context}
-        note="A emissão registra uma mensalidade no LPS Agenda. Não gera cobrança bancária automática."
-        fields={[
-          { name: "month", label: "Competência a emitir", type: "month" },
-        ]}
-      />
+      {canIssue ? (
+        <OperationForm
+          actor={actor}
+          kind="invoice"
+          title="Emitir mensalidade"
+          ids={ids}
+          context={context}
+          note="A emissão registra uma mensalidade no LPS Agenda. Não gera cobrança bancária automática."
+          fields={[
+            { name: "month", label: "Competência a emitir", type: "month" },
+          ]}
+        />
+      ) : (
+        <p className="fa-guidance" role="status">
+          {shop.origin === "reconcile"
+            ? "Esta assinatura requer conciliação antes de emitir uma mensalidade."
+            : shop.suspended
+              ? "A assinatura está suspensa. Regularize o estado antes de emitir uma mensalidade."
+              : "Emitir mensalidade ficará disponível quando começar a cobertura do contrato."}
+        </p>
+      )}
       <OperationForm
         actor={actor}
         kind="contract"

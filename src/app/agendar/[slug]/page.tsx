@@ -155,8 +155,14 @@ export default async function PublicBookingPage({
           <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-5 pb-14 pt-10 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:pb-20 lg:pt-14">
             <div className="animate-rise">
               <div className="flex flex-wrap items-center gap-3">
-                <Avatar className="size-12 rounded-xl after:rounded-xl">
-                  {logoUrl ? <AvatarImage src={logoUrl} alt="" /> : null}
+                <Avatar className="barbershop-logo-surface size-12 rounded-xl after:rounded-xl">
+                  {logoUrl ? (
+                    <AvatarImage
+                      src={logoUrl}
+                      alt=""
+                      className="barbershop-logo-image object-contain p-1"
+                    />
+                  ) : null}
                   <AvatarFallback className="rounded-xl bg-gold font-display text-sm text-gold-foreground">
                     {initialsFromName(shop.name)}
                   </AvatarFallback>

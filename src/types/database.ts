@@ -1075,6 +1075,26 @@ export type Database = {
       };
       get_owner_manual_trial: { Args: { p_shop: string }; Returns: Json };
       replace_barber_photo: { Args: {actor:string;shop:string;professional:string;previous:string|null;replacement:string|null}; Returns: boolean };
+      replace_barbershop_logo: {
+        Args: {
+          p_barbershop_id: string;
+          p_expected_object: string | null;
+          p_replacement_object: string | null;
+        };
+        Returns: Json;
+      };
+      barbershop_logo_cleanup_list: {
+        Args: { p_barbershop_id: string };
+        Returns: string[];
+      };
+      barbershop_logo_cleanup_result: {
+        Args: {
+          p_barbershop_id: string;
+          p_object_name: string;
+          p_removed: boolean;
+        };
+        Returns: boolean;
+      };
       finance_health: { Args: Record<string, never>; Returns: Json };
       get_shop_professional_limit: {
         Args: { p_shop: string };

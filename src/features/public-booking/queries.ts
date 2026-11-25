@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { publicBookingDateWindow } from "@/features/public-booking/constants";
 import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
+import { publicBarbershopLogoUrl } from "@/features/barbershop/logo";
 import type {
   PublicBarber,
   PublicBarbershop,
@@ -59,7 +60,7 @@ function mapBarbershop(row: BarbershopPublicRow): PublicBarbershop {
     addressState: row.address_state,
     addressZip: row.address_zip,
     timezone: row.timezone || "America/Sao_Paulo",
-    logoUrl: row.logo_url,
+    logoUrl: publicBarbershopLogoUrl(row.id, row.logo_url),
     coverUrl: row.cover_url,
     status: row.status,
   };

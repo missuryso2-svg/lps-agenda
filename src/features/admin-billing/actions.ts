@@ -93,9 +93,17 @@ export async function submitFinancialOperation(
         return failure(
           "Parcela já encerrada. Atualize a mensalidade e confira o histórico.",
         );
+      if (code === "55000" && v.kind === "agreement")
+        return failure(
+          "Esta barbearia já possui um contrato vigente, um teste ainda válido ou uma conciliação pendente. Atualize os dados antes de tentar novamente.",
+        );
       if (code === "23505" && v.kind === "pix")
         return failure(
           "Referência já registrada. Confira a conciliação antes de continuar.",
+        );
+      if (code === "23505" && v.kind === "agreement")
+        return failure(
+          "Esta barbearia já possui um contrato vigente. Nenhum contrato duplicado foi criado.",
         );
       if (code === "55000" || code === "23505")
         return failure(
@@ -124,10 +132,11 @@ export async function submitFinancialOperation(
           (receipt.coverage_confirmed ? "sim." : "não.");
       if (v.kind === "agreement")
         message =
-          "Acordo registrado. Contrato " +
+          "Contrato registrado com sucesso. Contrato " +
           receipt.contract +
           " · " +
-          labels[String(receipt.state)];
+          (labels[String(receipt.state)] ?? String(receipt.state)) +
+          (receipt.state === "pending" ? ". Aguardando pagamento." : ".");
       if (v.kind === "invoice")
         message = "Mensalidade registrada. Parcela " + receipt.invoice;
       if (v.kind === "contract")

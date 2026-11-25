@@ -24,7 +24,7 @@ import { useState, useTransition } from "react";
 
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/brand/theme-toggle";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -52,6 +52,7 @@ type MembershipSummary = {
   name: string;
   slug: string;
   role: AppRole;
+  logoUrl: string | null;
 };
 
 type NavItem = {
@@ -180,9 +181,18 @@ export function DashboardShell({
                 type="button"
                 className="flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border bg-card/70 px-2.5 py-2.5 text-left transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-ring/50"
               >
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-display text-[11px] font-semibold text-primary-foreground">
-                  {initialsFromName(activeMembership.name)}
-                </span>
+                <Avatar className="barbershop-logo-surface size-8 rounded-lg after:rounded-lg">
+                  {activeMembership.logoUrl ? (
+                    <AvatarImage
+                      src={activeMembership.logoUrl}
+                      alt=""
+                      className="rounded-lg object-contain p-0.5"
+                    />
+                  ) : null}
+                  <AvatarFallback className="rounded-lg bg-primary font-display text-[11px] font-semibold text-primary-foreground">
+                    {initialsFromName(activeMembership.name)}
+                  </AvatarFallback>
+                </Avatar>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-medium text-sidebar-foreground">
                     {activeMembership.name}
@@ -203,9 +213,18 @@ export function DashboardShell({
                   disabled={isChangingShop}
                   className="gap-2 py-2"
                 >
-                  <span className="grid size-7 place-items-center rounded-md bg-muted font-display text-[10px]">
-                    {initialsFromName(membership.name)}
-                  </span>
+                  <Avatar className="barbershop-logo-surface size-7 rounded-md after:rounded-md">
+                    {membership.logoUrl ? (
+                      <AvatarImage
+                        src={membership.logoUrl}
+                        alt=""
+                        className="rounded-md object-contain p-0.5"
+                      />
+                    ) : null}
+                    <AvatarFallback className="rounded-md bg-muted font-display text-[10px]">
+                      {initialsFromName(membership.name)}
+                    </AvatarFallback>
+                  </Avatar>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium">
                       {membership.name}

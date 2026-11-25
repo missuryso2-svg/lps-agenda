@@ -15,8 +15,16 @@ const nextURL = "http://127.0.0.1:59130";
 assert.match(project, /^b2a2-app-\d+$/);
 assert.equal(url, "http://127.0.0.1:59121");
 const container = "supabase_db_" + project;
+// Windows can run the disposable daemon in its own WSL distribution.
+const distro = process.env.B2A2_QA_WSL_DISTRO;
+if (distro) assert.match(distro, /^LPS-I3-\d+$/);
+function docker(args, options) {
+  return distro
+    ? execFileSync("wsl.exe", ["-d", distro, "--", "docker", ...args], options)
+    : execFileSync("docker", args, options);
+}
 assert.match(
-  execFileSync("docker", ["port", "supabase_kong_" + project, "8000/tcp"], {
+  docker(["port", "supabase_kong_" + project, "8000/tcp"], {
     encoding: "utf8",
   }),
   /:59121\b/,
@@ -33,8 +41,7 @@ const actions = Object.fromEntries(
 const ids = () => randomUUID();
 const slug = () => "qa-" + ids();
 function sql(command) {
-  return execFileSync(
-    "docker",
+  return docker(
     [
       "exec",
       "-i",

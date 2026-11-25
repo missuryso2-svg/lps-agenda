@@ -2,6 +2,8 @@
 
 Fundação técnica do **LPS Agenda**, um SaaS multi-tenant de agenda e gestão para barbearias, desenvolvido pela LPS Solutions.
 
+> **Checkpoint local I3 · 24/11/2026.** O painel financeiro permite aplicar a primeira assinatura manual a uma barbearia sem contrato. O proprietário pode gerenciar a logo em Configurações. A adoção hospedada depende de aprovação para a migration 30 e para a publicação. O lançamento comercial segue em **NO-GO**. [Relatório e evidências da I3](docs/recuperacao-i3.md)
+
 A versão atual entrega a base de produto: identidade visual, site institucional, autenticação, onboarding, painel administrativo, agendamento público por tenant, página de demonstração, banco PostgreSQL versionado e políticas de isolamento por barbearia.
 
 > **Estado:** fundação `v0.1` com as Etapas 2.1, 2.2, 2.3, 3.1, 3.2 e 4 implementadas. Serviços, profissionais, horários, jornadas, bloqueios, clientes, agendamentos e reserva pública estão conectados ao Supabase, com isolamento por barbearia; a validação com dados reais depende de aplicar as migrações e testar em um ambiente autorizado. A cobrança recorrente da plataforma está integrada ao **Asaas Sandbox** e o teste gratuito é local. Cobrança dos serviços da barbearia, convites de equipe, notificações e pagamento antecipado ainda **não** estão implementados. Nada nesta versão simula integrações externas como se estivessem funcionando.

@@ -329,6 +329,63 @@
   border: 1px solid var(--fa-border);
   border-radius: var(--radius);
 }
+.fa-operation[data-featured="true"] summary {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-color: transparent;
+  background: var(--fa-gold);
+  color: #211c14;
+  font-weight: 700;
+}
+.fa-operation[data-featured="true"] summary::after {
+  content: "Abrir formulário";
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.fa-operation[data-featured="true"][open] summary::after {
+  content: "Recolher formulário";
+}
+.fa-actions {
+  min-width: 13rem;
+}
+.fa-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  border: 1px solid #57584f;
+  border-radius: 0.45rem;
+  padding: 0.5rem 0.7rem;
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+.fa-actions a[data-primary="true"] {
+  border-color: transparent;
+  background: var(--fa-gold);
+  color: #211c14;
+}
+.fa-actions small,
+.fa-guidance {
+  display: block;
+  max-width: 22rem;
+  margin-top: 0.45rem;
+  color: var(--fa-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.fa-guidance {
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--fa-border);
+  border-left: 3px solid var(--fa-gold);
+  border-radius: var(--radius);
+  background: var(--fa-surface);
+}
 .fa-inset {
   margin-top: 0.4rem;
 }

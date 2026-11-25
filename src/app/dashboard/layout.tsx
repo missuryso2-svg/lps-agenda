@@ -8,6 +8,7 @@ import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access
 import type { BarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import { isCurrentUserPlatformAdmin, requireDashboardContext } from "@/lib/auth/dal";
 import { getSupabasePublicEnv } from "@/lib/env/public";
+import { publicBarbershopLogoUrl } from "@/features/barbershop/logo";
 
 export const metadata: Metadata = {
   title: {
@@ -66,6 +67,10 @@ export default async function DashboardLayout({
     name: membership.barbershop.name,
     slug: membership.barbershop.slug,
     role: membership.role,
+    logoUrl: publicBarbershopLogoUrl(
+      membership.barbershop_id,
+      membership.barbershop.logo_url,
+    ),
   }));
 
   return (

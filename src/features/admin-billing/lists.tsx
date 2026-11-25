@@ -6,6 +6,7 @@ import {
   money,
   originLabels,
   period,
+  manualAgreementEligibility,
 } from "./validation";
 import { size, type Invoice, type Shop } from "./data";
 import { PixForm } from "./forms";
@@ -61,10 +62,13 @@ export function Shops({ rows }: { rows: Shop[] }) {
             <th>Situação / fim do trial</th>
             <th>Mensalidade</th>
             <th>Último Pix conferido</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
-          {rows.slice(0, size).map((s) => (
+          {rows.slice(0, size).map((s) => {
+            const eligibility = manualAgreementEligibility(s);
+            return (
             <tr key={s.shop}>
               <td>
                 <Link href={adminPath + "/barbearias/" + s.shop}>{s.name}</Link>
@@ -84,8 +88,22 @@ export function Shops({ rows }: { rows: Shop[] }) {
               </td>
               <td>{money(s.monthly_cents)}</td>
               <td>{instant(s.last_verified_at)}</td>
+              <td className="fa-actions">
+                <Link
+                  href={adminPath + "/barbearias/" + s.shop + (eligibility.eligible ? "#aplicar-assinatura" : "")}
+                  data-primary={eligibility.eligible}
+                >
+                  {eligibility.eligible
+                    ? "Aplicar assinatura manual"
+                    : s.origin === "reconcile" || s.origin === "asaas"
+                      ? "Conferir conciliação"
+                      : "Administrar assinatura"}
+                </Link>
+                <small>{eligibility.message}</small>
+              </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

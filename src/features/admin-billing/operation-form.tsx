@@ -34,6 +34,9 @@ type Props = {
   fields: Field[];
   note?: string;
   expectedCents?: number;
+  featured?: boolean;
+  sectionId?: string;
+  openInitially?: boolean;
 };
 export function OperationForm({
   kind,
@@ -44,6 +47,9 @@ export function OperationForm({
   fields,
   note,
   expectedCents,
+  featured = false,
+  sectionId,
+  openInitially = false,
 }: Props) {
   const [review, setReview] = useState<Record<string, string | boolean> | null>(
     null,
@@ -155,7 +161,13 @@ export function OperationForm({
     }
   }
   return (
-    <details className="fa-operation" data-danger={revoking}>
+    <details
+      id={sectionId}
+      className="fa-operation"
+      data-danger={revoking}
+      data-featured={featured}
+      open={openInitially || undefined}
+    >
       <summary ref={disclosure}>{title}</summary>
       <div className="fa-inset">
         {note && <p>{note}</p>}

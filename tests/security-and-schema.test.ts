@@ -64,7 +64,7 @@ describe("migrações", () => {
     expect(migrationFiles).toContain(
       "20261115120000_subscription_cancel_reason.sql",
     );
-    expect(migrationFiles.slice(-11)).toEqual([
+    expect(migrationFiles.slice(-12)).toEqual([
       "20261117120000_asaas_payment_transition_guard.sql",
       "20261118120000_manual_billing_foundation.sql",
       "20261118130000_manual_trial_onboarding.sql",
@@ -76,7 +76,40 @@ describe("migrações", () => {
       "20261120160000_financial_cutover_health.sql",
       "20261120170000_private_barber_photos.sql",
       "20261120180000_scheduling_operations.sql",
+      "20261123120000_phase_i3_manual_agreements_and_logos.sql",
     ]);
+  });
+
+  it("permite apenas a primeira contratação sem histórico e protege logos por tenant", () => {
+    const migration = read(
+      "supabase/migrations/20261123120000_phase_i3_manual_agreements_and_logos.sql",
+    );
+
+    expect(migration).toContain("not exists (");
+    expect(migration).toContain("gateway = 'manual_pix'");
+    expect(migration).toContain("Manual trial is still active");
+    expect(migration).toContain("h.needs_reconciliation");
+    expect(migration).toContain("Manual enrollment required");
+    expect(migration).toContain("manual_operation_result(op, payload)");
+    expect(migration).toContain("manual_billing.agreement");
+    expect(migration).toContain("create or replace view private.finance_shop_directory");
+    expect(migration).toContain("legacy.gateway = 'asaas'");
+    expect(migration).toContain("manual.gateway = 'manual_pix'");
+
+    expect(migration).toContain("'barbershop-logos', 'barbershop-logos', true");
+    expect(migration).toContain("array['image/webp']");
+    expect(migration).toContain("barbershop_logos_block_client_insert");
+    expect(migration).toContain("barbershop_logos_block_client_update");
+    expect(migration).toContain("barbershop_logos_block_client_delete");
+    expect(migration).toContain("barbershop_logo_api_storage_read");
+    expect(migration).toContain("barbershop_logo_api_member_lock");
+    expect(migration).toContain("replace_barbershop_logo");
+    expect(migration).toContain("barbershop_logo_cleanup_list");
+    expect(migration).toContain("barbershop_logo_cleanup_result");
+    expect(migration).toContain("guard_barbershop_logo_reference");
+    expect(migration).toContain("revoke update (logo_url) on public.barbershops from authenticated");
+    expect(migration).toContain("set role lps_barbershop_logo_api");
+    expect(migration).not.toMatch(/\bdrop\s+(table|index|policy)\b/i);
   });
 
   it("mantém a migration de concorrência aditiva e sem índice redundante", () => {

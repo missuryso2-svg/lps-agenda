@@ -1,0 +1,26 @@
+psql -Xq -v ON_ERROR_STOP=1 -f c2-dashboard.sql
+exit 0
+PASS public RPCs owned by limited role and no anonymous or service grants
+PASS invoker view private
+PASS dedicated role cannot login, bypass RLS or create public functions
+PASS manager self revocation denied
+PASS manager can list grants
+PASS individual capability
+PASS regular operator cannot list grants
+PASS shop without any subscription can receive a pending agreement
+PASS pending agreement cannot be duplicated
+PASS canceled manual contract permits a non-overlapping new pending agreement
+PASS active trial is not ended by applying a contract
+PASS active trial remains unchanged
+PASS legacy Asaas history remains blocked
+PASS terminal mixed Asaas/manual history remains in reconciliation
+PASS terminal Asaas history cannot be converted without reconciliation
+PASS overview counts all pages
+PASS 105 filtered shops without gaps or overlap
+PASS no contract is distinct from delinquency
+PASS mixed legacy history requires reconciliation; shop-service payment is not verified Pix
+PASS legacy plus manual history requires reconciliation
+PASS trial dates and selected subscription originate from manual trial
+PASS isolated Asaas subscription explicitly classified without manual trial dates
+PASS compatibility projection matches directory
+PASS private history remains immutable

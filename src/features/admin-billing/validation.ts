@@ -33,6 +33,7 @@ export const operation = z.discriminatedUnion("kind", [
   z.object({
     ...base,
     kind: z.literal("agreement"),
+    bookingImpactAccepted: z.literal(true),
     shop: uuid,
     plan: uuid,
     amount: amount.pipe(z.number().max(100000000)),

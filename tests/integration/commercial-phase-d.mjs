@@ -127,6 +127,7 @@ try {
     [
       {
         kind: "agreement",
+        bookingImpactAccepted: true,
         op: ids(),
         confirmed: true,
         shop: manualShop,
@@ -154,6 +155,7 @@ try {
     [
       {
         kind: "agreement",
+        bookingImpactAccepted: true,
         op: ids(),
         confirmed: true,
         shop: firstContractShop,
@@ -185,6 +187,7 @@ try {
     [
       {
         kind: "agreement",
+        bookingImpactAccepted: true,
         op: ids(),
         confirmed: true,
         shop: trialShop,

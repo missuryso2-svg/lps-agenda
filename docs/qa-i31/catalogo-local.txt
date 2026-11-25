@@ -1,0 +1,6 @@
+server_version=17.11
+migrations=31
+manual_onboarding_enabled=false
+API execution grants on reconciliation functions=0
+canonical orphan candidates at least 15min old=1
+completed administrative receipts=1

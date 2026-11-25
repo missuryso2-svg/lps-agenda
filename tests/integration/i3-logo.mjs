@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { pathToFileURL } from "node:url";
 import sharp from "sharp";
-import { ids, nextURL, session, sql, startNext, stopNext } from "./local-next-qa.mjs";
+import { admin, ids, nextURL, session, sql, startNext, stopNext } from "./local-next-qa.mjs";
 
 const { chromium } = await import(pathToFileURL(process.env.C2_QA_PLAYWRIGHT).href);
 const browser = await chromium.launch({ executablePath: process.env.C2_QA_CHROME });
@@ -64,6 +64,30 @@ try {
   assert.equal(sql(`select logo_url is null from public.barbershops where id='${shop}'`), "t");
   assert.equal(sql(`select count(*) from storage.objects where bucket_id='barbershop-logos' and name like '${shop}/%'`), "0");
   console.log("PASS logo preview, upload, public WebP, dashboard, booking page, replacement and removal");
+  const closed = ids();
+  sql(`insert into public.barbershops(id,name,slug) values ('${closed}','QA Encerrada','qa-${closed}');
+    insert into public.barbershop_members(barbershop_id,user_id,role) values ('${closed}','${owner.id}','owner')`);
+  const key = closed + "/" + ids() + ".webp";
+  const bucket = admin.storage.from("barbershop-logos");
+  const raster = await sharp({ create: { width: 8, height: 8, channels: 4, background: "transparent" } }).webp().toBuffer();
+  assert.ifError((await bucket.upload(key, raster, { contentType: "image/webp", upsert: false })).error);
+  assert.ifError((await owner.client.rpc("replace_barbershop_logo", {
+    p_barbershop_id: closed, p_expected_object: null, p_replacement_object: key,
+  })).error);
+  // Advance the synthetic object's age without waiting for the quarantine window.
+  sql(`update storage.objects set created_at=now()-interval '1 hour' where bucket_id='barbershop-logos' and name='${key}'`);
+  const claim = () => sql(`select private.claim_retired_logo('${closed}','${key}')`);
+  const finish = () => sql(`select private.finish_retired_logo('${closed}','${key}')`);
+  assert.equal(claim(), "f");
+  sql(`delete from public.barbershops where id='${closed}'`);
+  assert.equal(claim(), "t");
+  assert.equal(finish(), "f");
+  assert.equal(claim(), "t");
+  assert.ifError((await bucket.remove([key])).error);
+  assert.equal(finish(), "t");
+  assert.equal(finish(), "t");
+  assert.equal(sql(`select count(*) from private.logo_reconciliation_log where shop='${closed}' and removed_at is not null`), "1");
+  console.log("PASS deleted tenant reconciled through Storage API, reference protected and recovery idempotent");
 } finally {
   await browser.close();
   await stopNext();

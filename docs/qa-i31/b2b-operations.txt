@@ -1,0 +1,45 @@
+psql -Xq -v ON_ERROR_STOP=1 -f b2b-operations.sql
+exit 0
+PASS uncontracted trial cannot issue
+PASS expired trial blocks without grace
+PASS missing terms fail
+PASS missing or negative explicit price
+PASS missing or negative explicit price
+PASS missing or negative explicit price
+PASS repeat agreement
+PASS registration is pending and does not issue or activate
+PASS agreement key payload conflict
+PASS tenant mismatch
+PASS pre-contract competence
+PASS future coverage
+PASS same key returns existing invoice
+PASS another key converges on same competence
+PASS invoice key cannot change month
+PASS first exact negotiated due date and amount
+PASS cannot rewrite price after issue
+PASS pending contract can have overdue invoice without acquiring access
+PASS first missed payment grants no grace
+PASS calendar following early/late payments, including DST offset
+PASS worker failure isolated
+PASS failed audit rolls back invoice and subscription
+PASS retry updates both records
+PASS exact 72h grace
+PASS second invoice processed once
+PASS empty replay
+PASS zero balance is not overdue
+PASS past_due not extended or cured by older paid month
+PASS other tenant trial intact
+PASS canceled contract cannot issue
+PASS historical retry after cancellation
+PASS new agreement cannot overlap trial
+PASS first due must precede next due
+PASS DST gap follows PostgreSQL wall-time rule
+PASS invoice and audit fail together
+PASS failed issue retains no receipt or invoice
+PASS retry and autumn DST fold
+PASS legacy API roles cannot execute any billing operation
+PASS worker has no general financial grants
+PASS authenticated cannot issue directly
+PASS authenticated cannot register
+PASS service cannot run worker
+PASS service cannot directly update invoice

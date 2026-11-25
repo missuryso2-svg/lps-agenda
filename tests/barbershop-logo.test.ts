@@ -358,6 +358,19 @@ describe("endpoint autenticado de logo da barbearia", () => {
     expect(state.remove).toHaveBeenCalledWith([current]);
   });
 
+  it("omite imagem e versão quando a releitura do conflito falha", async () => {
+    const current = `${SHOP_A}/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp`;
+    state.currentLogo = current;
+    const db = setupDb();
+    db.from().maybeSingle.mockResolvedValueOnce({ data: { logo_url: current }, error: null })
+      .mockRejectedValueOnce(new Error("offline"));
+    state.replaceError = "40001";
+    const response = await DELETE(request("DELETE", current));
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ message: expect.stringContaining("Atualize a página") });
+    expect(state.remove).not.toHaveBeenCalled();
+  });
+
   it("preserva a imagem confirmada se a resposta da troca e a releitura se perderem", async () => {
     const db = setupDb();
     const lookup = db.from();

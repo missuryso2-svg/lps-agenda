@@ -1,0 +1,18 @@
+psql -Xq -v ON_ERROR_STOP=1 -f c1-concurrency.sql
+exit 0
+PASS real waiter behind c1_a
+PASS parallel first agreements replay one pending contract
+PASS real waiter behind c1_a
+PASS different operation IDs cannot create duplicate first agreements
+PASS real waiter behind c1_a
+PASS parallel human issuance returns one invoice
+PASS real waiter behind c1_a
+PASS parallel Pix returns identical receipt
+PASS one settlement audit
+PASS real waiter behind c1_a
+PASS late credit keeps cancellation
+PASS late payment retained and access closed
+PASS worker claims due invoice
+PASS real waiter behind c1_worker
+PASS credit reconciles committed delinquency
+PASS one paid invoice with consistent coverage

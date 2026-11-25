@@ -1,0 +1,4 @@
+node tests/integration/i3-logo.mjs
+exit 0
+PASS logo preview, upload, public WebP, dashboard, booking page, replacement and removal
+PASS deleted tenant reconciled through Storage API, reference protected and recovery idempotent

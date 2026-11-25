@@ -132,11 +132,9 @@ export function BarbershopLogoCard({
       const result = (await response.json().catch(() => ({}))) as LogoResponse;
 
       if (!response.ok) {
-        if (response.status === 409) {
-          if (result.version !== undefined) {
-            setLogoUrl(result.logoUrl ?? null);
-            setLogoVersion(result.version);
-          }
+        if (response.status === 409 && result.version !== undefined) {
+          setLogoUrl(result.logoUrl ?? null);
+          setLogoVersion(result.version);
           clearSelection();
           router.refresh();
         }

@@ -1,0 +1,5 @@
+npm.cmd run build
+exit 0
+✓ Compiled successfully in 7.7s
+Finished TypeScript in 9.1s ...
+✓ Generating static pages using 11 workers (8/8) in 237ms

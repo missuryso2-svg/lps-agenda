@@ -212,13 +212,12 @@ async function changeLogo(request: Request, remove: boolean): Promise<Response> 
     const code = changed.error?.code;
     if (code === "40001") {
       const latest = await readCurrentLogo(db, shopId);
+      if (!latest.ok) return fail("A logo mudou e a versão atual não pôde ser consultada. Atualize a página.", 409);
       return Response.json(
         {
           message: "A logo mudou. Revise a versão atual antes de tentar novamente.",
-          logoUrl: latest.ok
-            ? publicBarbershopLogoUrl(shopId, latest.value)
-            : null,
-          version: barbershopLogoVersion(latest.ok ? latest.value : null),
+          logoUrl: publicBarbershopLogoUrl(shopId, latest.value),
+          version: barbershopLogoVersion(latest.value),
         },
         { status: 409, headers: noStore },
       );

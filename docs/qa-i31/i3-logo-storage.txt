@@ -1,0 +1,23 @@
+psql -Xq -v ON_ERROR_STOP=1 -f i3-logo-storage.sql
+exit 0
+PASS dedicated public bucket accepts normalized WebP only
+PASS logo mutation RPC is available only to authenticated clients
+PASS logo API role is non-login, non-bypass and not delegated to API roles
+PASS client write policies do not permit direct logo storage mutations
+PASS owner session sees its own membership
+PASS owner can associate only an uploaded same-tenant logo
+PASS owner cannot change another tenant logo
+PASS direct logo_url Data API update is blocked
+PASS authenticated clients cannot bypass normalized uploads
+PASS owner cannot delete Storage objects directly
+PASS replacement uses optimistic version and queues old object
+PASS stale logo version cannot overwrite replacement
+PASS retired object cannot be reattached while cleanup is running
+PASS uncertain response cannot retire the current object
+PASS cleanup cannot be acknowledged while Storage still has the object
+PASS failed object cleanup remains queued
+PASS owner can remove current logo without confirming payment
+PASS replacement and removal cleanup keys remain tenant-scoped
+PASS abandoned upload is retired on the next cleanup
+PASS team staff cannot replace a barbershop logo
+PASS logo reference remains tenant scoped

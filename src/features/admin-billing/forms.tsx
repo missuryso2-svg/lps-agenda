@@ -102,6 +102,11 @@ export function AgreementForm({
           maxLength: 120,
         },
         reason,
+        {
+          type: "checkbox",
+          name: "bookingImpactAccepted",
+          label: "Entendo que o acordo ficará pendente até a confirmação do pagamento e poderá bloquear imediatamente novos agendamentos online, mesmo com início de cobertura futuro.",
+        },
       ]}
     />
   );

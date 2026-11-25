@@ -119,6 +119,7 @@ try {
   );
   const agreement = {
     kind: "agreement",
+    bookingImpactAccepted: true,
     op: ids(),
     confirmed: true,
     shop,
@@ -143,6 +144,11 @@ try {
     reference: "QA primeira assinatura",
     reason: "QA barbearia sem contrato",
   };
+  await mutate(operator, { ...firstManual, bookingImpactAccepted: false }, /confirmações obrigatórias/);
+  const oversized = ids();
+  sql(`insert into public.barbershops(id,name,slug) values ('${oversized}','QA Capacidade','qa-${oversized}');
+    insert into public.barbers(barbershop_id,name) values ('${oversized}','QA Um'), ('${oversized}','QA Dois');`);
+  await mutate(operator, { ...firstManual, shop: oversized, op: ids() }, /equipe ativa excede o limite/);
   await mutate(operator, firstManual, /Contrato registrado com sucesso/);
   assert.match(
     sql(`select status || ':' || gateway from public.subscriptions where barbershop_id='${uncontractedShop}' and agreement_at is not null`),
@@ -228,6 +234,11 @@ try {
         }),
       );
       const tab = await context.newPage();
+      await tab.goto(nextURL + root + "/barbearias/" + oversized);
+      const impact = tab.getByRole("checkbox", { name: /bloquear imediatamente novos agendamentos online/ });
+      assert.equal(await impact.isChecked(), false);
+      assert.equal(await impact.evaluate((el) => el.validity.valueMissing), true);
+      pass("agreement impact warning is visible and explicit acceptance is mandatory");
       await tab.goto(nextURL + detail, { waitUntil: "networkidle" });
       const pixSummary = tab
         .locator("article.fa-record")

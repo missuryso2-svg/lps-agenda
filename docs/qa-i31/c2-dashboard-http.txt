@@ -1,0 +1,10 @@
+node tests/integration/c2-dashboard-http.mjs
+exit 0
+PASS anonymous login return, four unauthorized identities, direct POST and direct RPC
+PASS operator without shop, manager-only directory, private no-store HTML and self-management denied
+PASS agreement at negotiated price, repeat issuance, exact cents and explicit attestation
+PASS agreement impact warning is visible and explicit acceptance is mandatory
+PASS bank receipt survives a lost HTTP reply and browser retry with original operation ID
+PASS Chrome desktop and mobile navigation, unchecked attestation, two-step confirmation and keyboard focus
+PASS concurrent settlement and retry return receipt, contract actions preserve history, filtered journal
+PASS same session denied after revocation, manual onboarding off

@@ -1,0 +1,3 @@
+npm.cmd run typecheck
+exit 0
+> tsc --noEmit

@@ -1,0 +1,36 @@
+psql -Xq -v ON_ERROR_STOP=1 -f c1-finance.sql
+exit 0
+PASS no grants at install
+PASS bootstrap once
+PASS privileged API cannot fabricate manual audit
+PASS anon denied
+PASS owner staff and legacy admin denied global read
+PASS unregistered cannot confirm
+PASS no direct operator grant
+PASS operator cannot grant or promote
+PASS operator directory contains shop
+PASS agreement replay
+PASS receipt binds commercial reference
+PASS invoice tenant mismatch
+PASS invoice amount equals negotiated
+PASS requires bank credit check
+PASS partial and excess refused
+PASS partial and excess refused
+PASS cannot settle across tenants
+PASS older invoice does not activate while current month is due
+PASS reference cannot be reused
+PASS posting fails atomically
+PASS rollback preserves unpaid invoice
+PASS current payment activates
+PASS exact replay
+PASS different payload after settlement
+PASS global financial totals
+PASS hold blocks booking despite paid coverage
+PASS resume refuses another overdue obligation
+PASS credit cannot clear administrative hold
+PASS adjustment unavailable even with reason
+PASS extra days cannot create payment
+PASS journal visible to operator
+PASS revocation denies same JWT read
+PASS revocation denies mutation and replay
+PASS cancellation retains all payments

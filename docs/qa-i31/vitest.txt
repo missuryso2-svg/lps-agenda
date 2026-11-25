@@ -1,0 +1,4 @@
+npm.cmd test -- --reporter=dot
+exit 0
+Test Files  37 passed (37)
+Tests  791 passed (791)

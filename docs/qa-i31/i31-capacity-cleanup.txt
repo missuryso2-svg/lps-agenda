@@ -1,0 +1,14 @@
+psql -Xq -v ON_ERROR_STOP=1 -f i31-capacity-cleanup.sql
+exit 0
+PASS unenrolled booking is initially allowed
+PASS future pending agreement below cap blocks booking immediately
+PASS agreement above cap rejected after concurrent activation
+PASS team preserved and agreement rolled back
+PASS activation waits for contract and cannot exceed cap
+PASS agreement at exact cap and one active professional
+PASS administrative claim rejects another tenant key
+PASS claim racing a replacement preserves the referenced logo
+PASS retirement survives tenant deletion
+PASS deleted tenant can be reconciled
+PASS claim is repeatable
+PASS single audit entry and no premature acknowledgement

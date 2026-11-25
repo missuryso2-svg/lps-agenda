@@ -88,6 +88,8 @@ export async function submitFinancialOperation(
     }
     if (response.error) {
       const code = response.error.code;
+      if (code === "LP031" && v.kind === "agreement")
+        return failure("A equipe ativa excede o limite do plano escolhido. Escolha um plano que comporte os profissionais ativos.");
       if (code === "42501") return failure("Acesso financeiro negado.");
       if (code === "55000" && v.kind === "pix")
         return failure(

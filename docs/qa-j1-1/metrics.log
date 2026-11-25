@@ -1,0 +1,8 @@
+clk_tck:
+100
+Before HTTP suite:
+{"name":"workerd","pid":831,"cpu_ticks":34,"rss_kib":102336,"peak_kib":102336}
+{"name":"workerd","pid":853,"cpu_ticks":182,"rss_kib":266360,"peak_kib":266360}
+After HTTP suite:
+{"name":"workerd","pid":831,"cpu_ticks":45,"rss_kib":105380,"peak_kib":105380}
+{"name":"workerd","pid":853,"cpu_ticks":268,"rss_kib":290256,"peak_kib":290256}

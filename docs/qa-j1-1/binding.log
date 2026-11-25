@@ -1,0 +1,3 @@
+env.UPLOAD_IMAGES                                              Images                    local
+env.LPS_IMAGE_PROCESSOR ("cloudflare")                         Environment Variable      local
+[wrangler:info] Ready on http://127.0.0.1:59331

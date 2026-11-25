@@ -1,0 +1,7 @@
+PASS logo rejects invalid images, unauthenticated, cross-tenant and cross-origin requests
+PASS logo JPG/PNG/WebP, orientation, WebP, transparency, dimensions and replacement
+PASS logo concurrent CAS, stale delete and cleanup
+PASS photo rejects invalid images, unauthenticated, cross-tenant and cross-origin requests
+PASS photo JPG/PNG/WebP, orientation, WebP, transparency, dimensions and replacement
+PASS photo concurrent CAS, stale delete and cleanup
+{"runtime":"workers","valid_upload_ms":[409,402,441,383,353,340]}

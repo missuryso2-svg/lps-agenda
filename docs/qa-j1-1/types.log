@@ -1,0 +1,42 @@
+⛅️ wrangler 4.168.0
+────────────────────
+Generating project types...
+
+interface __BaseEnv_Env {
+	UPLOAD_IMAGES: ImagesBinding;
+	ASSETS: Fetcher;
+	MANUAL_TRIAL_ONBOARDING_ENABLED: "false";
+	ADSENSE_ENABLED: "false";
+	LPS_WORKERS_CSP_FINALIZE: "true";
+	LPS_IMAGE_PROCESSOR: "cloudflare";
+	NEXT_PUBLIC_SUPABASE_URL: string;
+	NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
+	SUPABASE_SERVICE_ROLE_KEY: string;
+	NEXT_PUBLIC_APP_URL: string;
+	CSP_ENFORCE: string;
+	ASAAS_API_KEY: string;
+	ASAAS_WEBHOOK_TOKEN: string;
+	BILLING_CRON_SECRET: string;
+	WORKER_SELF_REFERENCE: Service<typeof import("../../../source/lps-agenda-j1/worker.j1").default>;
+}
+declare namespace Cloudflare {
+	interface Env extends __BaseEnv_Env {}
+}
+interface Env extends __BaseEnv_Env {}
+type StringifyValues<EnvType extends Record<string, unknown>> = {
+	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
+};
+declare namespace NodeJS {
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "MANUAL_TRIAL_ONBOARDING_ENABLED" | "ADSENSE_ENABLED" | "LPS_WORKERS_CSP_FINALIZE" | "LPS_IMAGE_PROCESSOR" | "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY" | "SUPABASE_SERVICE_ROLE_KEY" | "NEXT_PUBLIC_APP_URL" | "CSP_ENFORCE" | "ASAAS_API_KEY" | "ASAAS_WEBHOOK_TOKEN" | "BILLING_CRON_SECRET">> {}
+}
+
+Generating runtime types...
+
+Runtime types generated.
+
+
+✨ Types written to <QA_WORKTREE>/lps-j11-types.d.ts
+
+📖 Read about runtime types
+https://developers.cloudflare.com/workers/languages/typescript/#generate-types
+📣 Remember to rerun 'wrangler types' after you change your wrangler.jsonc file.

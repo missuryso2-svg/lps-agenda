@@ -1,0 +1,99 @@
+> lps-agenda@0.1.0 workers:build
+> opennextjs-cloudflare build --config wrangler.j1.jsonc
+
+
+┌─────────────────────────────┐
+│ OpenNext — Cloudflare build │
+└─────────────────────────────┘
+
+App directory: /work
+Next.js version : 16.4.5
+@opennextjs/cloudflare version: 1.20.19
+@opennextjs/aws version: 4.2.1
+workerd compatibility_date: 2026-11-25
+
+┌─────────────────────────────────┐
+│ OpenNext — Building Next.js app │
+└─────────────────────────────────┘
+
+
+> lps-agenda@0.1.0 build
+> next build
+
+▲ Next.js 16.4.5 (Turbopack)
+✓ Running next.config.ts took 38ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 8.0s
+  Running TypeScript ...
+  Finished TypeScript in 2.9s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/8) ...
+  Generating static pages using 11 workers (2/8)
+  Generating static pages using 11 workers (4/8)
+  Generating static pages using 11 workers (6/8)
+✓ Generating static pages using 11 workers (8/8) in 193ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /admin/acesso-negado
+├ ƒ /admin/assinaturas
+├ ƒ /admin/assinaturas/barbearias
+├ ƒ /admin/assinaturas/barbearias/[id]
+├ ƒ /admin/assinaturas/historico
+├ ƒ /admin/assinaturas/mensalidades
+├ ƒ /admin/assinaturas/operadores
+├ ƒ /admin/assinaturas/saude
+├ ƒ /agendar/[slug]
+├ ƒ /agendar/[slug]/reserva/[token]
+├ ƒ /agendar/[slug]/sobre
+├ ƒ /api/barbershop/logo
+├ ƒ /api/cron/billing-compensation
+├ ƒ /api/cron/trial-finalization
+├ ƒ /api/equipe/foto/[id]
+├ ƒ /api/webhooks/asaas
+├ ƒ /auth/callback
+├ ƒ /barbearia/[slug]
+├ ƒ /cadastro
+├ ƒ /dashboard
+├ ƒ /dashboard/agenda
+├ ƒ /dashboard/clientes
+├ ƒ /dashboard/configuracoes
+├ ƒ /dashboard/equipe
+├ ƒ /dashboard/financeiro
+├ ƒ /dashboard/horarios
+├ ƒ /dashboard/plano
+├ ƒ /dashboard/qr
+├ ƒ /dashboard/servicos
+├ ƒ /login
+├ ƒ /onboarding
+├ ƒ /privacidade
+├ ƒ /recuperar-senha
+├ ƒ /redefinir-senha
+└ ƒ /termos
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
+
+┌──────────────────────────────┐
+│ OpenNext — Generating bundle │
+└──────────────────────────────┘
+
+WARN Node.js middleware support is experimental in cloudflare, and not officially maintained by OpenNext maintainers. Use at your own risk.
+Bundling middleware function...
+Bundling Node.js middleware...
+Bundling static assets...
+Bundling cache assets...
+Building server function: default...
+Applying code patches: 3.090s
+# copyPackageTemplateFiles
+⚙️ Bundling the OpenNext server...
+
+Worker saved in `.open-next/worker.js` 🚀
+
+OpenNext build complete.

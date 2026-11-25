@@ -14,8 +14,10 @@ const state = vi.hoisted(() => ({
   upload: vi.fn(),
   remove: vi.fn(),
   lastReplace: null as Record<string, unknown> | null,
+  images: undefined as unknown,
 }));
 
+vi.mock("@opennextjs/cloudflare", () => ({ getCloudflareContext: () => ({ env: { UPLOAD_IMAGES: state.images } }) }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/security/upload-limit", () => ({ limitImageMutation: vi.fn(async () => null) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -249,6 +251,29 @@ describe("validação e normalização de logos", () => {
 });
 
 describe("endpoint autenticado de logo da barbearia", () => {
+  it.each([undefined, 9422, 9523])("mantém a logo se o binding estiver indisponível (%s)", async (code) => {
+    vi.stubEnv("LPS_IMAGE_PROCESSOR", "cloudflare");
+    const logo = `${SHOP_A}/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp`;
+    state.currentLogo = logo;
+    const output = vi.fn().mockRejectedValue({ code });
+    state.images = code === undefined ? undefined : {
+      info: vi.fn(async () => ({ format: "image/png", width: 16, height: 16 })),
+      input: () => ({ transform: () => ({ output }) }),
+    };
+    try {
+      const image = await sharp({ create: { width: 16, height: 16, channels: 3, background: "red" } }).png().toBuffer();
+      expect((await POST(request("POST", logo, image, "image/png"))).status).toBe(503);
+      expect(state.currentLogo).toBe(logo);
+      expect(state.upload).not.toHaveBeenCalled();
+      expect(state.remove).not.toHaveBeenCalled();
+      expect(state.lastReplace).toBeNull();
+      expect(output).toHaveBeenCalledTimes(code === undefined ? 0 : 1);
+    } finally {
+      state.images = undefined;
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("armazena WebP no tenant da sessão e persiste a referência sem receber shop_id", async () => {
     const png = await sharp({
       create: { width: 80, height: 40, channels: 4, background: "transparent" },

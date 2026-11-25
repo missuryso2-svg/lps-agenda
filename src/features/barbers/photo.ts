@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { loadImageDecoder } from "@/lib/security/image-decoder";
 import { rasterFormat } from "@/lib/security/image-signature";
 
 export const maxPhotoBytes = 2 * 1024 * 1024;
@@ -16,6 +16,7 @@ export async function normalizePhoto(bytes: Uint8Array, mime: string) {
     rasterFormat(bytes) !== formats[mime as keyof typeof formats]
   )
     throw new Error("invalid photo");
+  const sharp = await loadImageDecoder();
   const image = sharp(bytes, {
     limitInputPixels: 16_000_000,
     failOn: "warning",

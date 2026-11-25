@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { ImageDecoderUnavailable } from "@/lib/security/image-decoder";
 import { limitImageMutation } from "@/lib/security/upload-limit";
 
 import {
@@ -163,7 +164,8 @@ async function changeLogo(request: Request, remove: boolean): Promise<Response> 
     let image: Buffer;
     try {
       image = await boundedBarbershopLogo(request);
-    } catch {
+    } catch (error) {
+      if (error instanceof ImageDecoderUnavailable) return fail(error.message, 503);
       return fail(
         `Envie um arquivo PNG, JPG ou WebP válido de até ${maxBarbershopLogoBytes / 1024 / 1024} MB.`,
         400,

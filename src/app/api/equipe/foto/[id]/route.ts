@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { ImageDecoderUnavailable } from "@/lib/security/image-decoder";
 import { limitImageMutation } from "@/lib/security/upload-limit";
 import { revalidatePath } from "next/cache";
 import { boundedPhoto } from "@/features/barbers/photo";
@@ -72,7 +73,8 @@ async function change(req: Request, params: Params, remove: boolean) {
     let image: Buffer;
     try {
       image = await boundedPhoto(req);
-    } catch {
+    } catch (error) {
+      if (error instanceof ImageDecoderUnavailable) return fail(error.message, 503);
       return fail(
         "Envie uma foto JPG, PNG ou WebP de até 2 MB e 16 megapixels.",
         400,

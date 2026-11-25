@@ -1,6 +1,6 @@
 import "server-only";
 
-import sharp from "sharp";
+import { loadImageDecoder } from "@/lib/security/image-decoder";
 import { rasterFormat } from "@/lib/security/image-signature";
 import {
   MAX_BARBERSHOP_LOGO_BYTES,
@@ -24,6 +24,7 @@ export async function normalizeBarbershopLogo(
     limitInputPixels: MAX_BARBERSHOP_LOGO_PIXELS,
     failOn: "warning",
   } as const;
+  const sharp = await loadImageDecoder();
   const metadata = await sharp(bytes, sharpOptions).metadata();
 
   if (

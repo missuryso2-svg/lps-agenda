@@ -1,0 +1,50 @@
+:root {
+  --lps-canvas: #f6f4ed;
+  --lps-surface: #fffdf7;
+  --lps-subtle: #eeebe2;
+  --lps-ink: #201e19;
+  --lps-muted: #5e594f;
+  --lps-line: #d5cdbd;
+  --lps-edge: #83796a;
+  --lps-accent: #715117;
+  --lps-accent-soft: #ece0c3;
+  --lps-action: #dcb65f;
+  --lps-action-hover: #cfa54d;
+  --lps-on-action: #201a0d;
+  --lps-focus: #765317;
+  --lps-black: #191814;
+  --lps-inverse: #f7f1e5;
+  --lps-inverse-muted: #cbc1ae;
+  --lps-inverse-line: #514838;
+  --lps-positive: #375b41;
+  --lps-danger: #a12835;
+  --lps-display: Georgia, "Times New Roman", serif;
+  --lps-body: var(--font-sans);
+  --lps-code: var(--font-mono);
+  --lps-wrap: 74rem;
+  --lps-gutter: clamp(1.125rem, 4.5vw, 3.5rem);
+  --lps-section: clamp(3.5rem, 8vw, 7.5rem);
+  --lps-control: 2.75rem;
+  --lps-radius-control: 0.5rem;
+  --lps-radius-panel: 1rem;
+  --lps-shadow-panel: 0 14px 32px -25px #29200d60;
+  --lps-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --lps-ease-panel: cubic-bezier(0.32, 0.72, 0, 1);
+  --lps-press: 140ms;
+}
+
+.dark {
+  --lps-canvas: #171612;
+  --lps-surface: #211f19;
+  --lps-subtle: #2b2821;
+  --lps-ink: #f7f1e5;
+  --lps-muted: #c0b7a6;
+  --lps-line: #494133;
+  --lps-edge: #928671;
+  --lps-accent: #e4c478;
+  --lps-accent-soft: #383022;
+  --lps-focus: #f1cd77;
+  --lps-positive: #a5c6aa;
+  --lps-danger: #ffadb7;
+  --lps-shadow-panel: 0 16px 38px -23px #000b;
+}

@@ -32,12 +32,13 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   await connection();
   return (
-    <>
-      <SiteHeader />
-      <main className="flex-1">
+    <div className="j2-site">
+      <a className="j2-skip" href="#conteudo">Ir para o conteúdo</a>
+      <SiteHeader landing />
+      <main id="conteudo" tabIndex={-1}>
         <LandingPage />
       </main>
       <SiteFooter />
-    </>
+    </div>
   );
 }

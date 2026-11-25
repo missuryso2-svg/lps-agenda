@@ -1,31 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
-  ArrowUpRight,
-  CalendarDays,
-  ChevronDown,
-  Clock3,
-  LayoutDashboard,
-  Scissors,
-  ShieldCheck,
-  UsersRound,
+  ArrowDownRight, ArrowUpRight, CalendarDays, ChevronDown,
+  Clock3, LayoutDashboard, UsersRound,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { demoBarbershops } from "@/features/public-barbershop/demo-data";
 import { CommercialContact, CommercialPlans } from "./commercial-plans";
-
-import {trialOffer,trialTerms} from "./plan-benefits";
+import { trialOffer, trialTerms } from "./plan-benefits";
+import "./landing-j2.css";
 
 const demo = demoBarbershops[0];
-const demoPath = `/barbearia/${demo.slug}`;
+const demoPath = "/barbearia/" + demo.slug;
+const services = demo.services.slice(0, 3);
 
 const resources = [
   {
     icon: CalendarDays,
     name: "Agenda online",
-    copy: "Veja os horários de cada profissional e compartilhe o link para seus clientes agendarem.",
+    copy: "Veja os horários por profissional e compartilhe o link para seus clientes agendarem.",
   },
   {
     icon: UsersRound,
@@ -35,7 +28,7 @@ const resources = [
   {
     icon: LayoutDashboard,
     name: "Gestão da barbearia",
-    copy: "Acompanhe serviços, valores e atendimentos do dia em um painel da sua barbearia.",
+    copy: "Acompanhe serviços, valores e atendimentos do dia no painel da sua barbearia.",
   },
 ];
 
@@ -52,10 +45,7 @@ const faq = [
     "Como funciona o pagamento por Pix?",
     "Após o acordo, a equipe financeira registra a mensalidade e orienta o pagamento. Um operador autorizado confere o crédito e confirma a parcela.",
   ],
-  [
-    "Existe teste gratuito?",
-    trialOffer+" "+trialTerms,
-  ],
+  ["Existe teste gratuito?", trialOffer + " " + trialTerms],
   [
     "Posso mudar de plano?",
     "Converse com a LPS Solutions para avaliar o novo limite e as condições. A mudança depende de revisão do acordo.",
@@ -74,171 +64,147 @@ const faq = [
   ],
 ];
 
+function AgendaPreview() {
+  return (
+    <figure className="j2-agenda">
+      <figcaption className="j2-agenda-caption">
+        <span><CalendarDays size={18} aria-hidden /> Agenda do dia</span>
+        <span>Prévia ilustrativa</span>
+      </figcaption>
+      <div className="j2-agenda-title">
+        <strong>Barbearia Aurora</strong>
+        <span>Horário local</span>
+      </div>
+      <ol className="j2-slots">
+        {["09:00", "09:45", "10:30"].map((time, index) => {
+          const service = index === 1 ? undefined : services[index];
+          return (
+            <li key={time}>
+              <time>{time}</time>
+              <div className="j2-slot" data-available={!service}>
+                <strong>{service?.name ?? "Horário disponível"}</strong>
+                <span>{service ? service.durationMinutes + " min" : "Livre"}</span>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <Link href={demoPath} className="j2-agenda-link">
+        Abrir a Barbearia Aurora <ArrowUpRight size={16} aria-hidden />
+      </Link>
+    </figure>
+  );
+}
+
 export function LandingPage() {
   return (
     <>
-      <section className="lp-hero" aria-labelledby="hero-heading">
-        <div className="lp-photo">
-          <Image
-            src="/images/barbearia.webp"
-            alt="Barbeiro trabalhando em um corte de cabelo na barbearia"
-            fill
-            preload
-            sizes="(min-width: 900px) 68vw, 100vw"
-            className="object-cover"
-          />
-        </div>
-        <div className="lp-hero-inner">
-          <div className="lp-intro">
-            <p className="lp-kicker">
-              <span />
-              Gestão para barbearias
-            </p>
-            <h1 id="hero-heading">
-              Sua barbearia.
-              <br />
-              Seu ritmo.
-              <br />
-              <em>Sua agenda.</em>
-            </h1>
-            <p className="mt-5 text-sm font-semibold text-yellow-300">{trialOffer}</p>
-            <p className="mt-1 text-xs text-white/80">{trialTerms}</p>
-            <p className="lp-lead">
-              Organize agendamentos, serviços e clientes. Veja quem atende em
-              cada horário e compartilhe a agenda da barbearia por link.
-            </p>
-            <div className="lp-actions">
-              <Button asChild size="xl" variant="gold">
-                <Link href="#planos">
-                  Conhecer os planos <ArrowRight />
-                </Link>
-              </Button>
-              <Link href={demoPath} className="lp-demo-link">
-                Ver demonstração <ArrowRight size={16} />
-              </Link>
-            </div>
+      <section className="j2-wrap j2-hero" aria-labelledby="hero-heading">
+        <div>
+          <p className="j2-kicker"><span aria-hidden /> Gestão para barbearias</p>
+          <h1 id="hero-heading">O dia da sua barbearia, <em>em ordem.</em></h1>
+          <p className="j2-lead">
+            Organize a equipe, veja quem atende em cada horário e deixe seus
+            clientes agendarem pelo link da sua barbearia.
+          </p>
+          <div className="j2-actions">
+            <Link href="#planos" className="j2-button">
+              Conhecer os planos <ArrowDownRight size={18} aria-hidden />
+            </Link>
+            <Link href={demoPath} className="j2-text-link">
+              Ver demonstração <ArrowUpRight size={17} aria-hidden />
+            </Link>
           </div>
-          <Link
-            href={demoPath}
-            className="lp-preview"
-            aria-label="Ver serviços da Barbearia Aurora na demonstração"
-          >
-            <span className="lp-preview-top">
-              <span>
-                <Scissors size={15} /> Serviço em destaque
-              </span>
-              <ArrowUpRight size={16} />
-            </span>
-            <strong>{demo.services[0].name}</strong>
-            <span className="lp-preview-meta">
-              <Clock3 size={13} /> {demo.services[0].durationMinutes} min <i />{" "}
-              Barbearia Aurora · Demo
-            </span>
+        </div>
+        <AgendaPreview />
+      </section>
+
+      <section id="recursos" className="j2-benefits" aria-labelledby="recursos-heading">
+        <div className="j2-wrap">
+          <h2 id="recursos-heading" className="j2-section-title">Da primeira reserva ao fim do expediente.</h2>
+          <div className="j2-benefit-grid">
+            {resources.map(({ icon: Icon, name, copy }) => (
+              <article key={name}>
+                <Icon size={23} strokeWidth={1.6} aria-hidden />
+                <h3>{name}</h3>
+                <p>{copy}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="como-funciona" className="j2-wrap j2-demo" aria-labelledby="demo-heading">
+        <picture className="j2-photo">
+          <source
+            srcSet="/images/barbearia-480.webp 480w, /images/barbearia-768.webp 768w, /images/barbearia.webp 1536w"
+            sizes="(max-width: 42rem) 91vw, (max-width: 82rem) 43vw, 34rem"
+            type="image/webp"
+          />
+          <Image
+            src="/images/barbearia-768.webp"
+            alt="Barbeiro atendendo um cliente na barbearia"
+            width={768}
+            height={512}
+            unoptimized
+          />
+        </picture>
+        <div>
+          <p className="j2-kicker"><span aria-hidden /> Como funciona</p>
+          <h2 id="demo-heading" className="j2-section-title">Da sua cadeira à tela do cliente.</h2>
+          <ol className="j2-steps">
+            <li>Cadastre os serviços e defina quem atende.</li>
+            <li>Abra os horários e compartilhe seu link.</li>
+            <li>O cliente escolhe o serviço e o horário disponível.</li>
+          </ol>
+          <div className="j2-demo-catalog">
+            <h3>{demo.name} <small>Demonstração</small></h3>
+            <ul>
+              {services.map(service => (
+                <li key={service.name}>
+                  <span>{service.name}</span>
+                  <span><Clock3 size={14} aria-hidden /> {service.durationMinutes} min</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Link href={demoPath} className="j2-text-link j2-demo-cta">
+            Explorar a demonstração <ArrowUpRight size={17} aria-hidden />
           </Link>
         </div>
       </section>
 
-      <section
-        id="recursos"
-        className="lp-resource-band"
-        aria-label="Recursos para o dia a dia"
-      >
-        <div className="lp-resource-grid">
-          {resources.map(({ icon: Icon, name, copy }) => (
-            <article key={name}>
-              <Icon size={24} strokeWidth={1.6} />
-              <div>
-                <h2>{name}</h2>
-                <p>{copy}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="como-funciona" className="lp-section">
-        <div className="lp-split">
-          <div>
-            <p className="lp-kicker">
-              <span />
-              Como funciona
-            </p>
-            <h2 className="lp-title">
-              Da sua cadeira
-              <br />à tela do cliente.
-            </h2>
-            <p className="lp-body">
-              Cadastre os serviços, defina quem atende e abra seus horários.
-              Seus clientes escolhem o que precisam pelo link da sua barbearia.
-            </p>
-            <Link href={demoPath} className="lp-text-link">
-              Explorar a demonstração <ArrowUpRight size={16} />
-            </Link>
-          </div>
-          <div className="lp-demo-panel">
-            <div className="lp-demo-header">
-              <span className="lp-demo-icon">
-                <Scissors />
-              </span>
-              <div>
-                <strong>{demo.name}</strong>
-                <small>Catálogo de serviços · Demonstração</small>
-              </div>
-            </div>
-            {demo.services.slice(0, 3).map((service) => (
-              <div key={service.name} className="lp-service">
-                <strong>{service.name}</strong>
-                <span>
-                  <Clock3 size={14} /> {service.durationMinutes} min
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="planos" className="lp-plans">
-        <div className="lp-section">
-          <p className="lp-kicker">
-            <span />
-            Planos
-          </p>
-          <h2 className="lp-title">Um plano para cada equipe.</h2>
+      <section id="planos" className="j2-plans" aria-labelledby="planos-heading">
+        <div className="j2-wrap">
+          <p className="j2-kicker"><span aria-hidden /> Planos</p>
+          <h2 id="planos-heading" className="j2-section-title">Um plano para cada equipe.</h2>
           <CommercialPlans />
         </div>
       </section>
 
-      <section id="faq" className="lp-section">
-        <div className="lp-split">
-          <div>
-            <ShieldCheck className="mb-4 text-gold" size={28} />
-            <h2 className="lp-title">Antes de começar.</h2>
-            <p className="lp-body">
-              Saiba como sua equipe e seus clientes usam o LPS Agenda.
-            </p>
-          </div>
-          <div className="lp-questions">
-            {faq.map(([q, a]) => (
-              <details key={q}>
-                <summary>
-                  {q}
-                  <ChevronDown size={18} />
-                </summary>
-                <p>{a}</p>
-              </details>
-            ))}
-          </div>
+      <section id="faq" className="j2-wrap j2-faq" aria-labelledby="faq-heading">
+        <div>
+          <p className="j2-kicker"><span aria-hidden /> Perguntas frequentes</p>
+          <h2 id="faq-heading" className="j2-section-title">Antes de começar.</h2>
+        </div>
+        <div className="j2-questions">
+          {faq.map(([question, answer]) => (
+            <details key={question}>
+              <summary>{question}<ChevronDown size={18} aria-hidden /></summary>
+              <p>{answer}</p>
+            </details>
+          ))}
         </div>
       </section>
 
-      <section id="contato" className="lp-final">
-        <div>
-          <h2>Pronto para organizar sua barbearia?</h2>
-          <p className="mt-3 text-sm text-white/80">
-            Converse sobre a equipe, os valores e as condições para começar.
-          </p>
+      <section id="contato" className="j2-wrap" aria-labelledby="contato-heading">
+        <div className="j2-contact">
+          <div>
+            <h2 id="contato-heading" className="j2-section-title">Pronto para organizar sua barbearia?</h2>
+            <p>Converse sobre a equipe, os valores e as condições para começar.</p>
+          </div>
+          <CommercialContact />
         </div>
-        <CommercialContact />
       </section>
     </>
   );

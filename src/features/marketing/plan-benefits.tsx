@@ -40,7 +40,7 @@ const benefits = [
 
 export function PlanBenefits() {
   return (
-    <section className="mt-8">
+    <section className="lp-benefits mt-8">
       <h3 className="font-display text-xl font-semibold">
         Incluído em todos os planos
       </h3>

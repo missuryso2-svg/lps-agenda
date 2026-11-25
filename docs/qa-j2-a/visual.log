@@ -1,0 +1,10 @@
+PASS 375 light · layout, WCAG contrast pairs, nonce CSP, keyboard, FAQ and theme
+PASS 375 dark · layout, WCAG contrast pairs, nonce CSP, keyboard, FAQ and theme
+PASS 768 light · layout, WCAG contrast pairs, nonce CSP, keyboard, FAQ and theme
+PASS 768 dark · layout, WCAG contrast pairs, nonce CSP, keyboard, FAQ and theme
+PASS 1280 light · layout, WCAG contrast pairs, nonce CSP, keyboard, FAQ and theme
+PASS 1280 dark · layout, WCAG contrast pairs, nonce CSP, keyboard, FAQ and theme
+PASS 1920 light · layout, WCAG contrast pairs, nonce CSP, keyboard, FAQ and theme
+PASS 1920 dark · layout, WCAG contrast pairs, nonce CSP, keyboard, FAQ and theme
+PASS pointer menu 200 ms; keyboard dismisses and returns focus
+Captured 8 width/theme combinations from the real local build.

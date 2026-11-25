@@ -47,7 +47,7 @@ export function CommercialPlans() {
         Escolha pelo tamanho da equipe. A LPS Solutions negocia a mensalidade e
         as condições diretamente com sua barbearia.
       </p>
-      <p className="mt-3 text-sm">
+      <p className="lp-trial mt-3 text-sm">
         <strong>{trialOffer}</strong> {trialTerms}
       </p>
       <div className="lp-plan-grid">

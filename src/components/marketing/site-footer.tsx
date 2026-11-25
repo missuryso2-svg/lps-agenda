@@ -61,9 +61,9 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#ffdb16]">
+      <h2 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#ffdb16]">
         {title}
-      </h3>
+      </h2>
       <ul className="mt-5 space-y-3">
         {links.map((link) => (
           <li key={link.href}>

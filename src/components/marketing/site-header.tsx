@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, Menu } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/brand/theme-toggle";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetClose,
+  SheetDescription,
   SheetContent,
   SheetHeader,
   SheetTitle,
@@ -22,9 +24,11 @@ const links = [
   { href: "/barbearia/barbearia-aurora", label: "Demonstração" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ landing = false }: { landing?: boolean }) {
+  const [pointerOpen, setPointerOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl">
+    <header data-landing={landing || undefined} className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
         <Link href="/" aria-label="LPS Agenda — início">
           <Logo />
@@ -59,17 +63,30 @@ export function SiteHeader() {
           <ThemeToggle />
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Abrir menu">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Abrir menu"
+                onClick={landing ? event => setPointerOpen(event.detail > 0) : undefined}
+              >
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-[86%] sm:max-w-sm">
+            <SheetContent
+              className={landing ? "j2-sheet" : "w-[86%] sm:max-w-sm"}
+              overlayClassName={landing ? "j2-sheet-overlay" : undefined}
+              data-pointer-open={landing && pointerOpen ? "" : undefined}
+              onEscapeKeyDown={landing ? () => setPointerOpen(false) : undefined}
+            >
               <SheetHeader className="border-b pb-4">
                 <SheetTitle>
                   <Link href="/" aria-label="LPS Agenda — início">
                     <Logo />
                   </Link>
                 </SheetTitle>
+                {landing && (
+                  <SheetDescription className="sr-only">Navegação do LPS Agenda</SheetDescription>
+                )}
               </SheetHeader>
 
               <nav className="flex flex-col px-2" aria-label="Menu">

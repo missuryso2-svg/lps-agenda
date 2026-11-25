@@ -1,0 +1,1178 @@
+[
+  {
+    "width": 375,
+    "theme": "light",
+    "lcp": 636,
+    "cls": 0,
+    "longTasks": 1,
+    "fcp": 636,
+    "ttfb": 98.09999999403954,
+    "jsBytes": 216817,
+    "imageBytes": 23594,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": [
+      {
+        "foreground": "ink",
+        "background": "canvas",
+        "ratio": 15.13,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "surface",
+        "ratio": 16.37,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "subtle",
+        "ratio": 13.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "canvas",
+        "ratio": 6.32,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 6.84,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "subtle",
+        "ratio": 5.84,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "accent-soft",
+        "ratio": 5.31,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "canvas",
+        "ratio": 6.6,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "subtle",
+        "ratio": 6.09,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "accent-soft",
+        "ratio": 5.54,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "positive",
+        "background": "subtle",
+        "ratio": 6.44,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "danger",
+        "background": "surface",
+        "ratio": 7.19,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action",
+        "ratio": 8.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action-hover",
+        "ratio": 7.52,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse",
+        "background": "black",
+        "ratio": 15.79,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse-muted",
+        "background": "black",
+        "ratio": 9.96,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "focus",
+        "background": "canvas",
+        "ratio": 6.32,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "surface",
+        "ratio": 6.84,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "subtle",
+        "ratio": 5.83,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "canvas",
+        "ratio": 3.89,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "surface",
+        "ratio": 4.21,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "subtle",
+        "ratio": 3.59,
+        "threshold": 3
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "lcp": 216,
+    "cls": 0,
+    "longTasks": 1,
+    "fcp": 216,
+    "ttfb": 40.80000001192093,
+    "jsBytes": 216817,
+    "imageBytes": 23594,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": [
+      {
+        "foreground": "ink",
+        "background": "canvas",
+        "ratio": 16.09,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "surface",
+        "ratio": 14.65,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "subtle",
+        "ratio": 13.07,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "canvas",
+        "ratio": 9.11,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 8.29,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "subtle",
+        "ratio": 7.4,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "accent-soft",
+        "ratio": 6.55,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "canvas",
+        "ratio": 10.75,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "subtle",
+        "ratio": 8.73,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "accent-soft",
+        "ratio": 7.72,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "positive",
+        "background": "subtle",
+        "ratio": 7.88,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "danger",
+        "background": "surface",
+        "ratio": 9.35,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action",
+        "ratio": 8.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action-hover",
+        "ratio": 7.52,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse",
+        "background": "black",
+        "ratio": 15.79,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse-muted",
+        "background": "black",
+        "ratio": 9.96,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "focus",
+        "background": "canvas",
+        "ratio": 11.84,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "surface",
+        "ratio": 10.78,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "subtle",
+        "ratio": 9.62,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "canvas",
+        "ratio": 5.06,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "surface",
+        "ratio": 4.61,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "subtle",
+        "ratio": 4.11,
+        "threshold": 3
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "lcp": 208,
+    "cls": 0,
+    "longTasks": 1,
+    "fcp": 208,
+    "ttfb": 27.5,
+    "jsBytes": 216817,
+    "imageBytes": 23594,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": [
+      {
+        "foreground": "ink",
+        "background": "canvas",
+        "ratio": 15.13,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "surface",
+        "ratio": 16.37,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "subtle",
+        "ratio": 13.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "canvas",
+        "ratio": 6.32,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 6.84,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "subtle",
+        "ratio": 5.84,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "accent-soft",
+        "ratio": 5.31,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "canvas",
+        "ratio": 6.6,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "subtle",
+        "ratio": 6.09,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "accent-soft",
+        "ratio": 5.54,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "positive",
+        "background": "subtle",
+        "ratio": 6.44,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "danger",
+        "background": "surface",
+        "ratio": 7.19,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action",
+        "ratio": 8.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action-hover",
+        "ratio": 7.52,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse",
+        "background": "black",
+        "ratio": 15.79,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse-muted",
+        "background": "black",
+        "ratio": 9.96,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "focus",
+        "background": "canvas",
+        "ratio": 6.32,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "surface",
+        "ratio": 6.84,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "subtle",
+        "ratio": 5.83,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "canvas",
+        "ratio": 3.89,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "surface",
+        "ratio": 4.21,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "subtle",
+        "ratio": 3.59,
+        "threshold": 3
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "lcp": 204,
+    "cls": 0,
+    "longTasks": 1,
+    "fcp": 204,
+    "ttfb": 22.899999976158142,
+    "jsBytes": 216817,
+    "imageBytes": 23594,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": [
+      {
+        "foreground": "ink",
+        "background": "canvas",
+        "ratio": 16.09,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "surface",
+        "ratio": 14.65,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "subtle",
+        "ratio": 13.07,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "canvas",
+        "ratio": 9.11,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 8.29,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "subtle",
+        "ratio": 7.4,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "accent-soft",
+        "ratio": 6.55,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "canvas",
+        "ratio": 10.75,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "subtle",
+        "ratio": 8.73,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "accent-soft",
+        "ratio": 7.72,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "positive",
+        "background": "subtle",
+        "ratio": 7.88,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "danger",
+        "background": "surface",
+        "ratio": 9.35,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action",
+        "ratio": 8.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action-hover",
+        "ratio": 7.52,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse",
+        "background": "black",
+        "ratio": 15.79,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse-muted",
+        "background": "black",
+        "ratio": 9.96,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "focus",
+        "background": "canvas",
+        "ratio": 11.84,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "surface",
+        "ratio": 10.78,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "subtle",
+        "ratio": 9.62,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "canvas",
+        "ratio": 5.06,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "surface",
+        "ratio": 4.61,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "subtle",
+        "ratio": 4.11,
+        "threshold": 3
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "lcp": 168,
+    "cls": 0,
+    "longTasks": 1,
+    "fcp": 168,
+    "ttfb": 22.69999998807907,
+    "jsBytes": 216817,
+    "imageBytes": 37190,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": [
+      {
+        "foreground": "ink",
+        "background": "canvas",
+        "ratio": 15.13,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "surface",
+        "ratio": 16.37,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "subtle",
+        "ratio": 13.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "canvas",
+        "ratio": 6.32,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 6.84,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "subtle",
+        "ratio": 5.84,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "accent-soft",
+        "ratio": 5.31,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "canvas",
+        "ratio": 6.6,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "subtle",
+        "ratio": 6.09,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "accent-soft",
+        "ratio": 5.54,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "positive",
+        "background": "subtle",
+        "ratio": 6.44,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "danger",
+        "background": "surface",
+        "ratio": 7.19,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action",
+        "ratio": 8.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action-hover",
+        "ratio": 7.52,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse",
+        "background": "black",
+        "ratio": 15.79,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse-muted",
+        "background": "black",
+        "ratio": 9.96,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "focus",
+        "background": "canvas",
+        "ratio": 6.32,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "surface",
+        "ratio": 6.84,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "subtle",
+        "ratio": 5.83,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "canvas",
+        "ratio": 3.89,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "surface",
+        "ratio": 4.21,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "subtle",
+        "ratio": 3.59,
+        "threshold": 3
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 244,
+    "cls": 0,
+    "longTasks": 2,
+    "fcp": 244,
+    "ttfb": 33.5,
+    "jsBytes": 216817,
+    "imageBytes": 37190,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": [
+      {
+        "foreground": "ink",
+        "background": "canvas",
+        "ratio": 16.09,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "surface",
+        "ratio": 14.65,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "subtle",
+        "ratio": 13.07,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "canvas",
+        "ratio": 9.11,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 8.29,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "subtle",
+        "ratio": 7.4,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "accent-soft",
+        "ratio": 6.55,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "canvas",
+        "ratio": 10.75,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "subtle",
+        "ratio": 8.73,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "accent-soft",
+        "ratio": 7.72,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "positive",
+        "background": "subtle",
+        "ratio": 7.88,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "danger",
+        "background": "surface",
+        "ratio": 9.35,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action",
+        "ratio": 8.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action-hover",
+        "ratio": 7.52,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse",
+        "background": "black",
+        "ratio": 15.79,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse-muted",
+        "background": "black",
+        "ratio": 9.96,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "focus",
+        "background": "canvas",
+        "ratio": 11.84,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "surface",
+        "ratio": 10.78,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "subtle",
+        "ratio": 9.62,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "canvas",
+        "ratio": 5.06,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "surface",
+        "ratio": 4.61,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "subtle",
+        "ratio": 4.11,
+        "threshold": 3
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "theme": "light",
+    "lcp": 156,
+    "cls": 0,
+    "longTasks": 1,
+    "fcp": 156,
+    "ttfb": 19.80000001192093,
+    "jsBytes": 216817,
+    "imageBytes": 37190,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": [
+      {
+        "foreground": "ink",
+        "background": "canvas",
+        "ratio": 15.13,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "surface",
+        "ratio": 16.37,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "subtle",
+        "ratio": 13.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "canvas",
+        "ratio": 6.32,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 6.84,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "subtle",
+        "ratio": 5.84,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "accent-soft",
+        "ratio": 5.31,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "canvas",
+        "ratio": 6.6,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "subtle",
+        "ratio": 6.09,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "accent-soft",
+        "ratio": 5.54,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "positive",
+        "background": "subtle",
+        "ratio": 6.44,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "danger",
+        "background": "surface",
+        "ratio": 7.19,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action",
+        "ratio": 8.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action-hover",
+        "ratio": 7.52,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse",
+        "background": "black",
+        "ratio": 15.79,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse-muted",
+        "background": "black",
+        "ratio": 9.96,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "focus",
+        "background": "canvas",
+        "ratio": 6.32,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "surface",
+        "ratio": 6.84,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "subtle",
+        "ratio": 5.83,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "canvas",
+        "ratio": 3.89,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "surface",
+        "ratio": 4.21,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "subtle",
+        "ratio": 3.59,
+        "threshold": 3
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 144,
+    "cls": 0,
+    "longTasks": 1,
+    "fcp": 144,
+    "ttfb": 15.599999994039536,
+    "jsBytes": 216817,
+    "imageBytes": 37190,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": [
+      {
+        "foreground": "ink",
+        "background": "canvas",
+        "ratio": 16.09,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "surface",
+        "ratio": 14.65,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "ink",
+        "background": "subtle",
+        "ratio": 13.07,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "canvas",
+        "ratio": 9.11,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 8.29,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "subtle",
+        "ratio": 7.4,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "muted",
+        "background": "accent-soft",
+        "ratio": 6.55,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "canvas",
+        "ratio": 10.75,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "subtle",
+        "ratio": 8.73,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "accent",
+        "background": "accent-soft",
+        "ratio": 7.72,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "positive",
+        "background": "subtle",
+        "ratio": 7.88,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "danger",
+        "background": "surface",
+        "ratio": 9.35,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action",
+        "ratio": 8.97,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "on-action",
+        "background": "action-hover",
+        "ratio": 7.52,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse",
+        "background": "black",
+        "ratio": 15.79,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "inverse-muted",
+        "background": "black",
+        "ratio": 9.96,
+        "threshold": 4.5
+      },
+      {
+        "foreground": "focus",
+        "background": "canvas",
+        "ratio": 11.84,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "surface",
+        "ratio": 10.78,
+        "threshold": 3
+      },
+      {
+        "foreground": "focus",
+        "background": "subtle",
+        "ratio": 9.62,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "canvas",
+        "ratio": 5.06,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "surface",
+        "ratio": 4.61,
+        "threshold": 3
+      },
+      {
+        "foreground": "edge",
+        "background": "subtle",
+        "ratio": 4.11,
+        "threshold": 3
+      }
+    ]
+  }
+]

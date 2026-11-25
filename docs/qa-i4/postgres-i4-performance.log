@@ -1,0 +1,98 @@
+Time: 0.109 ms
+Time: 0.290 ms
+Time: 1.876 ms
+Time: 1.222 ms
+Time: 1.086 ms
+Time: 1.630 ms
+Time: 7.287 ms
+Time: 0.674 ms
+Time: 0.813 ms
+Time: 224.056 ms
+Time: 3035.717 ms (00:03.036)
+Time: 36.126 ms
+Time: 21.771 ms
+Time: 0.515 ms
+Time: 0.249 ms
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+Time: 0.140 ms
+Time: 0.114 ms
+Agenda: tenant + time range under actual RLS (20,000 synthetic appointments)
+                                                                                                              QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=158.06..158.15 rows=36 width=28) (actual time=0.552..0.554 rows=48 loops=1)
+   Sort Key: appointments.starts_at
+   Sort Method: quicksort  Memory: 27kB
+   Buffers: shared hit=147
+   InitPlan 2
+     ->  Result  (cost=0.00..0.26 rows=1 width=1) (never executed)
+   ->  Bitmap Heap Scan on appointments  (cost=4.90..156.87 rows=36 width=28) (actual time=0.283..0.545 rows=48 loops=1)
+         Recheck Cond: ((barbershop_id = '<QA_UUID>'::uuid) AND (starts_at >= '2025-01-10 00:00:00+00'::timestamp with time zone) AND (starts_at < '2025-01-11 00:00:00+00'::timestamp with time zone))
+         Filter: ((SubPlan 1) OR (InitPlan 2).col1)
+         Heap Blocks: exact=21
+         Buffers: shared hit=147
+         ->  Bitmap Index Scan on appointments_shop_range_idx  (cost=0.00..4.89 rows=48 width=0) (actual time=0.008..0.008 rows=48 loops=1)
+               Index Cond: ((barbershop_id = '<QA_UUID>'::uuid) AND (starts_at >= '2025-01-10 00:00:00+00'::timestamp with time zone) AND (starts_at < '2025-01-11 00:00:00+00'::timestamp with time zone))
+               Buffers: shared hit=2
+         SubPlan 1
+           ->  Result  (cost=0.00..0.26 rows=1 width=1) (actual time=0.010..0.010 rows=1 loops=48)
+                 Buffers: shared hit=124
+ Planning:
+   Buffers: shared hit=102
+ Planning Time: 0.204 ms
+ Execution Time: 0.587 ms
+(21 rows)
+
+Time: 1.385 ms
+Customer page: tenant + active + sort under actual RLS (20,020 synthetic customers)
+                                                                QUERY PLAN
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.67..35.62 rows=20 width=27) (actual time=0.104..0.215 rows=20 loops=1)
+   Buffers: shared hit=33
+   InitPlan 2
+     ->  Result  (cost=0.00..0.26 rows=1 width=1) (never executed)
+   ->  Index Scan using customers_shop_idx on customers  (cost=0.41..1312.81 rows=751 width=27) (actual time=0.103..0.213 rows=20 loops=1)
+         Index Cond: (barbershop_id = '<QA_UUID>'::uuid)
+         Filter: (is_active AND ((SubPlan 1) OR (InitPlan 2).col1))
+         Buffers: shared hit=33
+         SubPlan 1
+           ->  Result  (cost=0.00..0.26 rows=1 width=1) (actual time=0.010..0.010 rows=1 loops=20)
+                 Buffers: shared hit=20
+ Planning:
+   Buffers: shared hit=52
+ Planning Time: 0.127 ms
+ Execution Time: 0.227 ms
+(15 rows)
+
+Time: 0.677 ms
+Customer substring search and exact count under actual RLS
+                                                                     QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=541.92..541.93 rows=1 width=8) (actual time=6.688..6.689 rows=1 loops=1)
+   Buffers: shared hit=1251
+   InitPlan 2
+     ->  Result  (cost=0.00..0.26 rows=1 width=1) (never executed)
+   ->  Bitmap Heap Scan on customers  (cost=15.80..541.58 rows=30 width=0) (actual time=3.409..6.685 rows=1 loops=1)
+         Recheck Cond: (barbershop_id = '<QA_UUID>'::uuid)
+         Filter: (is_active AND ((SubPlan 1) OR (InitPlan 2).col1) AND ((full_name ~~* '%500%'::text) OR (email ~~* '%500%'::text)))
+         Rows Removed by Filter: 1000
+         Heap Blocks: exact=248
+         Buffers: shared hit=1251
+         ->  Bitmap Index Scan on customers_shop_phone_digits_idx  (cost=0.00..15.79 rows=1001 width=0) (actual time=0.022..0.022 rows=1001 loops=1)
+               Index Cond: (barbershop_id = '<QA_UUID>'::uuid)
+               Buffers: shared hit=2
+         SubPlan 1
+           ->  Result  (cost=0.00..0.26 rows=1 width=1) (actual time=0.005..0.006 rows=1 loops=1001)
+                 Buffers: shared hit=1001
+ Planning:
+   Buffers: shared hit=3
+ Planning Time: 0.110 ms
+ Execution Time: 6.707 ms
+(20 rows)
+
+Time: 7.273 ms
+Time: 0.098 ms
+Time: 1.180 ms

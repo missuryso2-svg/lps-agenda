@@ -1,0 +1,39 @@
+psql:/tmp/i4-pg/manual-billing-concurrency.sql:4: NOTICE:  extension "dblink" already exists, skipping
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_exec
+-------------
+ INSERT 0 1
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing-concurrency.sql:44: NOTICE:  PASS second writer blocked by first
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing-concurrency.sql:50: NOTICE:  PASS competing insert rejected with 23505
+ dblink_disconnect | dblink_disconnect
+-------------------+-------------------
+ OK                | OK
+(1 row)
+
+PASS one pending invoice committed

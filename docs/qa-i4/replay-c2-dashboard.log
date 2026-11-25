@@ -1,0 +1,168 @@
+     bootstrap_financial_manager
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:35: NOTICE:  PASS public RPCs owned by limited role and no anonymous or service grants
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:36: NOTICE:  PASS invoker view private
+ verify
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:39: NOTICE:  PASS dedicated role cannot login, bypass RLS or create public functions
+--------
+
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+           finance_operator
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:44: NOTICE:  PASS manager self revocation denied
+ rejected
+----------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:45: NOTICE:  PASS manager can list grants
+--------
+
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:47: NOTICE:  PASS individual capability
+ verify
+--------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:48: NOTICE:  PASS regular operator cannot list grants
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:53: NOTICE:  PASS shop without any subscription can receive a pending agreement
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:56: NOTICE:  PASS pending agreement cannot be duplicated
+ rejected
+----------
+
+(1 row)
+
+                                                                    finance_contract_action
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"after": "canceled", "action": "cancel", "before": "pending", "contract": "<QA_UUID>", "suspended": false, "was_suspended": false}
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:68: NOTICE:  PASS canceled manual contract permits a non-overlapping new pending agreement
+--------
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:71: NOTICE:  PASS active trial is not ended by applying a contract
+----------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:74: NOTICE:  PASS active trial remains unchanged
+--------
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:77: NOTICE:  PASS legacy Asaas history remains blocked
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:80: NOTICE:  PASS terminal mixed Asaas/manual history remains in reconciliation
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:83: NOTICE:  PASS terminal Asaas history cannot be converted without reconciliation
+ rejected
+----------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:84: NOTICE:  PASS overview counts all pages
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:87: NOTICE:  PASS 105 filtered shops without gaps or overlap
+ verify
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:89: NOTICE:  PASS no contract is distinct from delinquency
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:92: NOTICE:  PASS mixed legacy history requires reconciliation; shop-service payment is not verified Pix
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:94: NOTICE:  PASS legacy plus manual history requires reconciliation
+ verify
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:97: NOTICE:  PASS trial dates and selected subscription originate from manual trial
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:99: NOTICE:  PASS isolated Asaas subscription explicitly classified without manual trial dates
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:101: NOTICE:  PASS compatibility projection matches directory
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c2-dashboard.sql:102: NOTICE:  PASS private history remains immutable
+ rejected
+----------
+
+(1 row)

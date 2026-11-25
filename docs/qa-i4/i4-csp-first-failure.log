@@ -1,0 +1,17 @@
+PASS Data API: tenant isolation, anon denial, private schema hidden, finance denied, private photo IDOR denied
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Script nonce mismatch: <script src="/_next/static/chunks/1k2w3nq2-wg_-.js" async="">
+    at file:///<QA_WORKTREE>/tests/integration/i4-security-http.mjs:43:66
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

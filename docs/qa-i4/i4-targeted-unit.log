@@ -1,0 +1,16 @@
+
+> lps-agenda@0.1.0 test
+> vitest run tests/security-i4.test.ts tests/permissions.test.ts tests/product-f1.test.ts tests/barbershop-logo.test.ts
+
+
+ RUN  v5.1.0 <QA_WORKTREE>
+
+ ✓ tests/permissions.test.ts (12 tests) 6ms
+ ✓ tests/product-f1.test.ts (10 tests) 51ms
+ ✓ tests/security-i4.test.ts (6 tests) 18ms
+ ✓ tests/barbershop-logo.test.ts (15 tests) 251ms
+
+ Test Files  4 passed (4)
+      Tests  43 passed (43)
+   Start at  05:56:18
+   Duration  1.07s (import 61%, transform 20%, tests 17%, setup 2%, worker 1%)

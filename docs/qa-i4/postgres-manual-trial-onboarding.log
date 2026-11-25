@@ -1,0 +1,260 @@
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:25: NOTICE:  PASS initially disabled
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:28: NOTICE:  PASS dedicated role has no login, bypass or administration
+ check_case
+------------
+
+(1 row)
+
+ check_case
+------------
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:31: NOTICE:  PASS only the onboarding RPC runs as this definer
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:34: NOTICE:  PASS no API role can SET ROLE to the definer
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:40: NOTICE:  PASS no broad privileges for definer
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:44: NOTICE:  PASS anon denied
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:46: NOTICE:  PASS auth.uid required
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:50: NOTICE:  PASS actual PostgREST role and claims
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:52: NOTICE:  PASS direct RPC with caller flag still disabled
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:53: NOTICE:  PASS cannot write database flag
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:54: NOTICE:  PASS cannot assume onboarding identity
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:55: NOTICE:  PASS cannot supply own intent record
+ check_case
+------------
+
+(1 row)
+
+                              set_config
+-----------------------------------------------------------------------
+ {"sub":"<QA_UUID>","role":"authenticated"}
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+ set_config
+------------
+ true
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+ authorize_manual_trial_intent
+-------------------------------
+
+
+
+
+(4 rows)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:73: NOTICE:  PASS equivalent retry returns original shop
+ check_case
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:75: NOTICE:  PASS invalid slug rejected
+ check_case
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:77: NOTICE:  PASS invalid timezone rejected
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:79: NOTICE:  PASS missing intent rejected
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:82: NOTICE:  PASS owner cannot insert manual subscription while enabled
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:84: NOTICE:  PASS owner cannot create manual invoice while enabled
+                                                     set_config
+--------------------------------------------------------------------------------------------------------------------
+ {"sub":"<QA_UUID>","role":"authenticated","app_metadata":{"lps_role":"platform_admin"}}
+(1 row)
+
+ check_case
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:87: NOTICE:  PASS legacy admin cannot extend trial while enabled
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:89: NOTICE:  PASS service cannot insert through the RPC
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:91: NOTICE:  PASS service cannot edit manual trial while enabled
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:92: NOTICE:  PASS service cannot toggle the DB flag
+ check_case
+------------
+
+(1 row)
+
+                              set_config
+-----------------------------------------------------------------------
+ {"sub":"<QA_UUID>","role":"authenticated"}
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:96: NOTICE:  PASS same intent divergent input rejected
+ check_case
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:99: NOTICE:  PASS new intention can create a different shop
+------------
+
+(1 row)
+
+                              set_config
+-----------------------------------------------------------------------
+ {"sub":"<QA_UUID>","role":"authenticated"}
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:107: NOTICE:  PASS slug collision returns generic conflict
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:109: NOTICE:  PASS same UUID for another actor cannot recover original result
+ check_case
+------------
+
+(1 row)
+
+ check_case
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:116: NOTICE:  PASS inactive basic plan rejects onboarding
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:119: NOTICE:  PASS one original shop
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:122: NOTICE:  PASS exactly one owner
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:124: NOTICE:  PASS exactly one subscription
+ check_case
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:132: NOTICE:  PASS finite basic trial without commercial or remote fields
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:138: NOTICE:  PASS no payments or gateway jobs for onboarding shops
+ check_case
+------------
+
+(1 row)
+
+ check_case
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:148: NOTICE:  PASS trial insert failure raised
+------------
+
+(1 row)
+
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:150: NOTICE:  PASS failed shop rolled back
+ check_case
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:152: NOTICE:  PASS failed owner rolled back
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:154: NOTICE:  PASS failed intent rolled back
+ check_case
+------------
+
+(1 row)
+
+                              set_config
+-----------------------------------------------------------------------
+ {"sub":"<QA_UUID>","role":"authenticated"}
+(1 row)
+
+ check_case
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:162: NOTICE:  PASS recovery of canceled result
+------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding.sql:167: NOTICE:  PASS no renewed access after retry
+ check_case
+------------
+
+(1 row)

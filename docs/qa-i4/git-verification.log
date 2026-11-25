@@ -1,0 +1,9 @@
+Baseline fsck connectivity: exit 0; dangling objects only.
+Baseline worktree: clean in dedicated checkout before fast-forward.
+Baseline lint: exit 0.
+Main relationship (origin/main...main):
+0	2
+77ff36b459c42002c81a02474a90a77ce990b33c 48a1f9f16c1b7b03b8f26cff455802069da6af83 fix(i3.1): serialize plan capacity and reconcile retired logos
+48a1f9f16c1b7b03b8f26cff455802069da6af83 8d1e18bdb1c515d2f29cfbd7f29b976a0092b9e0 feat(i3): restore first manual agreements and tenant logos
+8d1e18bdb1c515d2f29cfbd7f29b976a0092b9e0 23436ac9124fef3c8dbc8fc732e071a9c01cbb15 chore(vercel): set safe deployment defaults and update runbook
+Migrations 30 and 31 are unchanged from 77ff36b.

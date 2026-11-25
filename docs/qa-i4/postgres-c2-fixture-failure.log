@@ -1,0 +1,2 @@
+psql:/tmp/i4-pg/c2-dashboard.sql:7: ERROR:  Bootstrap closed
+CONTEXT:  PL/pgSQL function private.bootstrap_financial_manager(uuid,text) line 5 at RAISE

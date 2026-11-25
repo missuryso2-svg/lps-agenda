@@ -1,0 +1,159 @@
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:3: NOTICE:  extension "dblink" already exists, skipping
+ verify
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:10: NOTICE:  PASS unenrolled booking is initially allowed
+--------
+
+(1 row)
+
+      register_manual_agreement
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+ verify
+--------
+
+(1 row)
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:13: NOTICE:  PASS future pending agreement below cap blocks booking immediately
+
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_for_peer
+---------------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:38: NOTICE:  Active team exceeds agreement plan capacity
+ id
+----
+(0 rows)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:40: NOTICE:  PASS agreement above cap rejected after concurrent activation
+ id
+----
+(0 rows)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:44: NOTICE:  PASS team preserved and agreement rolled back
+      register_manual_agreement
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_for_peer
+---------------
+
+(1 row)
+
+ id
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:53: NOTICE:  O plano permite até 1 profissional(is) ativo(s) nesta barbearia.
+----
+(0 rows)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:55: NOTICE:  PASS activation waits for contract and cannot exceed cap
+ id
+----
+(0 rows)
+
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:59: NOTICE:  PASS agreement at exact cap and one active professional
+ verify
+--------
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:67: NOTICE:  PASS administrative claim rejects another tenant key
+----------
+
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+                                             replace_barbershop_logo
+-----------------------------------------------------------------------------------------------------------------
+ {"current": "<QA_UUID>/<QA_UUID>.webp", "previous": null}
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_for_peer
+---------------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:75: NOTICE:  PASS claim racing a replacement preserves the referenced logo
+ verify
+--------
+
+(1 row)
+
+ claimed
+---------
+(0 rows)
+
+                                             replace_barbershop_logo
+-----------------------------------------------------------------------------------------------------------------
+ {"current": null, "previous": "<QA_UUID>/<QA_UUID>.webp"}
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:80: NOTICE:  PASS retirement survives tenant deletion
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:81: NOTICE:  PASS deleted tenant can be reconciled
+ verify
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:82: NOTICE:  PASS claim is repeatable
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i31-capacity-cleanup.sql:85: NOTICE:  PASS single audit entry and no premature acknowledgement
+ verify
+--------
+
+(1 row)
+
+ dblink_disconnect
+-------------------
+ OK
+(1 row)

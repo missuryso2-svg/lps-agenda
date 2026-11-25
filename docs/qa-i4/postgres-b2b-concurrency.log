@@ -1,0 +1,93 @@
+psql:/tmp/i4-pg/b2b-concurrency.sql:4: NOTICE:  extension "dblink" already exists, skipping
+ dblink_connect
+----------------
+ OK
+ OK
+(2 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:/tmp/i4-pg/b2b-concurrency.sql:25: NOTICE:  PASS issue waits for uncommitted competing competence
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ id
+----
+(0 rows)
+
+psql:/tmp/i4-pg/b2b-concurrency.sql:31: NOTICE:  PASS one invoice and one issuance audit across connections
+ verify
+--------
+
+(1 row)
+
+         issue_manual_invoice
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+psql:/tmp/i4-pg/b2b-concurrency.sql:37: NOTICE:  PASS worker one claims one
+ verify
+--------
+
+(1 row)
+
+ dblink_exec
+-------------
+ SET
+(1 row)
+
+psql:/tmp/i4-pg/b2b-concurrency.sql:40: NOTICE:  PASS worker two skips uncommitted row and processes different tenant
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-concurrency.sql:42: NOTICE:  PASS exactly one transition visible before first worker commits
+ verify
+--------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/b2b-concurrency.sql:47: NOTICE:  PASS exactly two overdue events, correlated by tenant
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/b2b-concurrency.sql:48: NOTICE:  PASS retry does not duplicate transitions
+--------
+
+(1 row)
+
+ dblink_disconnect | dblink_disconnect
+-------------------+-------------------
+ OK                | OK
+(1 row)

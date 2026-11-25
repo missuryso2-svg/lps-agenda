@@ -1,0 +1,265 @@
+ verify
+psql:/tmp/i4-pg-fresh/c1-finance.sql:9: NOTICE:  PASS no grants at install
+--------
+
+(1 row)
+
+     bootstrap_financial_manager
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:11: NOTICE:  PASS bootstrap once
+ rejected
+----------
+psql:/tmp/i4-pg-fresh/c1-finance.sql:24: NOTICE:  PASS privileged API cannot fabricate manual audit
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:26: NOTICE:  PASS anon denied
+                                                                               set_config
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated", "app_metadata": {"lps_role": "platform_admin"}, "user_metadata": {"financial_operator": true}}
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg-fresh/c1-finance.sql:29: NOTICE:  PASS owner staff and legacy admin denied global read
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:30: NOTICE:  PASS unregistered cannot confirm
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:31: NOTICE:  PASS no direct operator grant
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+           finance_operator
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:35: NOTICE:  PASS operator cannot grant or promote
+ rejected
+----------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c1-finance.sql:36: NOTICE:  PASS operator directory contains shop
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c1-finance.sql:38: NOTICE:  PASS agreement replay
+--------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:40: NOTICE:  PASS receipt binds commercial reference
+ rejected
+psql:/tmp/i4-pg-fresh/c1-finance.sql:41: NOTICE:  PASS invoice tenant mismatch
+----------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c1-finance.sql:45: NOTICE:  PASS invoice amount equals negotiated
+--------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:46: NOTICE:  PASS requires bank credit check
+psql:/tmp/i4-pg-fresh/c1-finance.sql:47: NOTICE:  PASS partial and excess refused
+ rejected
+----------
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:47: NOTICE:  PASS partial and excess refused
+
+(2 rows)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:48: NOTICE:  PASS cannot settle across tenants
+ verify
+psql:/tmp/i4-pg-fresh/c1-finance.sql:50: NOTICE:  PASS older invoice does not activate while current month is due
+--------
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg-fresh/c1-finance.sql:51: NOTICE:  PASS reference cannot be reused
+----------
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg-fresh/c1-finance.sql:57: NOTICE:  PASS posting fails atomically
+----------
+
+(1 row)
+
+ verify
+--------
+psql:/tmp/i4-pg-fresh/c1-finance.sql:59: NOTICE:  PASS rollback preserves unpaid invoice
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c1-finance.sql:64: NOTICE:  PASS current payment activates
+--------
+psql:/tmp/i4-pg-fresh/c1-finance.sql:65: NOTICE:  PASS exact replay
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:66: NOTICE:  PASS different payload after settlement
+psql:/tmp/i4-pg-fresh/c1-finance.sql:67: NOTICE:  PASS global financial totals
+ verify
+--------
+
+(1 row)
+
+                                                                   finance_contract_action
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"after": "active", "action": "suspend", "before": "active", "contract": "<QA_UUID>", "suspended": true, "was_suspended": false}
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c1-finance.sql:70: NOTICE:  PASS hold blocks booking despite paid coverage
+--------
+
+(1 row)
+
+                                                                  finance_contract_action
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"after": "active", "action": "resume", "before": "active", "contract": "<QA_UUID>", "suspended": false, "was_suspended": true}
+(1 row)
+
+                                                                   finance_contract_action
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"after": "active", "action": "suspend", "before": "active", "contract": "<QA_UUID>", "suspended": true, "was_suspended": false}
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg-fresh/c1-finance.sql:77: NOTICE:  PASS resume refuses another overdue obligation
+----------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/c1-finance.sql:79: NOTICE:  PASS credit cannot clear administrative hold
+--------
+
+(1 row)
+
+                                                                  finance_contract_action
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"after": "active", "action": "resume", "before": "active", "contract": "<QA_UUID>", "suspended": false, "was_suspended": true}
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:82: NOTICE:  PASS adjustment unavailable even with reason
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:84: NOTICE:  PASS extra days cannot create payment
+                                                                    finance_contract_action
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"after": "canceled", "action": "cancel", "before": "active", "contract": "<QA_UUID>", "suspended": false, "was_suspended": false}
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:86: NOTICE:  PASS journal visible to operator
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+           finance_operator
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:90: NOTICE:  PASS revocation denies same JWT read
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:91: NOTICE:  PASS revocation denies mutation and replay
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/c1-finance.sql:93: NOTICE:  PASS cancellation retains all payments

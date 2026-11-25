@@ -1,0 +1,31 @@
+psql:/tmp/i4-pg/i4-rate-concurrency.sql:3: NOTICE:  extension "dblink" already exists, skipping
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+psql:/tmp/i4-pg/i4-rate-concurrency.sql:7: NOTICE:  PASS first rate claim allowed
+ verify
+--------
+
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:/tmp/i4-pg/i4-rate-concurrency.sql:18: NOTICE:  PASS concurrent claim cannot exceed limit
+ verify
+--------
+
+(1 row)
+
+ allowed
+---------
+(0 rows)
+
+ dblink_disconnect
+-------------------
+ OK
+(1 row)

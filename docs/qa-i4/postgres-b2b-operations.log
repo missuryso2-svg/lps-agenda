@@ -1,0 +1,255 @@
+psql:/tmp/i4-pg/b2b-operations.sql:7: NOTICE:  PASS uncontracted trial cannot issue
+ rejected
+----------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:8: NOTICE:  PASS expired trial blocks without grace
+psql:/tmp/i4-pg/b2b-operations.sql:9: NOTICE:  PASS missing terms fail
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:12: NOTICE:  PASS missing or negative explicit price
+psql:/tmp/i4-pg/b2b-operations.sql:12: NOTICE:  PASS missing or negative explicit price
+ rejected
+----------
+
+
+
+(3 rows)
+
+psql:/tmp/i4-pg/b2b-operations.sql:12: NOTICE:  PASS missing or negative explicit price
+psql:/tmp/i4-pg/b2b-operations.sql:14: NOTICE:  PASS repeat agreement
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:18: NOTICE:  PASS registration is pending and does not issue or activate
+ verify
+--------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:20: NOTICE:  PASS agreement key payload conflict
+psql:/tmp/i4-pg/b2b-operations.sql:21: NOTICE:  PASS tenant mismatch
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:22: NOTICE:  PASS pre-contract competence
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:23: NOTICE:  PASS future coverage
+ verify
+psql:/tmp/i4-pg/b2b-operations.sql:25: NOTICE:  PASS same key returns existing invoice
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:26: NOTICE:  PASS another key converges on same competence
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:27: NOTICE:  PASS invoice key cannot change month
+ rejected
+----------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:30: NOTICE:  PASS first exact negotiated due date and amount
+psql:/tmp/i4-pg/b2b-operations.sql:31: NOTICE:  PASS cannot rewrite price after issue
+ rejected
+----------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/b2b-operations.sql:33: NOTICE:  PASS pending contract can have overdue invoice without acquiring access
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:35: NOTICE:  PASS first missed payment grants no grace
+ verify
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/b2b-operations.sql:46: NOTICE:  PASS calendar following early/late payments, including DST offset
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:57: NOTICE:  PASS worker failure isolated
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:60: NOTICE:  PASS failed audit rolls back invoice and subscription
+ verify
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/b2b-operations.sql:63: NOTICE:  PASS retry updates both records
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:67: NOTICE:  PASS exact 72h grace
+ verify
+psql:/tmp/i4-pg/b2b-operations.sql:68: NOTICE:  PASS second invoice processed once
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/b2b-operations.sql:69: NOTICE:  PASS empty replay
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:70: NOTICE:  PASS zero balance is not overdue
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:75: NOTICE:  PASS past_due not extended or cured by older paid month
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:76: NOTICE:  PASS other tenant trial intact
+psql:/tmp/i4-pg/b2b-operations.sql:78: NOTICE:  PASS canceled contract cannot issue
+psql:/tmp/i4-pg/b2b-operations.sql:79: NOTICE:  PASS historical retry after cancellation
+ rejected
+----------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:82: NOTICE:  PASS new agreement cannot overlap trial
+psql:/tmp/i4-pg/b2b-operations.sql:85: NOTICE:  PASS first due must precede next due
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:89: NOTICE:  PASS DST gap follows PostgreSQL wall-time rule
+ verify
+--------
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg/b2b-operations.sql:96: NOTICE:  PASS invoice and audit fail together
+----------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:99: NOTICE:  PASS failed issue retains no receipt or invoice
+ verify
+psql:/tmp/i4-pg/b2b-operations.sql:102: NOTICE:  PASS retry and autumn DST fold
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:106: NOTICE:  PASS legacy API roles cannot execute any billing operation
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:108: NOTICE:  PASS worker has no general financial grants
+                                           set_config
+-------------------------------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "app_metadata": {"lps_role": "platform_admin"}}
+(1 row)
+
+ rejected
+----------
+psql:/tmp/i4-pg/b2b-operations.sql:111: NOTICE:  PASS authenticated cannot issue directly
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg/b2b-operations.sql:112: NOTICE:  PASS authenticated cannot register
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:115: NOTICE:  PASS service cannot run worker
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/b2b-operations.sql:116: NOTICE:  PASS service cannot directly update invoice

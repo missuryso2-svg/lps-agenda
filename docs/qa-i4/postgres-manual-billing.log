@@ -1,0 +1,268 @@
+psql:/tmp/i4-pg/manual-billing.sql:78: NOTICE:  PASS no automatic trial or contract debt
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+psql:/tmp/i4-pg/manual-billing.sql:80: NOTICE:  PASS wrong tenant
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:82: NOTICE:  PASS uncontracted trial
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:85: NOTICE:  PASS legacy invoice cannot attach to manual subscription
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:86: NOTICE:  PASS cannot use service scope
+ verify
+psql:/tmp/i4-pg/manual-billing.sql:87: NOTICE:  PASS invalid original
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:88: NOTICE:  PASS invalid total
+ verify
+--------
+
+psql:/tmp/i4-pg/manual-billing.sql:89: NOTICE:  PASS unexplained discount
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:90: NOTICE:  PASS total differs
+ verify
+--------
+
+psql:/tmp/i4-pg/manual-billing.sql:91: NOTICE:  PASS required method
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:92: NOTICE:  PASS first competence
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:93: NOTICE:  PASS canonical month
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:94: NOTICE:  PASS required invoice date
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:95: NOTICE:  PASS agreed cutoff
+psql:/tmp/i4-pg/manual-billing.sql:96: NOTICE:  PASS Feb 2026 anchored
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:97: NOTICE:  PASS March restores 31
+psql:/tmp/i4-pg/manual-billing.sql:98: NOTICE:  PASS March valid
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:99: NOTICE:  PASS wrong due month
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:100: NOTICE:  PASS leap February
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:101: NOTICE:  PASS missing settlement evidence
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:102: NOTICE:  PASS pending cannot carry credit
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:103: NOTICE:  PASS invalid agreement timezone
+ verify
+psql:/tmp/i4-pg/manual-billing.sql:104: NOTICE:  PASS invalid period
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:107: NOTICE:  PASS invoice with negotiated discount
+ verify
+psql:/tmp/i4-pg/manual-billing.sql:111: NOTICE:  PASS rollback restores invoice and audit
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/manual-billing.sql:113: NOTICE:  PASS first invoice
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:114: NOTICE:  PASS duplicate competence
+ verify
+psql:/tmp/i4-pg/manual-billing.sql:115: NOTICE:  PASS immutable amount
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:117: NOTICE:  PASS verified before credit
+ verify
+psql:/tmp/i4-pg/manual-billing.sql:119: NOTICE:  PASS trusted fixture settlement
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:121: NOTICE:  PASS no renewal or anchor drift
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:122: NOTICE:  PASS cannot erase confirmation
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:123: NOTICE:  PASS cannot erase paid invoice
+psql:/tmp/i4-pg/manual-billing.sql:128: NOTICE:  PASS extra days recorded
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:129: NOTICE:  PASS audit append only
+ verify
+--------
+
+(1 row)
+psql:/tmp/i4-pg/manual-billing.sql:132: NOTICE:  PASS anon cannot read payments
+
+psql:/tmp/i4-pg/manual-billing.sql:133: NOTICE:  PASS anon cannot write payments
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS authenticated verified claim
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS authenticated cannot read manual payments
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS authenticated cannot update manual payment
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS authenticated cannot modify manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS authenticated cannot delete manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS authenticated cannot insert manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS authenticated cannot issue manual invoice
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS authenticated cannot execute trigger helpers
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner verified claim
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner verified tenant membership
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner cannot read manual payments
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner cannot update manual payment
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner cannot modify manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner cannot delete manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner cannot insert manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner cannot issue manual invoice
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS owner cannot execute trigger helpers
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff verified claim
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff verified tenant membership
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff cannot read manual payments
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff cannot update manual payment
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff cannot modify manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff cannot delete manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff cannot insert manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff cannot issue manual invoice
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS staff cannot execute trigger helpers
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS platform_admin verified claim
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS platform_admin cannot read manual payments
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS platform_admin cannot update manual payment
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS platform_admin cannot modify manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS platform_admin cannot delete manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS platform_admin cannot insert manual contract
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS platform_admin cannot issue manual invoice
+psql:/tmp/i4-pg/manual-billing.sql:171: NOTICE:  PASS platform_admin cannot execute trigger helpers
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:175: NOTICE:  PASS legacy service cannot mutate manual rows
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-billing.sql:177: NOTICE:  PASS legacy service cannot settle manual Pix

@@ -1,0 +1,19 @@
+psql:/tmp/i4-pg/i4-rate-concurrency.sql:3: NOTICE:  extension "dblink" already exists, skipping
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i4-rate-concurrency.sql:7: NOTICE:  PASS first rate claim allowed
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:/tmp/i4-pg/i4-rate-concurrency.sql:18: ERROR:  FAIL concurrent claim cannot exceed limit
+CONTEXT:  PL/pgSQL function pg_temp_30.verify(text,boolean) line 3 at RAISE

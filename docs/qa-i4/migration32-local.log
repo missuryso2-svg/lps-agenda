@@ -1,0 +1,1 @@
+Incremental validation with psql as postgres in isolated QA: exit 0. See migrations-clean-replay.log for CLI replay.

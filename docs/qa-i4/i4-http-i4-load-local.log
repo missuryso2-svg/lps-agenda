@@ -1,0 +1,27 @@
+{"concurrency":10,"responses":10,"errors":0,"p50_ms":226,"p95_ms":228,"p99_ms":228,"duration_ms":229,"completed_per_s":43.7}
+{"concurrency":10,"database_after_burst":{"client_backends":16,"waiting_lock":0}}
+{"concurrency":25,"responses":25,"errors":0,"p50_ms":484,"p95_ms":488,"p99_ms":488,"duration_ms":490,"completed_per_s":51}
+{"concurrency":25,"database_after_burst":{"client_backends":17,"waiting_lock":0}}
+{"concurrency":50,"responses":50,"errors":0,"p50_ms":1121,"p95_ms":1130,"p99_ms":1131,"duration_ms":1133,"completed_per_s":44.1}
+{"concurrency":50,"database_after_burst":{"client_backends":17,"waiting_lock":0}}
+{"concurrency":100,"responses":96,"errors":4,"p50_ms":2978,"p95_ms":3009,"p99_ms":3014,"duration_ms":20008,"completed_per_s":4.8}
+{"concurrency":100,"database_after_burst":{"client_backends":17,"waiting_lock":0}}
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: stop load escalation after an HTTP error or timeout
+
+4 !== 0
+
+    at file:///<QA_WORKTREE>/tests/integration/i4-load-local.mjs:40:12
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

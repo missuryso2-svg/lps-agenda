@@ -1,0 +1,25 @@
+
+> lps-agenda@0.1.0 test
+> vitest run --reporter=dot
+
+
+ RUN  v5.1.0 <QA_WORKTREE>
+
+stderr | tests/public-booking.test.ts > actions públicas e rate limiting > consulta disponibilidade mesmo se o rate limit estiver indisponível
+[public-booking] rate limit unavailable (availability)
+
+stderr | tests/public-booking.test.ts > actions públicas e rate limiting > falha fechado quando o rate limit de criação está indisponível
+[public-booking] rate limit unavailable (create ip)
+
+stderr | tests/public-booking.test.ts > actions públicas e rate limiting > falha fechado quando o rate limit de cancelamento está indisponível
+[public-booking] rate limit unavailable (cancel)
+
+·······················································································································································································································································································································································································································································································································································································································································································································································································································
+
+ Test Files  37 passed (37)
+      Tests  791 passed (791)
+   Start at  05:46:51
+   Duration  7.30s (import 62%, transform 22%, tests 11%, setup 3%, worker 2%)
+
+    Isolate  37 workers spawned · ~757ms startup each (spawn + environment, per file)
+             at least ~1.79s faster with isolate: false — reuses workers across files instead of one per file

@@ -1,0 +1,96 @@
+psql:/tmp/i4-pg/manual-trial-access.sql:16: NOTICE:  PASS (normal,<NULL>) at 2026-11-25 08:51:10.618912+00
+ check_access
+--------------
+
+(1 row)
+
+ check_access
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access.sql:19: NOTICE:  PASS (normal,trial) at 2026-01-07 23:59:59+00
+psql:/tmp/i4-pg/manual-trial-access.sql:20: NOTICE:  PASS (blocked,trial_ended) at 2026-01-08 00:00:00+00
+ check_access
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access.sql:22: NOTICE:  PASS (blocked,no_coverage) at 2026-01-07 00:00:00+00
+ check_access
+--------------
+
+(1 row)
+
+ check_access
+psql:/tmp/i4-pg/manual-trial-access.sql:24: NOTICE:  PASS (blocked,no_coverage) at 2026-01-07 00:00:00+00
+--------------
+
+(1 row)
+
+ check_access
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access.sql:27: NOTICE:  PASS (blocked,mixed_origin) at 2026-11-25 08:51:10.618912+00
+ check_access
+psql:/tmp/i4-pg/manual-trial-access.sql:38: NOTICE:  PASS (blocked,no_coverage) at 2026-01-20 00:00:00+00
+--------------
+
+(1 row)
+
+ check_access
+psql:/tmp/i4-pg/manual-trial-access.sql:40: NOTICE:  PASS (blocked,no_coverage) at 2026-01-20 00:00:00+00
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access.sql:42: NOTICE:  PASS (blocked,past_due) at 2026-11-25 08:51:10.681529+00
+ check_access
+--------------
+
+(1 row)
+
+ check_access
+psql:/tmp/i4-pg/manual-trial-access.sql:47: NOTICE:  PASS (grace,past_due) at 2026-11-28 08:51:09.681529+00
+--------------
+
+(1 row)
+
+ check_access
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access.sql:48: NOTICE:  PASS (blocked,past_due) at 2026-11-28 08:51:10.681529+00
+ check_access
+psql:/tmp/i4-pg/manual-trial-access.sql:53: NOTICE:  PASS (blocked,no_coverage) at 2026-01-17 00:00:00+00
+--------------
+
+(1 row)
+
+ check_access
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access.sql:54: NOTICE:  PASS (normal,paid) at 2026-01-20 00:00:00+00
+ check_access
+psql:/tmp/i4-pg/manual-trial-access.sql:56: NOTICE:  PASS (blocked,no_coverage) at 2026-02-20 00:00:00+00
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access.sql:60: NOTICE:  PASS (grace,<NULL>) at 2026-11-28 08:51:10.719764+00
+ check_access
+--------------
+
+(1 row)
+
+ check_access
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access.sql:61: NOTICE:  PASS (blocked,<NULL>) at 2026-11-28 08:51:10.719765+00

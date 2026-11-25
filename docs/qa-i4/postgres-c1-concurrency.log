@@ -1,0 +1,263 @@
+psql:/tmp/i4-pg/c1-concurrency.sql:5: NOTICE:  extension "dblink" already exists, skipping
+     bootstrap_financial_manager
+--------------------------------------
+ <QA_UUID>
+(1 row)
+
+ dblink_connect
+----------------
+ OK
+ OK
+ OK
+(3 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:39: NOTICE:  PASS real waiter behind c1_a
+ wait_blocked
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:45: NOTICE:  PASS parallel first agreements replay one pending contract
+ verify
+--------
+
+(1 row)
+
+ result
+--------
+(0 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+                                  result
+--------------------------------------------------------------------------
+ {"state": "pending", "contract": "<QA_UUID>"}
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_blocked
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:55: NOTICE:  PASS real waiter behind c1_a
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:57: NOTICE:  Coverage overlaps an existing trial or agreement
+ result
+--------
+(0 rows)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:60: NOTICE:  PASS different operation IDs cannot create duplicate first agreements
+ result
+--------
+(0 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_blocked
+--------------
+
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:66: NOTICE:  PASS real waiter behind c1_a
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/c1-concurrency.sql:69: NOTICE:  PASS parallel human issuance returns one invoice
+--------
+
+(1 row)
+
+ result
+--------
+(0 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_blocked
+psql:/tmp/i4-pg/c1-concurrency.sql:75: NOTICE:  PASS real waiter behind c1_a
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:77: NOTICE:  PASS parallel Pix returns identical receipt
+ result
+--------
+(0 rows)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:79: NOTICE:  PASS one settlement audit
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+                                                                             result
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"after": "canceled", "action": "cancel", "before": "pending", "contract": "<QA_UUID>", "suspended": false, "was_suspended": false}
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_blocked
+psql:/tmp/i4-pg/c1-concurrency.sql:96: NOTICE:  PASS real waiter behind c1_a
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/c1-concurrency.sql:98: NOTICE:  PASS late credit keeps cancellation
+--------
+
+(1 row)
+
+ result
+--------
+(0 rows)
+
+ verify
+psql:/tmp/i4-pg/c1-concurrency.sql:101: NOTICE:  PASS late payment retained and access closed
+--------
+
+(1 row)
+
+ dblink_exec
+-------------
+ SET
+(1 row)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/c1-concurrency.sql:107: NOTICE:  PASS worker claims due invoice
+--------
+
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_blocked
+psql:/tmp/i4-pg/c1-concurrency.sql:109: NOTICE:  PASS real waiter behind c1_worker
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:112: NOTICE:  PASS credit reconciles committed delinquency
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/c1-concurrency.sql:114: NOTICE:  PASS one paid invoice with consistent coverage
+ dblink_disconnect
+-------------------
+ OK
+ OK
+ OK
+(3 rows)

@@ -1,0 +1,44 @@
+psql:/tmp/i4-pg/manual-trial-onboarding-concurrency.sql:3: NOTICE:  extension "dblink" already exists, skipping
+ authorize_manual_trial_intent
+-------------------------------
+
+(1 row)
+
+ dblink_connect
+----------------
+ OK
+ OK
+(2 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-onboarding-concurrency.sql:47: NOTICE:  PASS retry waiting on the uncommitted first intention
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ shop
+------
+(0 rows)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ dblink_disconnect | dblink_disconnect
+-------------------+-------------------
+ OK                | OK
+(1 row)
+
+PASS both sessions committed the same shop, one owner, one intent, one trial, zero payments

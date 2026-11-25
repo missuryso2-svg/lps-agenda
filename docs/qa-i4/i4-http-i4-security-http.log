@@ -1,0 +1,10 @@
+PASS Data API: tenant isolation, anon denial, private schema hidden, finance denied, private photo IDOR denied
+`x-forwarded-host` header with value `127.0.0.1:59330` does not match `origin` header with value `invalid.example` from a forwarded Server Actions request. Aborting the action.
+⨯ Error: Invalid Server Actions request.
+    at ignore-listed frames {
+  digest: '1129040302'
+}
+PASS per-request CSP nonce on all login scripts, security headers, anonymous redirect and cross-origin mutation rejection
+PASS stored HTML rendered as text and hostile search input preserves data
+PASS exactly 30 of 31 concurrent tenant image claims allowed; real route returns 429
+PASS strict CSP in Chrome: theme script and input hydration work; unnonced inline script blocked

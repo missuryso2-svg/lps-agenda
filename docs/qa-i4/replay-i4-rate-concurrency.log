@@ -1,0 +1,30 @@
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-rate-concurrency.sql:7: NOTICE:  PASS first rate claim allowed
+ verify
+--------
+
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-rate-concurrency.sql:18: NOTICE:  PASS concurrent claim cannot exceed limit
+ allowed
+---------
+(0 rows)
+
+ dblink_disconnect
+-------------------
+ OK
+(1 row)

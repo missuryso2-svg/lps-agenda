@@ -1,0 +1,73 @@
+psql:/tmp/i4-pg/manual-trial-access-concurrency.sql:3: NOTICE:  extension "dblink" already exists, skipping
+ dblink_connect
+----------------
+ OK
+ OK
+(2 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_exec
+-------------
+ UPDATE 1
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access-concurrency.sql:33: NOTICE:  PASS booking waits on uncommitted subscription change
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access-concurrency.sql:41: NOTICE:  PASS queued booking sees committed cancellation
+ id
+----
+(0 rows)
+
+ dblink_exec
+-------------
+ UPDATE 1
+(1 row)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+  status
+----------
+ trialing
+(1 row)
+
+ dblink_exec
+-------------
+ UPDATE 1
+(1 row)
+
+                                                                                                               set_config
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ \r                                                                                                                                                                                                                                    +
+   insert into public.appointments(barbershop_id,customer_id,barber_id,service_id,starts_at,ends_at,price_cents)\r                                                                                                                     +
+   values ('<QA_UUID>','<QA_UUID>','<QA_UUID>','<QA_UUID>',now()+interval '1 day',now()+interval '1 day 30 minutes',1000)\r+
+
+(1 row)
+
+psql:/tmp/i4-pg/manual-trial-access-concurrency.sql:62: NOTICE:  PASS stale repeatable-read booking must retry
+ dblink_exec
+-------------
+ ROLLBACK
+(1 row)
+
+ dblink_disconnect | dblink_disconnect
+-------------------+-------------------
+ OK                | OK
+(1 row)
+
+PASS no appointment persisted

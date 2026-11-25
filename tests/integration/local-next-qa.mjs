@@ -11,9 +11,14 @@ const project = process.env.B2A2_QA_PROJECT ?? "";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const nextURL = "http://127.0.0.1:59130";
+// Alternate dedicated ports avoid interfering with another local Docker stack.
+const apiPort = process.env.B2A2_QA_API_PORT ?? "59121";
+const nextPort = process.env.B2A2_QA_NEXT_PORT ?? "59130";
+for (const port of [apiPort, nextPort]) assert.match(port, /^59[0-9]{3}$/);
+assert.notEqual(apiPort, nextPort);
+const nextURL = "http://127.0.0.1:" + nextPort;
 assert.match(project, /^b2a2-app-\d+$/);
-assert.equal(url, "http://127.0.0.1:59121");
+assert.equal(url, "http://127.0.0.1:" + apiPort);
 const container = "supabase_db_" + project;
 // Windows can run the disposable daemon in its own WSL distribution.
 const distro = process.env.B2A2_QA_WSL_DISTRO;
@@ -27,7 +32,7 @@ assert.match(
   docker(["port", "supabase_kong_" + project, "8000/tcp"], {
     encoding: "utf8",
   }),
-  /:59121\b/,
+  new RegExp(":" + apiPort + "\\b"),
 );
 const admin = createClient(url, key, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -102,11 +107,11 @@ async function startNext(enabled) {
       "-H",
       "127.0.0.1",
       "-p",
-      "59130",
+      nextPort,
     ],
     {
       windowsHide: true,
-      stdio: "ignore",
+      stdio: ["ignore", "ignore", "inherit"],
       env: {
         ...process.env,
         NEXT_PUBLIC_APP_URL: nextURL,

@@ -1,0 +1,28 @@
+
+> lps-agenda@0.1.0 build
+> next build
+
+▲ Next.js 16.4.5 (Turbopack)
+✓ Running next.config.ts took 26ms
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 1 error:
+./src/app/globals.css
+Error: Error evaluating Node.js code
+Error: Can't resolve 'shadcn/tailwind.css' in '<QA_WORKTREE>\src\app'
+  (from <QA_WORKTREE>\node_modules\@tailwindcss\turbopack\dist\index.js)
+    [at finishWithoutResolve (<QA_WORKTREE>\node_modules\enhanced-resolve\lib\Resolver.js:959:18)]
+    [at <QA_WORKTREE>\node_modules\enhanced-resolve\lib\Resolver.js:1055:13]
+    [at <QA_WORKTREE>\node_modules\enhanced-resolve\lib\Resolver.js:1139:5]
+    [at eval (<QA_WORKTREE>\node_modules\tapable\lib\HookCodeFactory.js:31:10)]
+    [at <QA_WORKTREE>\node_modules\enhanced-resolve\lib\Resolver.js:1139:5]
+    [at eval (<QA_WORKTREE>\node_modules\tapable\lib\HookCodeFactory.js:31:10)]
+    [at <QA_WORKTREE>\node_modules\enhanced-resolve\lib\DescriptionFilePlugin.js:94:43]
+    [at <QA_WORKTREE>\node_modules\enhanced-resolve\lib\Resolver.js:1139:5]
+    [at eval (<QA_WORKTREE>\node_modules\tapable\lib\HookCodeFactory.js:31:10)]
+    [at <QA_WORKTREE>\node_modules\enhanced-resolve\lib\Resolver.js:1139:5]
+
+
+    at ignore-listed frames

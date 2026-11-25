@@ -1,0 +1,69 @@
+psql:/tmp/i4-pg/operations-f3-concurrency.sql:3: NOTICE:  extension "dblink" already exists, skipping
+ dblink_connect
+----------------
+ OK
+ OK
+(2 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_exec
+-------------
+ INSERT 0 1
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ id
+----
+(0 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ active
+--------
+ t
+(1 row)
+
+ dblink_exec
+-------------
+ UPDATE 1
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ id
+----
+(0 rows)
+
+ dblink_exec
+-------------
+ ROLLBACK
+(1 row)
+
+ dblink_disconnect | dblink_disconnect
+-------------------+-------------------
+ OK                | OK
+(1 row)
+
+ no_partial_booking
+--------------------
+                  1
+(1 row)

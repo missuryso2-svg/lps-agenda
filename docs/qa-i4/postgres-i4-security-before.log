@@ -1,0 +1,70 @@
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i4-security.sql:6: NOTICE:  PASS every public table has RLS
+psql:/tmp/i4-pg/i4-security.sql:9: NOTICE:  PASS public SECURITY DEFINER functions pin search_path
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+psql:/tmp/i4-pg/i4-security.sql:12: NOTICE:  PASS no public SECURITY DEFINER executable by anon
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i4-security.sql:13: NOTICE:  PASS private schema not available to anon
+                                                        set_config
+---------------------------------------------------------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated", "user_metadata": {"lps_role": "platform_admin"}}
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i4-security.sql:29: NOTICE:  PASS staff cannot read another tenant customers
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i4-security.sql:30: NOTICE:  PASS user_metadata cannot grant platform authority
+ verify
+psql:/tmp/i4-pg/i4-security.sql:32: NOTICE:  PASS staff cannot update another tenant customers
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i4-security.sql:33: NOTICE:  PASS cannot insert in another tenant
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/i4-security.sql:34: NOTICE:  PASS staff cannot grant own owner role
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i4-security.sql:35: NOTICE:  PASS membership remains staff
+psql:/tmp/i4-pg/i4-security.sql:38: NOTICE:  PASS KNOWN I4-01: staff can rewrite a completed appointment price
+ verify
+--------
+
+(1 row)

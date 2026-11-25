@@ -1,0 +1,117 @@
+ verify
+psql:/tmp/i4-pg-fresh/i4-security.sql:6: NOTICE:  PASS every public table has RLS
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/i4-security.sql:9: NOTICE:  PASS public SECURITY DEFINER functions pin search_path
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-security.sql:12: NOTICE:  PASS no public SECURITY DEFINER executable by anon
+ verify
+psql:/tmp/i4-pg-fresh/i4-security.sql:13: NOTICE:  PASS private schema not available to anon
+--------
+
+(1 row)
+
+                                                        set_config
+---------------------------------------------------------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated", "user_metadata": {"lps_role": "platform_admin"}}
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-security.sql:29: NOTICE:  PASS staff cannot read another tenant customers
+psql:/tmp/i4-pg-fresh/i4-security.sql:30: NOTICE:  PASS user_metadata cannot grant platform authority
+ verify
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg-fresh/i4-security.sql:32: NOTICE:  PASS staff cannot update another tenant customers
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-security.sql:33: NOTICE:  PASS cannot insert in another tenant
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-security.sql:34: NOTICE:  PASS staff cannot grant own owner role
+psql:/tmp/i4-pg-fresh/i4-security.sql:35: NOTICE:  PASS membership remains staff
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-security.sql:36: NOTICE:  PASS staff cannot rewrite completed price
+ rejected
+----------
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg-fresh/i4-security.sql:37: NOTICE:  PASS staff cannot forge author
+----------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+psql:/tmp/i4-pg-fresh/i4-security.sql:41: NOTICE:  PASS insertion derives canonical price and actual author
+
+ set_config
+------------
+ {}
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-security.sql:47: NOTICE:  PASS owner cannot rewrite completed price
+psql:/tmp/i4-pg-fresh/i4-security.sql:50: NOTICE:  PASS catalog update preserves historical price
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+psql:/tmp/i4-pg-fresh/i4-security.sql:51: NOTICE:  PASS human insertion audited
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg-fresh/i4-security.sql:55: NOTICE:  PASS trusted service correction remains audited

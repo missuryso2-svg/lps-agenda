@@ -1,0 +1,140 @@
+psql:/tmp/i4-pg/financial-cutover.sql:5: NOTICE:  extension "dblink" already exists, skipping
+psql:/tmp/i4-pg/financial-cutover.sql:7: NOTICE:  PASS scheduler installed off
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:8: NOTICE:  PASS invalid batch
+ rejected
+----------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:13: NOTICE:  PASS runner can only invoke the scheduled entry
+psql:/tmp/i4-pg/financial-cutover.sql:15: NOTICE:  PASS ordinary role denied worker
+ rejected
+----------
+
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg/financial-cutover.sql:16: NOTICE:  PASS ordinary role denied metrics
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:24: NOTICE:  PASS suspended contract cannot issue a new competence
+ rejected
+----------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:25: NOTICE:  PASS held invoice excluded
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:29: NOTICE:  PASS service cannot enroll an Asaas subscription
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:32: NOTICE:  PASS mixed origin counted
+psql:/tmp/i4-pg/financial-cutover.sql:34: NOTICE:  PASS mixed history requires a decision
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:36: NOTICE:  PASS no automatic conversion
+psql:/tmp/i4-pg/financial-cutover.sql:38: NOTICE:  PASS no terminal resurrection
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:40: NOTICE:  PASS missing heartbeat detected
+ verify
+--------
+
+(1 row)
+
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ locked
+--------
+ t
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:44: NOTICE:  PASS overlap skips without another run
+ dblink_exec | dblink_disconnect
+-------------+-------------------
+ COMMIT      | OK
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:49: NOTICE:  PASS partial batch persisted
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:52: NOTICE:  PASS safe partial telemetry
+ verify
+psql:/tmp/i4-pg/financial-cutover.sql:55: NOTICE:  PASS successful retry
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/financial-cutover.sql:58: NOTICE:  PASS first unpaid installment stays blocked
+ verify
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/financial-cutover.sql:60: NOTICE:  PASS monitor recovers and retains failures
+--------
+
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/financial-cutover.sql:62: NOTICE:  PASS telemetry excludes records and identifiers
+--------
+
+(1 row)

@@ -1,0 +1,141 @@
+psql:/tmp/i4-pg/i3-logo-storage.sql:19: NOTICE:  PASS dedicated public bucket accepts normalized WebP only
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:23: NOTICE:  PASS logo mutation RPC is available only to authenticated clients
+ verify
+--------
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:30: NOTICE:  PASS logo API role is non-login, non-bypass and not delegated to API roles
+(1 row)
+
+ verify
+psql:/tmp/i4-pg/i3-logo-storage.sql:37: NOTICE:  PASS client write policies do not permit direct logo storage mutations
+--------
+
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:52: NOTICE:  PASS owner session sees its own membership
+psql:/tmp/i4-pg/i3-logo-storage.sql:56: NOTICE:  PASS owner can associate only an uploaded same-tenant logo
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:59: NOTICE:  PASS owner cannot change another tenant logo
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:62: NOTICE:  PASS direct logo_url Data API update is blocked
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:65: NOTICE:  PASS authenticated clients cannot bypass normalized uploads
+ rejected
+----------
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:68: NOTICE:  PASS owner cannot delete Storage objects directly
+(1 row)
+
+ verify
+--------
+psql:/tmp/i4-pg/i3-logo-storage.sql:73: NOTICE:  PASS replacement uses optimistic version and queues old object
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:76: NOTICE:  PASS stale logo version cannot overwrite replacement
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:80: NOTICE:  PASS retired object cannot be reattached while cleanup is running
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:82: NOTICE:  PASS uncertain response cannot retire the current object
+ rejected
+----------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:86: NOTICE:  PASS cleanup cannot be acknowledged while Storage still has the object
+ verify
+psql:/tmp/i4-pg/i3-logo-storage.sql:89: NOTICE:  PASS failed object cleanup remains queued
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:93: NOTICE:  PASS owner can remove current logo without confirming payment
+ verify
+psql:/tmp/i4-pg/i3-logo-storage.sql:95: NOTICE:  PASS replacement and removal cleanup keys remain tenant-scoped
+--------
+
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:105: NOTICE:  PASS abandoned upload is retired on the next cleanup
+ verify
+--------
+
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "<QA_UUID>", "role": "authenticated"}
+(1 row)
+
+ rejected
+psql:/tmp/i4-pg/i3-logo-storage.sql:111: NOTICE:  PASS team staff cannot replace a barbershop logo
+----------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:/tmp/i4-pg/i3-logo-storage.sql:114: NOTICE:  PASS logo reference remains tenant scoped

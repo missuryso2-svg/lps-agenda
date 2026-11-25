@@ -1,0 +1,14 @@
+PASS App Router, Proxy, fresh CSP nonces and private cache
+PASS authenticated Server Action writes only into the active tenant
+PASS Supabase password sign-in and session cookies survive the Worker response
+PASS logo rejects CSRF, staff, and another tenant
+PASS logo rejects fake format, truncated PNG and oversized body without Storage writes
+FAIL logo valid upload and WebP Storage round trip: AssertionError ERR_ASSERTION
+  actual=503 expected=200
+PASS private photo rejects CSRF, staff, and another tenant
+PASS private photo rejects fake format, truncated PNG and oversized body without Storage writes
+FAIL private photo valid upload and WebP Storage round trip: AssertionError ERR_ASSERTION
+  actual=503 expected=200
+PASS private Storage read and cross-tenant denial
+PASS strict CSP blocks an unnonced inline script in Chrome
+PASS QR generated in Workers and A4 PDF generated in browser

@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "workers:build": "opennextjs-cloudflare build --config wrangler.j1.jsonc",
+    "workers:preview": "wrangler dev --local --config wrangler.j1.jsonc",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -46,6 +48,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "1.20.19",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^24.19.2",
     "@types/qrcode": "1.5.6",
@@ -59,6 +62,7 @@
     "supabase": "^3.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "wrangler": "4.168.0"
   }
 }

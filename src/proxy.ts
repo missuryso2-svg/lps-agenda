@@ -14,7 +14,9 @@ export async function proxy(request: NextRequest) {
   const enforce = process.env.CSP_ENFORCE === "true";
   // Next mirrors response headers back to the renderer. The baseline is set in
   // next.config, so it cannot replace the full nonce-bearing request policy.
-  if (enforce) response.headers.set("Content-Security-Policy", policy);
+  // OpenNext applies next.config headers after the proxy. The Worker entry
+  // promotes the generated policy only after the adapter returns its response.
+  if (enforce && process.env.LPS_WORKERS_CSP_FINALIZE !== "true") response.headers.set("Content-Security-Policy", policy);
   else response.headers.set("Content-Security-Policy-Report-Only", policy);
   return response;
 }

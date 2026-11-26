@@ -1,5 +1,7 @@
 import "server-only";
 
+import { publicLegacyImageUrl } from "./format";
+
 import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -128,7 +130,7 @@ function mapBarbers(
     id: row.id,
     name: row.name,
     bio: row.bio,
-    avatarUrl: row.avatar_url?.startsWith("https://") ? row.avatar_url : null,
+    avatarUrl: publicLegacyImageUrl(row.avatar_url),
     serviceIds: assignments
       .filter((assignment) => assignment.barber_id === row.id)
       .map((assignment) => assignment.service_id),

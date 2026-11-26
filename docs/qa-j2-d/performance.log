@@ -1,0 +1,4 @@
+before all {"n":10,"ttfb":12.8,"fcp":108,"lcp":120,"cls":0,"js":224971,"csp":0,"maxOverflow":0}
+before 320/375 {"n":4,"ttfb":22.75,"fcp":128,"lcp":284,"cls":0,"js":224971,"csp":0,"maxOverflow":0}
+after all {"n":10,"ttfb":17.15,"fcp":134,"lcp":136,"cls":0,"js":220939,"csp":0,"maxOverflow":0,"minContrast":6.84}
+after 320/375 {"n":4,"ttfb":23.4,"fcp":142,"lcp":148,"cls":0,"js":220939,"csp":0,"maxOverflow":0,"minContrast":6.84}

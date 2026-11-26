@@ -1,0 +1,10 @@
+PASS after 320 light overflow=0
+PASS after 320 dark overflow=0
+PASS after 375 light overflow=0
+PASS after 375 dark overflow=0
+PASS after 768 light overflow=0
+PASS after 768 dark overflow=0
+PASS after 1280 light overflow=0
+PASS after 1280 dark overflow=0
+PASS after 1920 light overflow=0
+PASS after 1920 dark overflow=0

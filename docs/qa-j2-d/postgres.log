@@ -1,0 +1,22 @@
+QA PostgreSQL local
+SUITE manual-trial-access
+NOTICE:  PASS (normal,<NULL>) at 2026-11-26 23:08:16.593477+00
+NOTICE:  PASS (normal,trial) at 2026-01-07 23:59:59+00
+NOTICE:  PASS (blocked,trial_ended) at 2026-01-08 00:00:00+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-07 00:00:00+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-07 00:00:00+00
+NOTICE:  PASS (blocked,mixed_origin) at 2026-11-26 23:08:16.593477+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-20 00:00:00+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-20 00:00:00+00
+NOTICE:  PASS (blocked,past_due) at 2026-11-26 23:08:17.180089+00
+NOTICE:  PASS (grace,past_due) at 2026-11-29 23:08:16.180089+00
+NOTICE:  PASS (blocked,past_due) at 2026-11-29 23:08:17.180089+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-17 00:00:00+00
+NOTICE:  PASS (normal,paid) at 2026-01-20 00:00:00+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-02-20 00:00:00+00
+NOTICE:  PASS (grace,<NULL>) at 2026-11-29 23:08:17.232268+00
+NOTICE:  PASS (blocked,<NULL>) at 2026-11-29 23:08:17.232269+00
+SUITE operations-f3
+SUITE operations-f3-concurrency
+PASS manual-trial-access, operations-f3 and operations-f3-concurrency each exited 0
+33 migrations verified in disposable QA

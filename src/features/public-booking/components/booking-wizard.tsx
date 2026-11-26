@@ -1,723 +1,401 @@
 "use client";
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  CalendarDays,
-  Check,
-  Clock3,
-  Loader2,
-  LockKeyhole,
-  Scissors,
-  ShieldCheck,
-  UserRound,
-} from "lucide-react";
+import "@/lib/validation/browser-safe-zod";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
-import { FormError } from "@/components/forms/form-message";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { createPublicBookingAction, getPublicAvailabilityAction } from "@/features/public-booking/actions";
-import type {
-  PublicBarber,
-  PublicService,
-} from "@/features/public-booking/types";
+import type { PublicBarber, PublicService } from "@/features/public-booking/types";
 import type { AvailabilitySnapshot } from "@/features/scheduling/types";
 import { fieldErrorsFrom } from "@/lib/actions";
 import {
-  formatCurrencyFromCents,
-  formatDateOnlyBR,
-  initialsFromName,
+  addDaysToDateString, formatCurrencyFromCents, formatDateOnlyBR, formatPhoneBR,
+  initialsFromName, shortWeekdayLabel, weekdayFromDateString, weekdayLabel,
 } from "@/lib/format";
+import { normalizePhoneDigits } from "@/lib/validation/customers";
 import { publicBookingSchema } from "@/lib/validation/public-booking";
-import { cn } from "@/lib/utils";
 
 type Step = 1 | 2 | 3 | 4;
-
-const steps: Array<{ id: Step; label: string; short: string }> = [
-  { id: 1, label: "Serviço", short: "1" },
-  { id: 2, label: "Profissional", short: "2" },
-  { id: 3, label: "Data e hora", short: "3" },
-  { id: 4, label: "Seus dados", short: "4" },
+const steps = ["Serviço", "Profissional", "Data e hora", "Seus dados"] as const;
+const titles = ["Escolha o serviço", "Escolha o profissional", "Escolha a data e o horário", "Revise e confirme"] as const;
+const partsOfDay = [
+  { label: "Manhã", start: 0, end: 12 },
+  { label: "Tarde", start: 12, end: 18 },
+  { label: "Noite", start: 18, end: 24 },
 ];
 
-function timeGroup(time: string): "morning" | "afternoon" | "evening" {
-  const hour = Number(time.slice(0, 2));
-
-  if (hour < 12) {
-    return "morning";
-  }
-
-  if (hour < 18) {
-    return "afternoon";
-  }
-
-  return "evening";
+function FieldError({ id, message }: { id: string; message?: string }) {
+  return message ? <p className="j2-book-error" id={id}>{message}</p> : null;
 }
 
-const groupLabels = {
-  morning: "Manhã",
-  afternoon: "Tarde",
-  evening: "Noite",
-} as const;
-
 export function BookingWizard({
-  slug,
-  timezone,
-  services,
-  barbers,
-  minDate,
-  maxDate,
+  slug, shopName, timezone, services, barbers, minDate, maxDate, openWeekdays,
 }: {
   slug: string;
+  shopName: string;
   timezone: string;
   services: PublicService[];
   barbers: PublicBarber[];
   minDate: string;
   maxDate: string;
+  openWeekdays: number[];
 }) {
   const router = useRouter();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const priorStep = useRef<Step>(1);
+  const submitting = useRef(false);
+  const confirmedOnServer = useRef(false);
   const [step, setStep] = useState<Step>(1);
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [barberId, setBarberId] = useState<string | null>(null);
   const [date, setDate] = useState(minDate);
   const [time, setTime] = useState<string | null>(null);
-  const [availability, setAvailability] =
-    useState<AvailabilitySnapshot | null>(null);
-  const [availabilityError, setAvailabilityError] = useState<string | null>(
-    null,
-  );
+  const [rejectedTime, setRejectedTime] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<AvailabilitySnapshot | null>(null);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [reloadSlots, setReloadSlots] = useState(0);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<
-    Record<string, string[] | undefined>
-  >({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[] | undefined>>({});
   const [isPending, startTransition] = useTransition();
+  const [confirmed, setConfirmed] = useState(false);
 
-  const selectedService = services.find((service) => service.id === serviceId);
-  const selectedBarber = barbers.find((barber) => barber.id === barberId);
-  const eligibleBarbers = useMemo(
-    () =>
-      barbers.filter((barber) =>
-        serviceId ? barber.serviceIds.includes(serviceId) : false,
-      ),
-    [barbers, serviceId],
-  );
+  const service = services.find(item => item.id === serviceId);
+  const barber = barbers.find(item => item.id === barberId);
+  const eligible = barbers.filter(item => serviceId && item.serviceIds.includes(serviceId));
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= minDate && date <= maxDate;
+  const validTime = availability?.slots.some(slot => slot.time === time) ?? false;
+  const weekStart = step === 3 && validDate && date > addDaysToDateString(minDate, 6) ? date : minDate;
+  const days = step === 3
+    ? Array.from({ length: 7 }, (_, index) => addDaysToDateString(weekStart, index)).filter(day => day <= maxDate)
+    : [];
 
   useEffect(() => {
-    if (step !== 3 || !serviceId || !barberId) {
-      return;
-    }
+    if (priorStep.current === step) return;
+    priorStep.current = step;
+    heading.current?.focus();
+  }, [step]);
 
+  useEffect(() => {
+    if (step !== 3 || !serviceId || !barberId || !validDate) return;
     let active = true;
 
-    getPublicAvailabilityAction({ slug, serviceId, barberId, date }).then(
-      (result) => {
-        if (!active) {
-          return;
-        }
-
-        setLoadingSlots(false);
-
-        if (result.status === "success") {
-          setAvailability(result.availability);
-          return;
-        }
-
+    void getPublicAvailabilityAction({ slug, serviceId, barberId, date }).then(result => {
+      if (!active) return;
+      setLoadingSlots(false);
+      if (result.status === "error") {
         setAvailabilityError(result.message);
-      },
-    );
+        return;
+      }
+      setAvailability(result.availability);
+      setTime(current => result.availability.slots.some(slot => slot.time === current) ? current : null);
+    }).catch(() => {
+      if (!active) return;
+      setLoadingSlots(false);
+      setAvailabilityError("Não foi possível consultar os horários. Tente novamente.");
+    });
+    return () => { active = false; };
+  }, [step, slug, serviceId, barberId, date, validDate, reloadSlots]);
 
-    return () => {
-      active = false;
-    };
-  }, [step, slug, serviceId, barberId, date, reloadSlots]);
-
-  const groupedSlots = useMemo(() => {
-    const groups: Record<"morning" | "afternoon" | "evening", string[]> = {
-      morning: [],
-      afternoon: [],
-      evening: [],
-    };
-
-    for (const slot of availability?.slots ?? []) {
-      groups[timeGroup(slot.time)].push(slot.time);
-    }
-
-    return groups;
-  }, [availability]);
-
-  function resetMessages() {
+  function clearMessages() {
     setFormError(null);
     setFieldErrors({});
   }
 
-  function beginSlotLoading() {
-    setLoadingSlots(true);
+  function loadSlots(valid = validDate) {
     setAvailability(null);
     setAvailabilityError(null);
+    setLoadingSlots(valid);
   }
 
-  function chooseService(id: string) {
-    resetMessages();
-    setServiceId(id);
-    setBarberId(null);
-    setTime(null);
-    setAvailability(null);
-    setStep(2);
-  }
-
-  function chooseBarber(id: string) {
-    resetMessages();
-    setBarberId(id);
-    setTime(null);
-    beginSlotLoading();
-    setStep(3);
-  }
-
-  function chooseDate(value: string) {
-    if (value === date) {
-      return;
-    }
-
-    resetMessages();
-    setDate(value);
-    setTime(null);
-    beginSlotLoading();
-  }
-
-  function goToStep(next: Step) {
-    resetMessages();
-
-    if (next === 3) {
-      beginSlotLoading();
-    }
-
+  function goTo(next: Step) {
+    clearMessages();
+    if (next === 3) loadSlots();
     setStep(next);
   }
 
-  function submit() {
-    const values = {
-      slug,
-      serviceId: serviceId ?? "",
-      barberId: barberId ?? "",
-      date,
-      time: time ?? "",
-      fullName,
-      phone,
-      email,
-    };
-    const parsed = publicBookingSchema.safeParse(values);
+  function chooseService(id: string) {
+    if (id !== serviceId) {
+      setServiceId(id);
+      setBarberId(null);
+      setTime(null);
+      setRejectedTime(null);
+      setAvailability(null);
+    }
+    goTo(2);
+  }
 
+  function chooseBarber(id: string) {
+    if (id !== barberId) {
+      setBarberId(id);
+      setTime(null);
+      setRejectedTime(null);
+    }
+    goTo(3);
+  }
+
+  function chooseDate(value: string) {
+    if (value === date) return;
+    clearMessages();
+    setDate(value);
+    setTime(null);
+    setRejectedTime(null);
+    loadSlots(value >= minDate && value <= maxDate);
+  }
+
+  function focusFirstContactError(errors: Record<string, string[] | undefined>) {
+    const first = errors.fullName ? "booking-name"
+      : errors.phone ? "booking-phone"
+      : errors.email ? "booking-email" : null;
+    if (first) document.getElementById(first)?.focus();
+  }
+
+  function submit() {
+    if (submitting.current) return;
+    const parsed = publicBookingSchema.safeParse({
+      slug, serviceId: serviceId ?? "", barberId: barberId ?? "",
+      date, time: time ?? "", fullName, phone, email,
+    });
     if (!parsed.success) {
-      setFieldErrors(fieldErrorsFrom(parsed.error));
-      setFormError("Revise os dados abaixo para concluir a reserva.");
+      const errors = fieldErrorsFrom(parsed.error);
+      setFieldErrors(errors);
+      setFormError("Revise os campos indicados para continuar.");
+      focusFirstContactError(errors);
       return;
     }
 
-    setFormError(null);
-    setFieldErrors({});
-
+    submitting.current = true;
+    clearMessages();
     startTransition(async () => {
-      const result = await createPublicBookingAction(parsed.data);
+      try {
+        const result = await createPublicBookingAction(parsed.data);
+        if (result.status === "success") {
+          confirmedOnServer.current = true;
+          setConfirmed(true);
+          router.push("/agendar/" + result.slug + "/reserva/" + result.token + "?novo=1");
+          return;
+        }
 
-      if (result.status === "success") {
-        router.push(
-          `/agendar/${result.slug}/reserva/${result.token}?novo=1`,
-        );
-        return;
-      }
-
-      setFormError(result.message);
-      setFieldErrors(result.fieldErrors ?? {});
-
-      if (result.fieldErrors?.time) {
-        // O horário deixou de existir entre a seleção e a confirmação.
-        // Voltamos para a etapa 3 e forçamos uma nova consulta de slots.
-        setTime(null);
-        beginSlotLoading();
-        setReloadSlots((value) => value + 1);
-        setStep(3);
+        setFormError(result.message);
+        const errors = result.fieldErrors ?? {};
+        setFieldErrors(errors);
+        if (errors.time || errors.date) {
+          setRejectedTime(errors.time ? time : null);
+          setTime(null);
+          loadSlots();
+          setReloadSlots(value => value + 1);
+          setStep(3);
+        } else if (errors.barberId || errors.serviceId) {
+          setStep(errors.serviceId ? 1 : 2);
+        } else {
+          focusFirstContactError(errors);
+        }
+      } catch {
+        setFormError("Não foi possível confirmar o envio. Confira com a barbearia se o horário ficou reservado.");
+      } finally {
+        // Keep submission blocked once the server has confirmed and navigation starts.
+        if (!confirmedOnServer.current) submitting.current = false;
       }
     });
   }
 
-  const canSubmit = Boolean(
-    serviceId && barberId && date && time && fullName && phone,
-  );
+  const busy = isPending || confirmed;
 
   return (
-    <div className="overflow-hidden rounded-[1.75rem] border border-border/80 bg-card shadow-premium">
-      <div className="border-b border-border/70 bg-muted/25 px-5 py-5 sm:px-7">
-        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">
-          <CalendarDays className="size-3.5" />
-          Agendamento online
-        </div>
-        <h2 className="mt-2 font-display text-2xl tracking-tight sm:text-3xl">
-          Escolha seu horário
-        </h2>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          Sem login, sem cadastro. Você recebe um link para consultar ou
-          cancelar a reserva.
-        </p>
+    <div className="j2-book-panel j2-book-wizard">
+      <p className="j2-book-eyebrow">Agendamento online</p>
+      <ol className="j2-book-steps" aria-label="Etapas do agendamento">
+        {steps.map((label, index) => (
+          <li key={label} aria-current={step === index + 1 ? "step" : undefined} data-complete={step > index + 1 || undefined}>
+            <span aria-hidden>{step > index + 1 ? <Check size={13} /> : index + 1}</span>{label}
+          </li>
+        ))}
+      </ol>
 
-        <ol className="mt-5 grid grid-cols-4 gap-2">
-          {steps.map((item) => {
-            const active = step === item.id;
-            const complete = step > item.id;
+      {step > 1 && (
+        <button className="j2-book-back" type="button" disabled={busy} onClick={() => goTo((step - 1) as Step)}>
+          <ArrowLeft size={16} aria-hidden />{step === 2 ? "Trocar serviço" : step === 3 ? "Trocar profissional" : "Trocar horário"}
+        </button>
+      )}
+      <h2 ref={heading} tabIndex={-1} className="j2-book-step-title">{titles[step - 1]}</h2>
+      {formError && <p role="alert" className="j2-book-message j2-book-error">{formError}</p>}
 
-            return (
-              <li key={item.id} className="min-w-0">
-                <div
-                  className={cn(
-                    "flex items-center gap-1.5 sm:gap-2",
-                    active || complete
-                      ? "text-foreground"
-                      : "text-muted-foreground/70",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "grid size-6 shrink-0 place-items-center rounded-full border text-[10px] font-semibold",
-                      active &&
-                        "border-gold bg-gold text-gold-foreground",
-                      complete &&
-                        "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                      !active &&
-                        !complete &&
-                        "border-border bg-background text-muted-foreground",
-                    )}
-                  >
-                    {complete ? <Check className="size-3" /> : item.short}
-                  </span>
-                  <span className="truncate text-[10px] font-medium sm:text-xs">
-                    {item.label}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
-
-      <div className="px-5 py-6 sm:px-7">
-        <FormError message={formError} />
-
-        {step === 1 ? (
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Etapa 1
-            </p>
-            <h3 className="mt-1 font-display text-xl tracking-tight">
-              Qual serviço você quer?
-            </h3>
-
-            {services.length === 0 ? (
-              <p className="mt-5 rounded-xl border border-dashed border-border bg-muted/20 p-5 text-sm text-muted-foreground">
-                Esta barbearia ainda não tem serviços disponíveis para
-                agendamento online.
-              </p>
-            ) : (
-              <div className="mt-4 grid gap-2.5">
-                {services.map((service) => (
-                  <button
-                    key={service.id}
-                    type="button"
-                    onClick={() => chooseService(service.id)}
-                    className={cn(
-                      "group flex w-full items-center gap-3 rounded-xl border p-3.5 text-left transition-colors",
-                      serviceId === service.id
-                        ? "border-gold/50 bg-gold-soft/30"
-                        : "border-border/80 bg-background hover:border-gold/35 hover:bg-muted/30",
-                    )}
-                  >
-                    <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-gold/25 bg-gold-soft/40 text-gold">
-                      <Scissors className="size-4" />
+      {step === 1 && (
+        <div>
+          <p className="j2-book-meta">Reserve sem criar conta. Seu link privado será exibido após a confirmação.</p>
+          {services.length ? (
+            <ul className="j2-book-choices">
+              {services.map(item => (
+                <li key={item.id}>
+                  <button type="button" aria-pressed={serviceId === item.id} onClick={() => chooseService(item.id)}>
+                    <span className="j2-book-choice-text">
+                      <strong>{item.name}</strong>
+                      {item.description && <span>{item.description}</span>}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-medium">
-                        {service.name}
-                      </span>
-                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          <Clock3 className="size-3" />
-                          {service.durationMinutes} min
-                        </span>
-                        <span className="text-border">·</span>
-                        <span>{formatCurrencyFromCents(service.priceCents)}</span>
-                      </span>
-                    </span>
-                    <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                    <span className="j2-book-choice-value"><strong>{formatCurrencyFromCents(item.priceCents)}</strong><span>{item.durationMinutes} min</span></span>
+                    {serviceId === item.id ? <Check size={16} aria-hidden /> : <ArrowRight size={16} aria-hidden />}
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : null}
-
-        {step === 2 ? (
-          <div>
-            <button
-              type="button"
-              onClick={() => goToStep(1)}
-              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="size-3" />
-              Trocar serviço
-            </button>
-            <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Etapa 2
-            </p>
-            <h3 className="mt-1 font-display text-xl tracking-tight">
-              Com quem você quer atendimento?
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Mostrando apenas profissionais habilitados para{" "}
-              <span className="font-medium text-foreground">
-                {selectedService?.name}
-              </span>
-              .
-            </p>
-
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-              {eligibleBarbers.map((barber) => (
-                <button
-                  key={barber.id}
-                  type="button"
-                  onClick={() => chooseBarber(barber.id)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl border p-3.5 text-left transition-colors",
-                    barberId === barber.id
-                      ? "border-gold/50 bg-gold-soft/30"
-                      : "border-border/80 bg-background hover:border-gold/35 hover:bg-muted/30",
-                  )}
-                >
-                  <Avatar className="size-10">
-                    {barber.avatarUrl ? (
-                      <AvatarImage src={barber.avatarUrl} alt="" />
-                    ) : null}
-                    <AvatarFallback className="bg-primary font-display text-xs text-gold">
-                      {initialsFromName(barber.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium">
-                      {barber.name}
-                    </span>
-                    {barber.bio ? (
-                      <span className="mt-0.5 line-clamp-2 block text-[11px] leading-relaxed text-muted-foreground">
-                        {barber.bio}
-                      </span>
-                    ) : (
-                      <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                        Profissional
-                      </span>
-                    )}
-                  </span>
-                </button>
+                </li>
               ))}
-            </div>
+            </ul>
+          ) : <p className="j2-book-message">Nenhum serviço pode ser agendado online no momento.</p>}
+        </div>
+      )}
 
-            {eligibleBarbers.length === 0 ? (
-              <p className="mt-4 rounded-xl border border-dashed border-border bg-muted/20 p-4 text-xs text-muted-foreground">
-                Nenhum profissional ativo realiza este serviço agora. Volte e
-                escolha outro serviço.
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-
-        {step === 3 ? (
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => goToStep(2)}
-                className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <ArrowLeft className="size-3" />
-                Trocar profissional
-              </button>
-              <span className="text-[10px] text-muted-foreground">
-                {selectedService?.name} · {selectedBarber?.name}
-              </span>
-            </div>
-
-            <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Etapa 3
-            </p>
-            <h3 className="mt-1 font-display text-xl tracking-tight">
-              Escolha a data e o horário
-            </h3>
-
-            <div className="mt-4 max-w-xs">
-              <Label htmlFor="booking-date" className="text-xs">
-                Data
-              </Label>
-              <Input
-                id="booking-date"
-                type="date"
-                value={date}
-                min={minDate}
-                max={maxDate}
-                onChange={(event) => chooseDate(event.target.value)}
-                className="mt-1.5 h-10"
-              />
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                Reservas abertas por até 60 dias. Horários no fuso {timezone}.
-              </p>
-            </div>
-
-            <div className="mt-5" aria-live="polite">
-              {loadingSlots ? (
-                <div className="flex items-center gap-2 rounded-xl border border-border/80 bg-muted/20 p-4 text-xs text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin text-gold" />
-                  Consultando horários livres...
-                </div>
-              ) : null}
-
-              {!loadingSlots && availabilityError ? (
-                <div className="rounded-xl border border-destructive/25 bg-destructive/5 p-4 text-xs text-destructive">
-                  {availabilityError}
-                </div>
-              ) : null}
-
-              {!loadingSlots && !availabilityError && availability ? (
-                availability.slots.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4 text-xs text-muted-foreground">
-                    {availability.reason ??
-                      "Não há horários livres neste dia. Escolha outra data."}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {(["morning", "afternoon", "evening"] as const).map(
-                      (group) =>
-                        groupedSlots[group].length > 0 ? (
-                          <div key={group}>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                              {groupLabels[group]}
-                            </p>
-                            <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                              {groupedSlots[group].map((slot) => (
-                                <button
-                                  key={slot}
-                                  type="button"
-                                  onClick={() => {
-                                    resetMessages();
-                                    setTime(slot);
-                                  }}
-                                  className={cn(
-                                    "rounded-lg border px-2 py-2 text-xs font-medium transition-colors",
-                                    time === slot
-                                      ? "border-gold bg-gold text-gold-foreground"
-                                      : "border-border/80 bg-background hover:border-gold/40 hover:bg-gold-soft/25",
-                                  )}
-                                >
-                                  {slot}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null,
-                    )}
-                  </div>
-                )
-              ) : null}
-            </div>
-
-            <Button
-              type="button"
-              variant="gold"
-              size="lg"
-              className="mt-6 w-full sm:w-auto"
-              disabled={!time || loadingSlots}
-              onClick={() => goToStep(4)}
-            >
-              Continuar
-              <ArrowRight className="size-4" />
-            </Button>
-          </div>
-        ) : null}
-
-        {step === 4 ? (
-          <div>
-            <button
-              type="button"
-              onClick={() => goToStep(3)}
-              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="size-3" />
-              Trocar horário
-            </button>
-
-            <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Etapa 4
-            </p>
-            <h3 className="mt-1 font-display text-xl tracking-tight">
-              Só falta você se identificar
-            </h3>
-
-            <div className="mt-4 grid gap-4">
-              <div className="rounded-xl border border-gold/25 bg-gold-soft/25 p-4">
-                <div className="grid gap-2 text-xs sm:grid-cols-2">
-                  <p>
-                    <span className="text-muted-foreground">Serviço:</span>{" "}
-                    <span className="font-medium">{selectedService?.name}</span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Profissional:</span>{" "}
-                    <span className="font-medium">{selectedBarber?.name}</span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Data:</span>{" "}
-                    <span className="font-medium">{formatDateOnlyBR(date)}</span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Horário:</span>{" "}
-                    <span className="font-medium">{time}</span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Duração:</span>{" "}
-                    <span className="font-medium">
-                      {availability?.durationMinutes ??
-                        selectedService?.durationMinutes}{" "}
-                      min
-                    </span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Valor:</span>{" "}
-                    <span className="font-medium">
-                      {formatCurrencyFromCents(
-                        availability?.priceCents ??
-                          selectedService?.priceCents ??
-                          0,
+      {step === 2 && (
+        <div>
+          <p className="j2-book-meta">Equipe habilitada para <strong>{service?.name}</strong>.</p>
+          {eligible.length ? (
+            <ul className="j2-book-choices">
+              {eligible.map(item => (
+                <li key={item.id}>
+                  <button type="button" aria-pressed={barberId === item.id} onClick={() => chooseBarber(item.id)}>
+                    <span className="j2-book-avatar" aria-hidden>
+                      <span>{initialsFromName(item.name)}</span>
+                      {item.avatarUrl && (
+                        // The URL is projected server-side with private paths filtered.
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.avatarUrl} alt="" width={48} height={48} loading="lazy" referrerPolicy="no-referrer"
+                          onError={event => { event.currentTarget.hidden = true; }} />
                       )}
                     </span>
-                  </p>
-                </div>
-              </div>
+                    <span className="j2-book-choice-text">
+                      <strong>{item.name}</strong>
+                      {item.bio && <span>{item.bio}</span>}
+                      <span>{services.filter(candidate => item.serviceIds.includes(candidate.id)).map(candidate => candidate.name).join(" · ")}</span>
+                    </span>
+                    {barberId === item.id ? <Check size={16} aria-hidden /> : <ArrowRight size={16} aria-hidden />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="j2-book-message">Nenhum profissional disponível para este serviço.</p>}
+        </div>
+      )}
 
-              <div>
-                <Label htmlFor="booking-name" className="text-xs">
-                  Nome completo
-                </Label>
-                <Input
-                  id="booking-name"
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                  placeholder="Como devemos chamar você?"
-                  autoComplete="name"
-                  className="mt-1.5 h-10"
-                  aria-invalid={Boolean(fieldErrors.fullName)}
-                />
-                {fieldErrors.fullName?.[0] ? (
-                  <p className="mt-1 text-[11px] text-destructive">
-                    {fieldErrors.fullName[0]}
-                  </p>
-                ) : null}
-              </div>
-
-              <div>
-                <Label htmlFor="booking-phone" className="text-xs">
-                  Telefone com DDD
-                </Label>
-                <Input
-                  id="booking-phone"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  placeholder="(11) 98765-4321"
-                  autoComplete="tel"
-                  inputMode="tel"
-                  className="mt-1.5 h-10"
-                  aria-invalid={Boolean(fieldErrors.phone)}
-                />
-                {fieldErrors.phone?.[0] ? (
-                  <p className="mt-1 text-[11px] text-destructive">
-                    {fieldErrors.phone[0]}
-                  </p>
-                ) : null}
-              </div>
-
-              <div>
-                <Label htmlFor="booking-email" className="text-xs">
-                  E-mail{" "}
-                  <span className="font-normal text-muted-foreground">
-                    (opcional)
-                  </span>
-                </Label>
-                <Input
-                  id="booking-email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="voce@exemplo.com"
-                  autoComplete="email"
-                  className="mt-1.5 h-10"
-                  aria-invalid={Boolean(fieldErrors.email)}
-                />
-                {fieldErrors.email?.[0] ? (
-                  <p className="mt-1 text-[11px] text-destructive">
-                    {fieldErrors.email[0]}
-                  </p>
-                ) : null}
-              </div>
-
-              {fieldErrors.time?.[0] ? (
-                <p className="rounded-lg border border-destructive/25 bg-destructive/5 px-3 py-2 text-[11px] text-destructive">
-                  {fieldErrors.time[0]}
-                </p>
-              ) : null}
-
-              <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-muted/20 p-3 text-[11px] leading-relaxed text-muted-foreground">
-                <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-gold" />
-                <p>
-                  Pedimos apenas nome, telefone e e-mail opcional. Seus dados
-                  são usados para esta reserva e ficam visíveis somente para a
-                  barbearia.
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                variant="gold"
-                size="xl"
-                disabled={!canSubmit || isPending}
-                onClick={submit}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Confirmando reserva...
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="size-4" />
-                    Confirmar reserva
-                  </>
-                )}
-              </Button>
-            </div>
+      {step === 3 && (
+        <>
+          <p className="j2-book-meta">{service?.name} · {barber?.name}</p>
+          <div className="j2-book-days" role="group" aria-label="Datas próximas">
+            {days.map(day => {
+              const weekday = weekdayFromDateString(day);
+              const closed = !openWeekdays.includes(weekday);
+              return (
+                <button key={day} type="button" aria-pressed={day === date}
+                  aria-label={weekdayLabel(weekday) + " " + formatDateOnlyBR(day) + (closed ? ", fechado" : "")}
+                  onClick={() => chooseDate(day)}>
+                  <span>{shortWeekdayLabel(weekday)}</span>
+                  <strong>{Number(day.slice(-2))}</strong>
+                  {closed && <small>Fechado</small>}
+                </button>
+              );
+            })}
           </div>
-        ) : null}
-      </div>
+          <label className="j2-book-date" htmlFor="booking-date">
+            <span>Data</span>
+            <input id="booking-date" type="date" value={date} min={minDate} max={maxDate} onChange={event => chooseDate(event.target.value)} />
+          </label>
+          <p className="j2-book-meta">Horários no fuso {timezone.replaceAll("_", " ")}.</p>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-muted/20 px-5 py-3 text-[10px] text-muted-foreground sm:px-7">
-        <span className="inline-flex items-center gap-1.5">
-          <UserRound className="size-3 text-gold" />
-          Sem conta e sem CPF
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <ShieldCheck className="size-3 text-gold" />
-          Disponibilidade conferida no servidor
-        </span>
-      </div>
+          <div className="j2-book-availability" aria-busy={loadingSlots} aria-live="polite">
+            {loadingSlots && (
+              <div className="j2-book-loading">
+                <p>Consultando horários livres…</p>
+                <div className="j2-book-slots" aria-hidden>{Array.from({ length: 6 }, (_, index) => <span key={index} />)}</div>
+              </div>
+            )}
+            {!validDate && <p className="j2-book-message">Escolha uma data dentro do período disponível.</p>}
+            {availabilityError && (
+              <div className="j2-book-message">
+                <p>{availabilityError}</p>
+                <button type="button" className="j2-book-back" onClick={() => { loadSlots(); setReloadSlots(value => value + 1); }}>Consultar novamente</button>
+              </div>
+            )}
+            {availability && (
+              availability.slots.length === 0
+                ? <p className="j2-book-message">{availability.reason ?? "Não há horários livres neste dia. Escolha outra data."}</p>
+                : partsOfDay.map(part => {
+                  const slots = availability.slots.filter(slot => {
+                    const hour = Number(slot.time.slice(0, 2));
+                    return hour >= part.start && hour < part.end;
+                  });
+                  return slots.length > 0 && (
+                    <div key={part.label} role="group" aria-label={part.label} className="j2-book-slot-group">
+                      <p>{part.label}</p>
+                      <div className="j2-book-slots">
+                        {slots.map(slot => (
+                          <button key={slot.time} type="button" aria-pressed={time === slot.time} onClick={() => {
+                            clearMessages();
+                            setTime(slot.time);
+                          }}>
+                            {slot.time}{time === slot.time && <Check size={14} aria-hidden />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+            {rejectedTime && availability && !availability.slots.some(slot => slot.time === rejectedTime) && (
+              <p className="j2-book-meta">{rejectedTime} · Indisponível</p>
+            )}
+          </div>
+          <button type="button" className="j2-book-primary" disabled={!validTime || loadingSlots} onClick={() => goTo(4)}>
+            Continuar{time && <span aria-hidden>{time}</span>} <ArrowRight size={16} aria-hidden />
+          </button>
+        </>
+      )}
+
+      {step === 4 && (
+        <>
+          <section className="j2-book-summary" aria-label="Resumo do agendamento">
+            <h3>{shopName}</h3>
+            <dl>
+              <div><dt>Serviço</dt><dd>{service?.name}</dd></div>
+              <div><dt>Profissional</dt><dd>{barber?.name}</dd></div>
+              <div><dt>Data e horário</dt><dd>{formatDateOnlyBR(date)} às {time}</dd></div>
+              <div><dt>Duração</dt><dd>{availability?.durationMinutes ?? service?.durationMinutes} min</dd></div>
+              <div><dt>Valor</dt><dd>{formatCurrencyFromCents(availability?.priceCents ?? service?.priceCents ?? 0)}</dd></div>
+            </dl>
+          </section>
+
+          <form method="post" noValidate onSubmit={event => { event.preventDefault(); submit(); }}>
+            <fieldset disabled={busy} className="j2-book-fields">
+              <legend>Seus dados para a reserva</legend>
+              <div>
+                <label htmlFor="booking-name">Nome completo</label>
+                <input id="booking-name" value={fullName} autoComplete="name" required aria-invalid={Boolean(fieldErrors.fullName)}
+                  aria-describedby={fieldErrors.fullName ? "booking-name-error" : undefined} onChange={event => setFullName(event.target.value)} />
+                <FieldError id="booking-name-error" message={fieldErrors.fullName?.[0]} />
+              </div>
+              <div>
+                <label htmlFor="booking-phone">Telefone com DDD</label>
+                <input id="booking-phone" type="tel" inputMode="tel" autoComplete="tel" required value={phone} placeholder="(11) 98765-4321"
+                  aria-invalid={Boolean(fieldErrors.phone)} aria-describedby={fieldErrors.phone ? "booking-phone-error" : undefined}
+                  onChange={event => setPhone(event.target.value)} onBlur={() => {
+                    const digits = normalizePhoneDigits(phone);
+                    if (digits.length === 10 || digits.length === 11) setPhone(formatPhoneBR(digits));
+                  }} />
+                <FieldError id="booking-phone-error" message={fieldErrors.phone?.[0]} />
+              </div>
+              <div>
+                <label htmlFor="booking-email">E-mail <span>(opcional)</span></label>
+                <input id="booking-email" type="email" autoComplete="email" value={email} aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={fieldErrors.email ? "booking-email-error" : undefined} onChange={event => setEmail(event.target.value)} />
+                <FieldError id="booking-email-error" message={fieldErrors.email?.[0]} />
+              </div>
+            </fieldset>
+            <p className="j2-book-meta">Seus dados são usados para esta reserva.</p>
+            <button className="j2-book-primary" type="submit" disabled={busy}>
+              {busy ? "Confirmando reserva…" : "Confirmar reserva"}
+            </button>
+          </form>
+        </>
+      )}
     </div>
   );
 }

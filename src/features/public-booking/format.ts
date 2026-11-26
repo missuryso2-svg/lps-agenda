@@ -20,6 +20,24 @@ export function safeHttpUrl(value: string | null | undefined): string | null {
   }
 }
 
+/** Keep private and signed Storage paths outside the anonymous projection. */
+export function publicLegacyImageUrl(value: string | null): string | null {
+  const safe = safeHttpUrl(value);
+  if (!safe) return null;
+
+  try {
+    const url = new URL(safe);
+    const path = decodeURIComponent(url.pathname).toLowerCase().replaceAll("\\", "/");
+    if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) return null;
+    if (/(?:^|\/)barber-photos(?:\/|$)|\/storage\/v1\/(?:object|render\/image)\/(?:sign|authenticated)(?:\/|$)/.test(path)) {
+      return null;
+    }
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
 export function barbershopAddressLines(
   shop: Pick<
     PublicBarbershop,

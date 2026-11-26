@@ -1,0 +1,122 @@
+[
+  {
+    "width": 320,
+    "theme": "light",
+    "ttfb": 119.90000000596046,
+    "fcp": 840,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 0,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 6.84
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "ttfb": 30.69999998807907,
+    "fcp": 92,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 432,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 8.29
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "ttfb": 16.099999994039536,
+    "fcp": 148,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 148,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 6.84
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "ttfb": 16,
+    "fcp": 136,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 136,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 8.29
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "ttfb": 21,
+    "fcp": 140,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 140,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 6.84
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "ttfb": 11.600000023841858,
+    "fcp": 132,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 132,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 8.29
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "ttfb": 18.19999998807907,
+    "fcp": 152,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 152,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 6.84
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "ttfb": 14.5,
+    "fcp": 124,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 124,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 8.29
+  },
+  {
+    "width": 1920,
+    "theme": "light",
+    "ttfb": 20.30000001192093,
+    "fcp": 124,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 124,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 6.84
+  },
+  {
+    "width": 1920,
+    "theme": "dark",
+    "ttfb": 13.799999982118607,
+    "fcp": 120,
+    "js": 220939,
+    "overflow": 0,
+    "lcp": 120,
+    "cls": 0,
+    "csp": [],
+    "minContrast": 8.29
+  }
+]

@@ -1,0 +1,10 @@
+PASS logo, legacy and private photos, catalog, closed/full days, review, validation, focus and CSP
+`x-forwarded-host` header with value `localhost:59332` does not match `origin` header with value `foreign.example.org` from a forwarded Server Actions request. Aborting the action.
+⨯ Error: Invalid Server Actions request.
+    at ignore-listed frames {
+  digest: '3054805576'
+}
+PASS public action rejects a foreign origin without writing a booking
+PASS concurrent booking, conflict refresh and contact draft preserved
+PASS node public booking, repeat click, historical price, private token isolation and confirmation
+PASS trial running, last day, expired, pending, paid, suspended and canceled with neutral public copy

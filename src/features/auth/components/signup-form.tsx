@@ -9,6 +9,7 @@ import { PasswordInput } from "@/components/forms/password-input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { premiumTrialCTA } from "@/features/premium-trial/copy";
 import { signUpAction } from "@/features/auth/actions";
 import { applyServerFieldErrors } from "@/lib/form-errors";
 import { signUpSchema, type SignUpInput } from "@/lib/validation/auth";
@@ -17,7 +18,7 @@ import {
   accountFieldAttributes, newPasswordHelp,
 } from "./account-form";
 
-export function SignUpForm({ disabled = false }: { disabled?: boolean }) {
+export function SignUpForm({ disabled = false, trialAvailable = false }: { disabled?: boolean; trialAvailable?: boolean }) {
   const form = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
     defaultValues: { fullName: "", email: "", password: "", confirmPassword: "", acceptTerms: false },
@@ -114,7 +115,7 @@ export function SignUpForm({ disabled = false }: { disabled?: boolean }) {
       </div>
 
       <AccountSubmit
-        label="Criar minha conta"
+        label={trialAvailable ? premiumTrialCTA : "Criar minha conta"}
         pendingLabel="Criando conta..."
         pending={isPending}
         disabled={disabled}

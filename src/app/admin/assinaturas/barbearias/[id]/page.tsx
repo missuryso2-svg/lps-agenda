@@ -46,7 +46,8 @@ export default async function Detail({
       <Link href={adminPath + "/barbearias"}>← Barbearias</Link>
       <h1>{shop.name}</h1>
       <div className="fa-panel">
-        <Badge value={shop.origin} /> <Badge value={shop.status} />{" "}
+        <Badge value={shop.origin === "trial" && shop.automatic_trial ? "automatic_trial" : shop.origin} />{" "}
+        <Badge value={shop.origin === "trial" && shop.automatic_trial_state === "ended" ? "expired" : shop.status} />{" "}
         {shop.suspended && <Badge value="suspended" />}
         <Facts
           values={{
@@ -64,7 +65,16 @@ export default async function Detail({
             Fuso: shop.contract_timezone,
             "Início do período": instant(shop.current_period_start),
             "Fim do período": instant(shop.current_period_end),
-            "Fim do trial manual": instant(shop.trial_end),
+            "Início do trial": instant(shop.trial_start),
+            "Fim do trial": instant(shop.trial_end),
+            ...(shop.automatic_trial && {
+              "Origem do benefício": "Trial automático",
+              "Plano do benefício": shop.automatic_trial_plan ?? null,
+              "Dias restantes": shop.automatic_trial_days ?? null,
+              "Situação do benefício": shop.automatic_trial_state === "converted"
+                ? "Convertido com Pix conferido"
+                : shop.automatic_trial_state === "running" ? "Vigente" : "Encerrado",
+            }),
             "Último Pix conferido": instant(shop.last_verified_at),
           }}
         />

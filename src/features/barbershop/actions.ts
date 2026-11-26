@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { automaticTrialAvailable } from "@/features/premium-trial/queries";
 import { manualTrialOnboardingEnabled } from "@/lib/env/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cookies } from "next/headers";
@@ -74,7 +75,7 @@ export async function createBarbershopAction(
     p_phone: parsed.data.phone || null,
     p_timezone: parsed.data.timezone,
   };
-  const manual = manualTrialOnboardingEnabled();
+  const manual = manualTrialOnboardingEnabled() && !(await automaticTrialAvailable());
   const create = async () => {
     if (!manual) return supabase.rpc("create_barbershop", params);
     const intent = z.uuid().safeParse(intentId);
@@ -91,7 +92,11 @@ export async function createBarbershopAction(
   }));
 
   if (error || !data) {
-    if (error?.code === "55000") return actionError("O plano Básico está indisponível. Tente novamente mais tarde.");
+    if (error?.code === "55000") {
+      return actionError(manual
+        ? "O plano Básico está indisponível. Tente novamente mais tarde."
+        : "O plano Premium está indisponível. Tente novamente mais tarde.");
+    }
     if (error?.code === "42501") return actionError("O cadastro não está disponível neste momento.");
     if (error?.code === "23505") {
       return actionError(

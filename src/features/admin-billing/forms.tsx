@@ -40,7 +40,9 @@ export function AgreementForm({
       ids={{ shop: shop.shop }}
       title="Aplicar assinatura manual"
       context={{ Barbearia: shop.name, Identificador: shop.shop }}
-      note="O contrato será registrado como pendente. O início da nova cobertura será validado contra testes e contratos anteriores; esta ação não confirma pagamento. Depois, emita a mensalidade e confira o Pix no extrato oficial."
+      note={shop.automatic_trial_state === "running"
+        ? "A confirmação encerra o período grátis imediatamente. O contrato ficará pendente e novos agendamentos poderão ser bloqueados até a conferência do Pix. Para contratar um plano menor, adeque a equipe ativa antes de confirmar."
+        : "O contrato será registrado como pendente. O início da nova cobertura será validado contra testes e contratos anteriores. Depois, emita a mensalidade e confira o Pix no extrato oficial."}
       featured
       sectionId="aplicar-assinatura"
       openInitially

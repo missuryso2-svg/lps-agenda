@@ -16,6 +16,7 @@ import {
   CommercialContact,
   CommercialPlans,
 } from "@/features/marketing/commercial-plans";
+import { automaticTrialAvailable } from "@/features/premium-trial/queries";
 import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import { requireOwnerDashboardContext } from "@/lib/auth/dal";
 import { formatCurrencyFromCents, formatDateBR } from "@/lib/format";
@@ -62,7 +63,7 @@ export default async function PlanPage() {
           <h3 className="flex flex-wrap items-center gap-3 text-lg font-semibold">
             Detalhes da assinatura{" "}
             {manual.status && (
-              <SubscriptionStatusBadge status={manual.status} />
+              <SubscriptionStatusBadge status={manual.status === "trialing" && manual.trial_state === "ended" ? "expired" : manual.status} />
             )}
           </h3>
           {limit?.maxBarbers != null && <p className="text-sm">Limite de profissionais ativos: {limit.maxBarbers}</p>}
@@ -72,7 +73,7 @@ export default async function PlanPage() {
                 ? `Teste gratuito · ${days}`
                 : manual.trial_state === "canceled"
                   ? "Teste cancelado"
-                  : `Teste encerrado · ${days}`}{" "}
+                  : "Teste encerrado"}{" "}
               · {date(manual.trial_start)} a {date(manual.trial_end)}
             </p>
           )}
@@ -122,9 +123,14 @@ export default async function PlanPage() {
             A equipe financeira confere o crédito antes de confirmar a
             mensalidade.
           </p>
-          <div>
+          <div id="contratacao-manual" className="scroll-mt-24">
             <CommercialContact />
           </div>
+          {limit?.maxBarbers != null && (
+            <p className="text-sm text-muted-foreground">
+              Para contratar um plano com limite menor, ajuste antes o número de profissionais ativos em Equipe.
+            </p>
+          )}
         </div>
         <PlanBenefits/>
         {invoices.length > 0 && (
@@ -156,7 +162,7 @@ export default async function PlanPage() {
         <>
           <div>
             <h2 className="text-2xl font-semibold">Planos para sua equipe</h2>
-            <CommercialPlans />
+            <CommercialPlans trialAvailable={await automaticTrialAvailable()} />
           </div>
           {data.hasUsedTrial && (
             <p className="text-sm text-muted-foreground">

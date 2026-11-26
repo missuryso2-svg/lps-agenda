@@ -25,6 +25,8 @@ import {
   demoBarbershops,
   getDemoBarbershop,
 } from "@/features/public-barbershop/demo-data";
+import { premiumTrialCTA } from "@/features/premium-trial/copy";
+import { automaticTrialAvailable } from "@/features/premium-trial/queries";
 import { formatCurrencyFromCents, initialsFromName } from "@/lib/format";
 
 type PublicBarbershopPageProps = {
@@ -67,6 +69,8 @@ export default async function PublicBarbershopPage({
     notFound();
   }
 
+  const trialAvailable = await automaticTrialAvailable();
+
   return (
     <>
       <SiteHeader />
@@ -82,7 +86,7 @@ export default async function PublicBarbershopPage({
             href="/cadastro"
             className="inline-flex items-center gap-1 text-muted-foreground underline decoration-gold/40 underline-offset-4 transition-colors hover:text-foreground"
           >
-            Criar a página da minha barbearia
+            {trialAvailable ? premiumTrialCTA : "Criar a página da minha barbearia"}
             <ArrowUpRight className="size-3" />
           </Link>
         </div>

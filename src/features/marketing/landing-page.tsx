@@ -7,6 +7,7 @@ import {
 
 import { demoBarbershops } from "@/features/public-barbershop/demo-data";
 import { CommercialContact, CommercialPlans } from "./commercial-plans";
+import { premiumTrialCTA, premiumTrialDescription, premiumTrialEligibility, premiumTrialOffer, premiumTrialTerms } from "@/features/premium-trial/copy";
 import { trialOffer, trialTerms } from "./plan-benefits";
 import "./landing-j2.css";
 
@@ -45,7 +46,7 @@ const faq = [
     "Como funciona o pagamento por Pix?",
     "Após o acordo, a equipe financeira registra a mensalidade e orienta o pagamento. Um operador autorizado confere o crédito e confirma a parcela.",
   ],
-  ["Existe teste gratuito?", trialOffer + " " + trialTerms],
+  ["Existe teste gratuito?", ""],
   [
     "Posso mudar de plano?",
     "Converse com a LPS Solutions para avaliar o novo limite e as condições. A mudança depende de revisão do acordo.",
@@ -96,7 +97,7 @@ function AgendaPreview() {
   );
 }
 
-export function LandingPage() {
+export function LandingPage({ trialAvailable }: { trialAvailable: boolean }) {
   return (
     <>
       <section className="j2-wrap j2-hero" aria-labelledby="hero-heading">
@@ -107,14 +108,22 @@ export function LandingPage() {
             Organize a equipe, veja quem atende em cada horário e deixe seus
             clientes agendarem pelo link da sua barbearia.
           </p>
+          {trialAvailable && (
+            <p className="j2-lead"><strong>{premiumTrialOffer}</strong> {premiumTrialDescription}</p>
+          )}
           <div className="j2-actions">
-            <Link href="#planos" className="j2-button">
-              Conhecer os planos <ArrowDownRight size={18} aria-hidden />
-            </Link>
+            {trialAvailable ? (
+              <Link href="/cadastro" className="j2-button">{premiumTrialCTA} <ArrowUpRight size={18} aria-hidden /></Link>
+            ) : (
+              <Link href="#planos" className="j2-button">
+                Conhecer os planos <ArrowDownRight size={18} aria-hidden />
+              </Link>
+            )}
             <Link href={demoPath} className="j2-text-link">
               Ver demonstração <ArrowUpRight size={17} aria-hidden />
             </Link>
           </div>
+          {trialAvailable && <p className="mt-3 text-sm text-muted-foreground">{premiumTrialTerms}</p>}
         </div>
         <AgendaPreview />
       </section>
@@ -178,7 +187,7 @@ export function LandingPage() {
         <div className="j2-wrap">
           <p className="j2-kicker"><span aria-hidden /> Planos</p>
           <h2 id="planos-heading" className="j2-section-title">Um plano para cada equipe.</h2>
-          <CommercialPlans />
+          <CommercialPlans trialAvailable={trialAvailable} />
         </div>
       </section>
 
@@ -191,7 +200,9 @@ export function LandingPage() {
           {faq.map(([question, answer]) => (
             <details key={question}>
               <summary>{question}<ChevronDown size={18} aria-hidden /></summary>
-              <p>{answer}</p>
+              <p>{answer || (trialAvailable
+                ? premiumTrialOffer + " " + premiumTrialEligibility + " " + premiumTrialTerms
+                : trialOffer + " " + trialTerms)}</p>
             </details>
           ))}
         </div>

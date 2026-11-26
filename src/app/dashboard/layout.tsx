@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { BookingAccessNotice } from "@/components/dashboard/booking-access-notice";
 import { ConfigRequiredPage } from "@/components/config-required-page";
 import { createClient } from "@/lib/supabase/server";
+import { AutomaticTrialDashboard } from "@/features/premium-trial/dashboard";
+import { getOwnerAutomaticTrial } from "@/features/premium-trial/queries";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { getBarbershopBookingAccess } from "@/features/scheduling/booking-access";
 import type { BarbershopBookingAccess } from "@/features/scheduling/booking-access";
@@ -51,9 +53,13 @@ export default async function DashboardLayout({
   }
 
   const db = await createClient();
-  const notices = await db.rpc("booking_notices", {
-    shop: active.barbershop_id,
-  });
+  const canSeeAutomaticTrial = active.role === "owner" &&
+    (bookingAccess?.reason === "trial" || bookingAccess?.reason === "trial_ended");
+  const [notices, trial] = await Promise.all([
+    db.rpc("booking_notices", { shop: active.barbershop_id }),
+    canSeeAutomaticTrial ? getOwnerAutomaticTrial(active.barbershop_id).catch(() => null) : null,
+  ]);
+  const timeZone = active.barbershop.timezone || "America/Sao_Paulo";
   const displayName =
     profile?.full_name?.trim() ||
     (typeof user.user_metadata?.full_name === "string"
@@ -76,7 +82,7 @@ export default async function DashboardLayout({
   return (
     <DashboardShell
       notices={notices.data}
-      timeZone={active.barbershop.timezone || "America/Sao_Paulo"}
+      timeZone={timeZone}
       userName={displayName}
       userEmail={user.email ?? "E-mail não informado"}
       memberships={membershipSummaries}
@@ -84,12 +90,20 @@ export default async function DashboardLayout({
       role={active.role}
       isPlatformAdmin={isCurrentUserPlatformAdmin(user)}
     >
-      <BookingAccessNotice
-        access={bookingAccess}
-        checkFailed={bookingAccessCheckFailed}
-        canManageBilling={active.role === "owner"}
-        timeZone={active.barbershop.timezone || "America/Sao_Paulo"}
-      />
+      {trial && <AutomaticTrialDashboard
+        key={active.barbershop_id + trial.observed_at}
+        shop={active.barbershop_id}
+        trial={trial}
+        timeZone={timeZone}
+      />}
+      {(!trial || bookingAccess?.reason !== "trial_ended") && (
+        <BookingAccessNotice
+          access={bookingAccess}
+          checkFailed={bookingAccessCheckFailed}
+          canManageBilling={active.role === "owner"}
+          timeZone={timeZone}
+        />
+      )}
       {children}
     </DashboardShell>
   );

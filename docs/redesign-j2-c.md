@@ -169,3 +169,7 @@ A repetição isolada de Serviços em ordem invertida registrou 434 ms antes e 4
 ### Pendências
 
 O C3 aguarda aprovação visual explícita. Permanecem abertas as pendências registradas no C1, incluindo NVDA ou Narrador, transições diretas de atendimentos, quatro timeouts ainda sem causa atribuída, reconciliação de fotos privadas órfãs, homologação do binding real, confiança em headers e revisão de abuso e Data API. O lançamento comercial permanece em NO-GO.
+
+### Checkpoint do trial Premium automático
+
+A implementação do trial foi isolada em um commit do redesign e validada em QA local. O [relatório do trial](trial-premium-automatico.md) reúne o parecer, a migration incremental, as capturas nos dois temas e as evidências de cobertura e conversão manual. A J2-C3 aguarda a confirmação visual explícita da J2-C2. O lançamento comercial segue em NO-GO.

@@ -64,7 +64,7 @@ describe("migrações", () => {
     expect(migrationFiles).toContain(
       "20261115120000_subscription_cancel_reason.sql",
     );
-    expect(migrationFiles.slice(-14)).toEqual([
+    expect(migrationFiles.slice(-15)).toEqual([
       "20261117120000_asaas_payment_transition_guard.sql",
       "20261118120000_manual_billing_foundation.sql",
       "20261118130000_manual_trial_onboarding.sql",
@@ -79,6 +79,7 @@ describe("migrações", () => {
       "20261123120000_phase_i3_manual_agreements_and_logos.sql",
       "20261125005128_phase_i31_contract_capacity_logo_reconciliation.sql",
       "20261125085435_phase_i4_appointment_price_integrity.sql",
+      "20261126095208_automatic_premium_trial.sql",
     ]);
   });
 

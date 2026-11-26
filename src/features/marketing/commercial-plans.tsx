@@ -1,4 +1,6 @@
 import "server-only";
+import Link from "next/link";
+import { premiumTrialCTA, premiumTrialEligibility, premiumTrialOffer } from "@/features/premium-trial/copy";
 import { PlanBenefits, trialOffer, trialTerms } from "./plan-benefits";
 import { ArrowUpRight, CalendarDays, UsersRound } from "lucide-react";
 
@@ -40,7 +42,7 @@ export function CommercialContact({
   );
 }
 
-export function CommercialPlans() {
+export function CommercialPlans({ trialAvailable = false }: { trialAvailable?: boolean } = {}) {
   return (
     <>
       <p className="lp-body">
@@ -48,7 +50,11 @@ export function CommercialPlans() {
         as condições diretamente com sua barbearia.
       </p>
       <p className="lp-trial mt-3 text-sm">
-        <strong>{trialOffer}</strong> {trialTerms}
+        {trialAvailable ? (
+          <><strong>{premiumTrialOffer}</strong> {premiumTrialEligibility}{" "}
+            <Link href="/cadastro" className="underline underline-offset-4">{premiumTrialCTA}</Link>
+          </>
+        ) : <><strong>{trialOffer}</strong> {trialTerms}</>}
       </p>
       <div className="lp-plan-grid">
         {commercialPlans.map((plan) => (

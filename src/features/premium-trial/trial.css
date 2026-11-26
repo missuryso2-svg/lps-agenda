@@ -1,0 +1,68 @@
+.trial-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in oklab, var(--gold) 36%, var(--border));
+  border-radius: 0.875rem;
+  background: color-mix(in oklab, var(--gold) 5%, var(--card));
+}
+
+.trial-mark {
+  display: grid;
+  inline-size: 2.375rem;
+  block-size: 2.375rem;
+  flex: none;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--gold) 28%, var(--border));
+  border-radius: 0.75rem;
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--gold) 17%, var(--card));
+}
+
+.trial-progress {
+  appearance: none;
+  inline-size: min(7rem, 100%);
+  block-size: 0.375rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.trial-progress::-webkit-progress-bar { background: var(--muted); }
+.trial-progress::-webkit-progress-value { background: var(--gold); }
+.trial-progress::-moz-progress-bar { background: var(--gold); }
+
+.trial-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  inline-size: min(calc(100% - 2rem), 34rem);
+  max-block-size: calc(100dvh - 2rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 18px 70px oklch(0 0 0 / 24%);
+}
+
+.trial-dialog::backdrop { background: oklch(0 0 0 / 64%); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .trial-dialog[open] { animation: trial-enter 180ms cubic-bezier(.22, 1, .36, 1) both; }
+  .trial-dialog[open]::backdrop { animation: trial-shade 150ms ease-out both; }
+}
+
+@keyframes trial-enter {
+  from { opacity: 0; transform: translateY(5px) scale(.985); }
+}
+
+@keyframes trial-shade {
+  from { opacity: 0; }
+}

@@ -67,7 +67,7 @@ describe("consulta comercial", () => {
 
 describe("divulgação do trial", () => {
   it("explicita duração, liberação comercial e limite do plano inicial", () => {
-    expect(trialOffer).toContain("168 horas");
+    expect(trialOffer).toContain("sete dias");
     expect(trialOffer).toContain("sujeito à liberação pela LPS Solutions");
     expect(trialTerms).toContain("Confirme a disponibilidade");
     expect(trialTerms).toContain("1 profissional ativo");

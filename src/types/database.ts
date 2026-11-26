@@ -1073,6 +1073,9 @@ export type Database = {
         Args: { p_actor: string; p_intent_id: string; p_name: string; p_slug: string; p_phone: string | null; p_timezone: string };
         Returns: undefined;
       };
+      automatic_premium_trial_available: { Args: Record<PropertyKey, never>; Returns: boolean };
+      get_owner_automatic_trial: { Args: { p_shop: string }; Returns: Json };
+      claim_automatic_trial_welcome: { Args: { p_shop: string }; Returns: boolean };
       get_owner_manual_trial: { Args: { p_shop: string }; Returns: Json };
       replace_barber_photo: { Args: {actor:string;shop:string;professional:string;previous:string|null;replacement:string|null}; Returns: boolean };
       replace_barbershop_logo: {

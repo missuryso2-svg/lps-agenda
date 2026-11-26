@@ -33,6 +33,7 @@ export async function submitFinancialOperation(
           reason: v.reason,
           terms: {
             plan_id: v.plan,
+            booking_impact_accepted: v.bookingImpactAccepted,
             monthly_cents: v.amount,
             currency: "BRL",
             terms: v.terms,
@@ -90,6 +91,8 @@ export async function submitFinancialOperation(
       const code = response.error.code;
       if (code === "LP031" && v.kind === "agreement")
         return failure("A equipe ativa excede o limite do plano escolhido. Escolha um plano que comporte os profissionais ativos.");
+      if (code === "LP033" && v.kind === "agreement")
+        return failure("Confirme o impacto nos agendamentos para encerrar o período grátis e registrar o contrato.");
       if (code === "42501") return failure("Acesso financeiro negado.");
       if (code === "55000" && v.kind === "pix")
         return failure(

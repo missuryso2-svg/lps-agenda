@@ -1,0 +1,3 @@
+{"path":"/","n":12,"medianMs":21.5,"p95Ms":25.8,"bytes":92849}
+{"path":"/cadastro","n":12,"medianMs":16.9,"p95Ms":18.2,"bytes":46577}
+{"path":"/barbearia/barbearia-aurora","n":12,"medianMs":25.1,"p95Ms":32,"bytes":128766}

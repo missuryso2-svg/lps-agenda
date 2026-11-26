@@ -97,6 +97,7 @@ export const adminPath = "/admin/assinaturas";
 export const originLabels: Record<string, string> = {
   manual: "Contrato manual",
   trial: "Trial manual",
+  automatic_trial: "Trial automático",
   asaas: "Asaas legado",
   none: "Sem contrato",
   reconcile: "Conciliar",
@@ -109,6 +110,7 @@ export type ManualAgreementState = {
   trial_end: string | null;
   current_period_end: string | null;
   suspended: boolean;
+  automatic_trial?: boolean;
 };
 
 export function manualAgreementEligibility(
@@ -133,6 +135,9 @@ export function manualAgreementEligibility(
   }
 
   if (shop.origin === "trial") {
+    if (shop.automatic_trial && ["trialing", "expired", "canceled"].includes(shop.status ?? "")) {
+      return eligible("A confirmação encerra um trial automático vigente. A cobertura contratada depende da conferência do Pix.");
+    }
     const trialEnd = shop.trial_end ? Date.parse(shop.trial_end) : Number.NaN;
     if (shop.status === "trialing" || (Number.isFinite(trialEnd) && trialEnd > now)) {
       return blocked(

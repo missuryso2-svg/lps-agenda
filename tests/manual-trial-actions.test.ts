@@ -4,8 +4,10 @@ import { FakeSupabase } from "./helpers/fake-supabase";
 const mocks = vi.hoisted(() => ({
   sessionRpc: vi.fn(), serverRpc: vi.fn(), setCookie: vi.fn(), remote: vi.fn(),
   db: null as unknown,
+  autoReleased: false,
 }));
 vi.mock("server-only", () => ({}));
+vi.mock("@/features/premium-trial/queries", () => ({ automaticTrialAvailable: async () => mocks.autoReleased }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ set: mocks.setCookie }) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: () => { throw new Error("redirect:dashboard"); } }));
@@ -35,6 +37,7 @@ const invoiceInput = { planId: intent, billingType: "pix", holderName: "Titular 
 
 beforeEach(() => {
   mocks.db = null;
+  mocks.autoReleased = false;
   vi.resetAllMocks();
   mocks.sessionRpc.mockResolvedValue({ data: "shop", error: null });
   mocks.serverRpc.mockResolvedValue({ data: null, error: null });
@@ -48,6 +51,13 @@ describe("integração das Server Actions com o onboarding", () => {
     expect(mocks.sessionRpc.mock.calls[0][0]).toBe("create_barbershop");
     expect(mocks.serverRpc).not.toHaveBeenCalled();
     expect(mocks.setCookie).toHaveBeenCalledTimes(1);
+  });
+  it("usa o cadastro canônico quando o banco libera o Premium automático", async () => {
+    vi.stubEnv("MANUAL_TRIAL_ONBOARDING_ENABLED", "true");
+    mocks.autoReleased = true;
+    await expect(createBarbershopAction(form)).rejects.toThrow("redirect:dashboard");
+    expect(mocks.sessionRpc.mock.calls[0][0]).toBe("create_barbershop");
+    expect(mocks.serverRpc).not.toHaveBeenCalled();
   });
   it("reapresenta a mesma intenção após perda da resposta", async () => {
     vi.stubEnv("MANUAL_TRIAL_ONBOARDING_ENABLED", "true");

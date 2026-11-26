@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 export const trialOffer =
-  "Teste de 168 horas no plano Básico, sujeito à liberação pela LPS Solutions.";
+  "Teste de sete dias no plano Básico, sujeito à liberação pela LPS Solutions.";
 export const trialTerms =
   "Confirme a disponibilidade antes de criar sua barbearia. Quando liberado, começa com 1 profissional ativo.";
 const benefits = [

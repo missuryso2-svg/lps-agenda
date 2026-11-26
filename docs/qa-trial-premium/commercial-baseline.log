@@ -1,0 +1,18 @@
+3a0691f
+PASS missing and invalid configuration, private projection and C2 roles
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: /dashboard/plano horizontal overflow
+    at visit (file:///C:/Users/missu/source/lps-agenda-trial-baseline/tests/integration/commercial-phase-d.mjs:77:10)
+    at async file:///C:/Users/missu/source/lps-agenda-trial-baseline/tests/integration/commercial-phase-d.mjs:345:7 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { ConfigAlert } from "@/components/config-alert";
 import { AccountHeading, AccountShell } from "@/features/auth/components/account-shell";
 import { OnboardingForm } from "@/features/onboarding/components/onboarding-form";
+import { automaticTrialAvailable } from "@/features/premium-trial/queries";
 import { getMemberships } from "@/lib/auth/dal";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getSupabasePublicEnv } from "@/lib/env/public";
@@ -39,6 +40,7 @@ export default async function OnboardingPage() {
   const memberships = await getMemberships(user.id);
   if (memberships.length > 0) redirect("/dashboard");
 
+  const trialAvailable = await automaticTrialAvailable();
   const name =
     (user.user_metadata?.full_name as string | undefined) ||
     user.email?.split("@")[0] ||
@@ -71,9 +73,11 @@ export default async function OnboardingPage() {
     >
       <header className="account-heading account-onboarding-heading">
         <h2>Dados da barbearia</h2>
-        <p>Você poderá editar estas informações no painel.</p>
+        <p>{trialAvailable
+          ? "Se esta for sua primeira barbearia elegível, seus 7 dias grátis no Premium começam ao concluir o cadastro."
+          : "Você poderá editar estas informações no painel."}</p>
       </header>
-      <OnboardingForm manualUserId={manualTrialOnboardingEnabled() ? user.id : null} />
+      <OnboardingForm manualUserId={!trialAvailable && manualTrialOnboardingEnabled() ? user.id : null} />
       <div className="account-alternatives">
         <p>A contratação de um plano pago depende de acordo com a LPS Solutions.</p>
         <Link href="/dashboard" className="account-link">Ir para o painel <ArrowRight size={16} aria-hidden /></Link>

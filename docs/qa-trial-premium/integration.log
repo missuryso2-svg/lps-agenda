@@ -1,0 +1,19 @@
+PASS disabled copy, enabled landing, plans, signup and demo, strict CSP
+PASS real signup, Mailpit confirmation, onboarding, seven days and no payment
+PASS keyboard focus, Escape and focus return, reload and relogin keep one welcome and original deadline
+PASS financial operator view, downgrade and booking warning, staff and other tenant RPC isolation
+PASS actual public booking before/after expiry, staff agenda, plan access, records preserved and no automatic invoice
+PASS screenshot pair, strict CSP and reduced motion 375 light
+PASS screenshot pair, strict CSP and reduced motion 375 dark
+PASS screenshot pair, strict CSP and reduced motion 768 light
+PASS screenshot pair, strict CSP and reduced motion 768 dark
+PASS screenshot pair, strict CSP and reduced motion 1280 light
+PASS screenshot pair, strict CSP and reduced motion 1280 dark
+PASS screenshot pair, strict CSP and reduced motion 1920 light
+PASS screenshot pair, strict CSP and reduced motion 1920 dark
+BENCH enabled {"path":"/","n":12,"medianMs":22.4,"p95Ms":25,"bytes":95145}
+BENCH enabled {"path":"/cadastro","n":12,"medianMs":17.3,"p95Ms":20.3,"bytes":47041}
+BENCH enabled {"path":"/barbearia/barbearia-aurora","n":12,"medianMs":23.1,"p95Ms":28.5,"bytes":130559}
+BENCH disabled {"path":"/","n":12,"medianMs":21.9,"p95Ms":32.9,"bytes":94155}
+BENCH disabled {"path":"/cadastro","n":12,"medianMs":14.5,"p95Ms":19.1,"bytes":46927}
+BENCH disabled {"path":"/barbearia/barbearia-aurora","n":12,"medianMs":23.2,"p95Ms":34.9,"bytes":130571}

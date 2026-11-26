@@ -116,7 +116,7 @@ try {
         assert.ok(
           await page
             .getByText(
-              "Teste de 168 horas no plano Básico, sujeito à liberação pela LPS Solutions.",
+              "Teste de sete dias no plano Básico, sujeito à liberação pela LPS Solutions.",
               {
                 exact: true,
               },

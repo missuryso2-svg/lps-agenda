@@ -78,13 +78,19 @@ export function Shops({ rows }: { rows: Shop[] }) {
                 </small>
               </td>
               <td>
-                <Badge value={s.origin} />
-                <small>{s.plan}</small>
+                <Badge value={s.origin === "trial" && s.automatic_trial ? "automatic_trial" : s.origin} />
+                {s.automatic_trial && <small>{s.origin === "trial" ? s.automatic_trial_plan : "Trial automático · " + s.automatic_trial_plan}</small>}
+                {s.origin !== "trial" || !s.automatic_trial ? <small>{s.plan}</small> : null}
               </td>
               <td>
-                <Badge value={s.status} />
+                <Badge value={s.origin === "trial" && s.automatic_trial_state === "ended" ? "expired" : s.status} />
                 {s.suspended && <Badge value="suspended" />}
                 {s.trial_end && <small>{instant(s.trial_end)}</small>}
+                {s.automatic_trial_state && <small>{{
+                  running: (s.automatic_trial_days ?? 0) + " dia(s) restante(s)",
+                  ended: "Período grátis encerrado",
+                  converted: "Convertido com Pix conferido",
+                }[s.automatic_trial_state]}</small>}
               </td>
               <td>{money(s.monthly_cents)}</td>
               <td>{instant(s.last_verified_at)}</td>

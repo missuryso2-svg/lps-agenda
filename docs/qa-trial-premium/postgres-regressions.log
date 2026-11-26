@@ -1,0 +1,165 @@
+ "$0==\"@@FIXTURE@@\" {system(\"cat b2b-fixtures.sql\");next} {print}" : line 0: syntax error: unexpected end of file (expecting "done")
+SUITE manual-trial-onboarding
+NOTICE:  PASS initially disabled
+NOTICE:  PASS dedicated role has no login, bypass or administration
+NOTICE:  PASS only the onboarding RPC runs as this definer
+NOTICE:  PASS no API role can SET ROLE to the definer
+NOTICE:  PASS no broad privileges for definer
+NOTICE:  PASS anon denied
+NOTICE:  PASS auth.uid required
+NOTICE:  PASS actual PostgREST role and claims
+NOTICE:  PASS direct RPC with caller flag still disabled
+NOTICE:  PASS cannot write database flag
+NOTICE:  PASS cannot assume onboarding identity
+NOTICE:  PASS cannot supply own intent record
+NOTICE:  PASS equivalent retry returns original shop
+NOTICE:  PASS invalid slug rejected
+NOTICE:  PASS invalid timezone rejected
+NOTICE:  PASS missing intent rejected
+NOTICE:  PASS owner cannot insert manual subscription while enabled
+NOTICE:  PASS owner cannot create manual invoice while enabled
+NOTICE:  PASS legacy admin cannot extend trial while enabled
+NOTICE:  PASS service cannot insert through the RPC
+NOTICE:  PASS service cannot edit manual trial while enabled
+NOTICE:  PASS service cannot toggle the DB flag
+NOTICE:  PASS same intent divergent input rejected
+NOTICE:  PASS new intention can create a different shop
+NOTICE:  PASS slug collision returns generic conflict
+NOTICE:  PASS same UUID for another actor cannot recover original result
+NOTICE:  PASS inactive basic plan rejects onboarding
+NOTICE:  PASS one original shop
+NOTICE:  PASS exactly one owner
+NOTICE:  PASS exactly one subscription
+NOTICE:  PASS finite basic trial without commercial or remote fields
+NOTICE:  PASS no payments or gateway jobs for onboarding shops
+NOTICE:  PASS trial insert failure raised
+NOTICE:  PASS failed shop rolled back
+NOTICE:  PASS failed owner rolled back
+NOTICE:  PASS failed intent rolled back
+NOTICE:  PASS recovery of canceled result
+NOTICE:  PASS no renewed access after retry
+SUITE manual-trial-access
+NOTICE:  PASS (normal,<NULL>) at 2026-11-26 22:10:19.917423+00
+NOTICE:  PASS (normal,trial) at 2026-01-07 23:59:59+00
+NOTICE:  PASS (blocked,trial_ended) at 2026-01-08 00:00:00+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-07 00:00:00+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-07 00:00:00+00
+NOTICE:  PASS (blocked,mixed_origin) at 2026-11-26 22:10:19.917423+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-20 00:00:00+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-20 00:00:00+00
+NOTICE:  PASS (blocked,past_due) at 2026-11-26 22:10:19.991538+00
+NOTICE:  PASS (grace,past_due) at 2026-11-29 22:10:18.991538+00
+NOTICE:  PASS (blocked,past_due) at 2026-11-29 22:10:19.991538+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-01-17 00:00:00+00
+NOTICE:  PASS (normal,paid) at 2026-01-20 00:00:00+00
+NOTICE:  PASS (blocked,no_coverage) at 2026-02-20 00:00:00+00
+NOTICE:  PASS (grace,<NULL>) at 2026-11-29 22:10:20.034886+00
+NOTICE:  PASS (blocked,<NULL>) at 2026-11-29 22:10:20.034887+00
+SUITE manual-billing
+NOTICE:  PASS no automatic trial or contract debt
+NOTICE:  PASS wrong tenant
+NOTICE:  PASS uncontracted trial
+NOTICE:  PASS legacy invoice cannot attach to manual subscription
+NOTICE:  PASS cannot use service scope
+NOTICE:  PASS invalid original
+NOTICE:  PASS invalid total
+NOTICE:  PASS unexplained discount
+NOTICE:  PASS total differs
+NOTICE:  PASS required method
+NOTICE:  PASS first competence
+NOTICE:  PASS canonical month
+NOTICE:  PASS required invoice date
+NOTICE:  PASS agreed cutoff
+NOTICE:  PASS Feb 2026 anchored
+NOTICE:  PASS March restores 31
+NOTICE:  PASS March valid
+NOTICE:  PASS wrong due month
+NOTICE:  PASS leap February
+NOTICE:  PASS missing settlement evidence
+NOTICE:  PASS pending cannot carry credit
+NOTICE:  PASS invalid agreement timezone
+NOTICE:  PASS invalid period
+NOTICE:  PASS invoice with negotiated discount
+NOTICE:  PASS rollback restores invoice and audit
+NOTICE:  PASS first invoice
+NOTICE:  PASS duplicate competence
+NOTICE:  PASS immutable amount
+NOTICE:  PASS verified before credit
+NOTICE:  PASS trusted fixture settlement
+NOTICE:  PASS no renewal or anchor drift
+NOTICE:  PASS cannot erase confirmation
+NOTICE:  PASS cannot erase paid invoice
+NOTICE:  PASS extra days recorded
+NOTICE:  PASS audit append only
+NOTICE:  PASS anon cannot read payments
+NOTICE:  PASS anon cannot write payments
+NOTICE:  PASS authenticated verified claim
+NOTICE:  PASS authenticated cannot read manual payments
+NOTICE:  PASS authenticated cannot update manual payment
+NOTICE:  PASS authenticated cannot modify manual contract
+NOTICE:  PASS authenticated cannot delete manual contract
+NOTICE:  PASS authenticated cannot insert manual contract
+NOTICE:  PASS authenticated cannot issue manual invoice
+NOTICE:  PASS authenticated cannot execute trigger helpers
+NOTICE:  PASS owner verified claim
+NOTICE:  PASS owner verified tenant membership
+NOTICE:  PASS owner cannot read manual payments
+NOTICE:  PASS owner cannot update manual payment
+NOTICE:  PASS owner cannot modify manual contract
+NOTICE:  PASS owner cannot delete manual contract
+NOTICE:  PASS owner cannot insert manual contract
+NOTICE:  PASS owner cannot issue manual invoice
+NOTICE:  PASS owner cannot execute trigger helpers
+NOTICE:  PASS staff verified claim
+NOTICE:  PASS staff verified tenant membership
+NOTICE:  PASS staff cannot read manual payments
+NOTICE:  PASS staff cannot update manual payment
+NOTICE:  PASS staff cannot modify manual contract
+NOTICE:  PASS staff cannot delete manual contract
+NOTICE:  PASS staff cannot insert manual contract
+NOTICE:  PASS staff cannot issue manual invoice
+NOTICE:  PASS staff cannot execute trigger helpers
+NOTICE:  PASS platform_admin verified claim
+NOTICE:  PASS platform_admin cannot read manual payments
+NOTICE:  PASS platform_admin cannot update manual payment
+NOTICE:  PASS platform_admin cannot modify manual contract
+NOTICE:  PASS platform_admin cannot delete manual contract
+NOTICE:  PASS platform_admin cannot insert manual contract
+NOTICE:  PASS platform_admin cannot issue manual invoice
+NOTICE:  PASS platform_admin cannot execute trigger helpers
+NOTICE:  PASS legacy service cannot mutate manual rows
+NOTICE:  PASS legacy service cannot settle manual Pix
+SUITE financial-cutover
+NOTICE:  PASS scheduler installed off
+NOTICE:  PASS invalid batch
+NOTICE:  PASS runner can only invoke the scheduled entry
+NOTICE:  PASS ordinary role denied worker
+NOTICE:  PASS ordinary role denied metrics
+NOTICE:  PASS suspended contract cannot issue a new competence
+NOTICE:  PASS held invoice excluded
+NOTICE:  PASS service cannot enroll an Asaas subscription
+NOTICE:  PASS mixed origin counted
+NOTICE:  PASS mixed history requires a decision
+NOTICE:  PASS no automatic conversion
+NOTICE:  PASS no terminal resurrection
+NOTICE:  PASS missing heartbeat detected
+NOTICE:  PASS overlap skips without another run
+NOTICE:  PASS partial batch persisted
+NOTICE:  PASS safe partial telemetry
+NOTICE:  PASS successful retry
+NOTICE:  PASS first unpaid installment stays blocked
+NOTICE:  PASS monitor recovers and retains failures
+NOTICE:  PASS telemetry excludes records and identifiers
+SUITE i31-capacity-cleanup
+NOTICE:  PASS unenrolled booking is initially allowed
+NOTICE:  PASS future pending agreement below cap blocks booking immediately
+NOTICE:  PASS agreement above cap rejected after concurrent activation
+NOTICE:  PASS team preserved and agreement rolled back
+NOTICE:  PASS activation waits for contract and cannot exceed cap
+NOTICE:  PASS agreement at exact cap and one active professional
+NOTICE:  PASS administrative claim rejects another tenant key
+NOTICE:  PASS claim racing a replacement preserves the referenced logo
+NOTICE:  PASS retirement survives tenant deletion
+NOTICE:  PASS deleted tenant can be reconciled
+NOTICE:  PASS claim is repeatable
+NOTICE:  PASS single audit entry and no premature acknowledgement

@@ -1,0 +1,5 @@
+NOTICE:  PASS concurrency starts with release disabled
+NOTICE:  PASS parallel distinct requests grant one Premium period
+NOTICE:  PASS first concurrent window claims welcome
+NOTICE:  PASS concurrent second window cannot claim again
+NOTICE:  PASS invitation committed first disqualifies the competing onboarding

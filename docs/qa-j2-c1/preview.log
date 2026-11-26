@@ -1,0 +1,3 @@
+PASS owner desktop signed in to the persistent preview
+PASS staff mobile signed in to the persistent preview
+PASS listener 127.0.0.1:59330

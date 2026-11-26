@@ -11,7 +11,6 @@ import {
   formatCurrencyFromCents,
   formatDateOnlyBR,
 } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
 export function SlotPicker({
   serviceId,
@@ -93,7 +92,7 @@ export function SlotPicker({
         className="flex min-h-28 items-center justify-center gap-2 rounded-xl border border-border/80 bg-muted/20 text-xs text-muted-foreground"
         aria-busy="true"
       >
-        <Loader2 className="size-4 animate-spin text-gold" />
+        <Loader2 className="size-4 animate-spin text-gold" aria-hidden />
         Calculando horários disponíveis...
       </div>
     );
@@ -125,7 +124,7 @@ export function SlotPicker({
       {availability.slots.length > 0 ? (
         <>
           <div
-            className="grid grid-cols-3 gap-2 sm:grid-cols-5"
+            className="j2-agenda-slots"
             role="group"
             aria-label="Horários disponíveis"
           >
@@ -139,12 +138,6 @@ export function SlotPicker({
                   onClick={() => onSelect(slot.time)}
                   disabled={disabled}
                   aria-pressed={selected}
-                  className={cn(
-                    "h-10 rounded-xl border text-xs font-semibold tabular-nums transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
-                    selected
-                      ? "border-gold bg-gold text-gold-foreground shadow-gold"
-                      : "border-border/80 bg-card hover:border-gold/40 hover:bg-gold-soft/30",
-                  )}
                 >
                   {slot.time}
                 </button>

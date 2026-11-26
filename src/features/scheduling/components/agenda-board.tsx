@@ -1,148 +1,75 @@
 "use client";
 
-import {
-  Ban,
-  CalendarDays,
-  CalendarPlus,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  Lock,
-  Plus,
-  UsersRound,
-} from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Lock, Plus, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
-import { AppointmentStatusBadge } from "@/components/dashboard/status-badge";
-import { DashboardEmpty } from "@/components/dashboard/dashboard-empty";
-import { Badge } from "@/components/ui/badge";
+import { AppointmentStatusBadge, appointmentLabels } from "@/components/dashboard/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AppointmentDetailsDialog } from "@/features/scheduling/components/appointment-details-dialog";
 import { CancelAppointmentDialog } from "@/features/scheduling/components/cancel-appointment-dialog";
 import { NewAppointmentDialog } from "@/features/scheduling/components/new-appointment-dialog";
 import { RescheduleAppointmentDialog } from "@/features/scheduling/components/reschedule-appointment-dialog";
 import type {
-  AgendaAppointment,
-  AgendaData,
-  AgendaTimeline,
-  AgendaView,
-  CustomerOption,
-  SchedulingOptions,
+  AgendaAppointment, AgendaData, AgendaTimeline, AgendaView, CustomerOption, SchedulingOptions,
 } from "@/features/scheduling/types";
 import {
-  addDaysToDateString,
-  formatDateOnlyBR,
-  formatTimeBR,
-  initialsFromName,
-  shortWeekdayLabel,
-  weekdayFromDateString,
-  weekdayLabel,
+  addDaysToDateString, formatDateOnlyBR, formatTimeBR, initialsFromName,
+  shortWeekdayLabel, weekdayFromDateString, weekdayLabel,
 } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
-function agendaHref({
-  date,
-  view,
-  barberId,
-}: {
-  date: string;
-  view: AgendaView;
-  barberId: string | null;
-}) {
-  const params = new URLSearchParams();
-  params.set("date", date);
-
-  if (view === "week") {
-    params.set("view", "week");
-  }
-
-  if (barberId) {
-    params.set("barber", barberId);
-  }
-
-  return `/dashboard/agenda?${params.toString()}`;
+function agendaHref(date: string, view: AgendaView, barberId: string | null) {
+  const params = new URLSearchParams({ date });
+  if (view === "week") params.set("view", "week");
+  if (barberId) params.set("barber", barberId);
+  return "/dashboard/agenda?" + params.toString();
 }
 
 function weekLabel(data: AgendaData) {
   const first = data.weekDays[0];
   const last = data.weekDays.at(-1);
-
-  if (!first || !last) {
-    return formatDateOnlyBR(data.date);
-  }
-
-  return `${formatDateOnlyBR(first.date)} – ${formatDateOnlyBR(last.date)}`;
+  return first && last
+    ? formatDateOnlyBR(first.date) + " – " + formatDateOnlyBR(last.date)
+    : formatDateOnlyBR(data.date);
 }
 
-function AppointmentCard({
+type SelectAppointment = (appointment: AgendaAppointment, trigger: HTMLButtonElement) => void;
+
+function AppointmentRow({
   appointment,
   timeZone,
   onSelect,
-  compact = false,
+  showBarber = false,
 }: {
   appointment: AgendaAppointment;
   timeZone: string;
-  onSelect: (appointment: AgendaAppointment) => void;
-  compact?: boolean;
+  onSelect: SelectAppointment;
+  showBarber?: boolean;
 }) {
+  const start = formatTimeBR(appointment.startsAt, timeZone);
+  const end = formatTimeBR(appointment.endsAt, timeZone);
+
   return (
     <button
       type="button"
-      onClick={() => onSelect(appointment)}
-      className={cn(
-        "group flex w-full items-start gap-3 rounded-xl border border-border/80 bg-card p-3 text-left transition-colors outline-none hover:border-gold/40 hover:bg-gold-soft/20 focus-visible:ring-3 focus-visible:ring-ring/50",
-        appointment.status === "cancelled" && "opacity-65",
-        compact && "p-2.5",
-      )}
-      aria-label={`${appointment.customerName}, ${appointment.serviceName}, ${formatTimeBR(
-        appointment.startsAt,
-        timeZone,
-      )}, ${appointment.status}`}
+      className="j2-agenda-row"
+      aria-haspopup="dialog"
+      aria-label={[appointment.customerName, appointment.serviceName, appointment.barberName, start, appointmentLabels[appointment.status]].join(", ")}
+      onClick={event => onSelect(appointment, event.currentTarget)}
     >
-      <span className="w-12 shrink-0 rounded-md border border-border bg-muted/60 py-1.5 text-center">
-        <span className="block font-mono text-[11px] font-semibold leading-none">
-          {formatTimeBR(appointment.startsAt, timeZone)}
-        </span>
-        <span className="mt-1 block text-[9px] text-muted-foreground">
-          {formatTimeBR(appointment.endsAt, timeZone)}
-        </span>
+      <span className="j2-list-time">
+        <time dateTime={appointment.startsAt}>{start}</time>
+        <span>{end}</span>
       </span>
-
-      <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="truncate text-xs font-semibold">
-            {appointment.customerName}
-          </span>
-          <AppointmentStatusBadge status={appointment.status} />
-        </span>
-        <span className="mt-1 block truncate text-[11px] text-muted-foreground">
-          {appointment.serviceName}
-          {appointment.durationMinutes
-            ? ` · ${appointment.durationMinutes} min`
-            : ""}
-        </span>
-        {!compact ? (
-          <span className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Clock3 className="size-3" />
-            {appointment.barberName}
-          </span>
-        ) : null}
+      <span className="j2-agenda-row-copy">
+        <strong>{appointment.customerName}</strong>
+        <span>{appointment.serviceName}{appointment.durationMinutes ? " · " + appointment.durationMinutes + " min" : ""}</span>
+        {showBarber && <span>{appointment.barberName}</span>}
+        <AppointmentStatusBadge status={appointment.status} />
       </span>
+      <ChevronRight size={16} className="j2-agenda-row-arrow" aria-hidden />
     </button>
   );
 }
@@ -154,101 +81,51 @@ function BarberTimeline({
 }: {
   timeline: AgendaTimeline;
   timeZone: string;
-  onSelect: (appointment: AgendaAppointment) => void;
+  onSelect: SelectAppointment;
 }) {
-  const appointments = timeline.items.filter(
-    (item) => item.kind === "appointment",
-  );
-  const blocks = timeline.items.filter((item) => item.kind === "block");
+  const appointments = timeline.items.filter(item => item.kind === "appointment").length;
+  const blocks = timeline.items.length - appointments;
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/70 pb-3.5">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full border border-gold/25 bg-gold-soft/40 text-[10px] font-semibold text-gold">
-            {initialsFromName(timeline.barberName)}
-          </span>
-          <div className="min-w-0">
-            <CardTitle className="truncate text-sm">
-              {timeline.barberName}
-            </CardTitle>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {appointments.length} compromisso(s) · {blocks.length} bloqueio(s)
-            </p>
-          </div>
+    <section className="j2-operation-panel j2-agenda-timeline" aria-label={"Agenda de " + timeline.barberName}>
+      <header>
+        <span className="j2-agenda-initials" aria-hidden>{initialsFromName(timeline.barberName)}</span>
+        <div>
+          <h2>{timeline.barberName}</h2>
+          <p>{appointments} compromisso(s) · {blocks} bloqueio(s)</p>
         </div>
-        <Badge variant="outline" className="shrink-0 text-[10px]">
-          {timeline.freeRanges.length > 0
-            ? `${timeline.freeRanges.length} faixa(s) livre(s)`
-            : "Sem horários livres"}
-        </Badge>
-      </CardHeader>
-
-      <CardContent className="space-y-3 pt-3.5">
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-            Horários disponíveis
-          </p>
-          {timeline.freeRanges.length > 0 ? (
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {timeline.freeRanges.map((range) => (
-                <span
-                  key={`${range.start}-${range.end}`}
-                  className="rounded-md border border-emerald-500/25 bg-card px-1.5 py-1 font-mono text-[10px] tabular-nums"
-                >
-                  {range.start}–{range.end}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {timeline.openRanges.length > 0
-                ? "Toda a janela de atendimento está ocupada."
-                : "O profissional não possui expediente neste dia."}
-            </p>
-          )}
-        </div>
-
-        {timeline.items.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border/80 bg-muted/15 px-3 py-5 text-center text-[11px] text-muted-foreground">
-            Nenhum compromisso. Os períodos acima estão livres para
-            agendamento.
-          </p>
+      </header>
+      <div className="j2-agenda-availability">
+        <strong>Horários disponíveis</strong>
+        {timeline.freeRanges.length ? (
+          <ul aria-label={"Faixas livres de " + timeline.barberName}>
+            {timeline.freeRanges.map(range => <li key={range.start + "-" + range.end}>{range.start}–{range.end}</li>)}
+          </ul>
         ) : (
-          <div className="space-y-2">
-            {timeline.items.map((item) =>
-              item.kind === "appointment" ? (
-                <AppointmentCard
-                  key={`appointment-${item.appointment.id}`}
-                  appointment={item.appointment}
-                  timeZone={timeZone}
-                  onSelect={onSelect}
-                />
-              ) : (
-                <div
-                  key={`block-${item.block.id}`}
-                  className="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 p-3"
-                >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300">
-                    <Lock className="size-3.5" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium">
-                      Bloqueio ·{" "}
-                      {formatTimeBR(item.block.startsAt, timeZone)} –{" "}
-                      {formatTimeBR(item.block.endsAt, timeZone)}
-                    </p>
-                    <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
-                      {item.block.reason ?? "Indisponibilidade sem motivo informado."}
-                    </p>
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
+          <p>{timeline.openRanges.length ? "Sem horários livres neste dia." : "Sem expediente neste dia."}</p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+      {timeline.items.length ? (
+        <ul className="j2-agenda-entries">
+          {timeline.items.map(item => item.kind === "appointment" ? (
+            <li key={"appointment-" + item.appointment.id}>
+              <AppointmentRow appointment={item.appointment} timeZone={timeZone} onSelect={onSelect} />
+            </li>
+          ) : (
+            <li className="j2-agenda-block" key={"block-" + item.block.id}>
+              <span className="j2-list-time">
+                <time dateTime={item.block.startsAt}>{formatTimeBR(item.block.startsAt, timeZone)}</time>
+                <span>{formatTimeBR(item.block.endsAt, timeZone)}</span>
+              </span>
+              <div>
+                <strong><Lock size={15} aria-hidden /> Bloqueio</strong>
+                <p>{item.block.reason ?? "Indisponibilidade sem motivo informado."}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="j2-operation-empty">Nenhum compromisso neste dia.</p>}
+    </section>
   );
 }
 
@@ -276,7 +153,31 @@ export function AgendaBoard({
   const query = useSearchParams();
   const bookingId = query.get("atendimento");
   const [selectedRow, setSelected] = useState<AgendaAppointment | null>(null);
-  const selected = selectedRow ?? data.appointments.find((a) => a.id === bookingId) ?? null;
+  const [cancelTarget, setCancelTarget] = useState<AgendaAppointment | null>(null);
+  const [rescheduleTarget, setRescheduleTarget] = useState<AgendaAppointment | null>(null);
+  const lastTrigger = useRef<HTMLButtonElement | null>(null);
+  const newButton = useRef<HTMLButtonElement | null>(null);
+  const periodLink = useRef<HTMLAnchorElement | null>(null);
+  const selected = selectedRow ?? data.appointments.find(appointment => appointment.id === bookingId) ?? null;
+  const weekly = data.view === "week";
+  const period = weekly ? 7 : 1;
+  const previousDate = addDaysToDateString(data.date, -period);
+  const nextDate = addDaysToDateString(data.date, period);
+  const dateDescription = weekly ? weekLabel(data) : weekdayLabel(weekdayFromDateString(data.date)) + " · " + formatDateOnlyBR(data.date);
+  const hrefFor = (date: string, view = data.view) => agendaHref(date, view, data.barberId);
+
+  function restoreFocus(trigger?: HTMLButtonElement | null) {
+    requestAnimationFrame(() => {
+      if (trigger?.isConnected && !trigger.disabled) trigger.focus();
+      else periodLink.current?.focus();
+    });
+  }
+
+  const selectAppointment: SelectAppointment = (appointment, trigger) => {
+    lastTrigger.current = trigger;
+    setSelected(appointment);
+  };
+
   function closeDetails() {
     setSelected(null);
     if (bookingId) {
@@ -285,310 +186,108 @@ export function AgendaBoard({
       window.history.replaceState(null, "", url);
     }
   }
-  const [cancelTarget, setCancelTarget] = useState<AgendaAppointment | null>(
-    null,
-  );
-  const [rescheduleTarget, setRescheduleTarget] =
-    useState<AgendaAppointment | null>(null);
 
-  const previousDate = addDaysToDateString(
-    data.date,
-    data.view === "week" ? -7 : -1,
-  );
-  const nextDate = addDaysToDateString(data.date, data.view === "week" ? 7 : 1);
-  const selectedWeekday = weekdayFromDateString(data.date);
-  const dateDescription =
-    data.view === "week"
-      ? weekLabel(data)
-      : `${weekdayLabel(selectedWeekday)} · ${formatDateOnlyBR(data.date)}`;
-
-  const openNew = () => {
-    if (!canCreateAppointments) {
-      return;
-    }
-
-    setNewKey((value) => value + 1);
+  function openNew() {
+    if (!canCreateAppointments) return;
+    setNewKey(value => value + 1);
     setNewOpen(true);
-  };
+  }
 
-  const handleNewOpenChange = (open: boolean) => {
+  function handleNewOpenChange(open: boolean) {
     setNewOpen(open && canCreateAppointments);
-
-    if (!open && openNewOnMount) {
-      router.replace(
-        agendaHref({
-          date: data.date,
-          view: data.view,
-          barberId: data.barberId,
-        }),
-        { scroll: false },
-      );
+    if (!open) {
+      restoreFocus(newButton.current);
+      if (openNewOnMount) router.replace(hrefFor(data.date), { scroll: false });
     }
-  };
-
-  const totalWeekAppointments = data.weekDays.reduce(
-    (total, day) => total + day.appointments.length,
-    0,
-  );
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="inline-flex w-fit items-center rounded-lg border border-border/80 bg-muted/30 p-1">
-              <Link
-                href={agendaHref({
-                  date: data.date,
-                  view: "day",
-                  barberId: data.barberId,
-                })}
-                scroll={false}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors",
-                  data.view === "day"
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Dia
-              </Link>
-              <Link
-                href={agendaHref({
-                  date: data.date,
-                  view: "week",
-                  barberId: data.barberId,
-                })}
-                scroll={false}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors",
-                  data.view === "week"
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Semana
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <Button asChild variant="outline" size="icon-sm">
-                <Link
-                  href={agendaHref({
-                    date: previousDate,
-                    view: data.view,
-                    barberId: data.barberId,
-                  })}
-                  scroll={false}
-                  aria-label="Período anterior"
-                >
-                  <ChevronLeft className="size-3.5" />
-                </Link>
-              </Button>
-              <div className="min-w-36 px-2 text-center">
-                <p className="text-xs font-medium">{dateDescription}</p>
-                <p className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                  {data.view === "week" ? "Semana" : "Dia"}
-                </p>
-              </div>
-              <Button asChild variant="outline" size="icon-sm">
-                <Link
-                  href={agendaHref({
-                    date: nextDate,
-                    view: data.view,
-                    barberId: data.barberId,
-                  })}
-                  scroll={false}
-                  aria-label="Próximo período"
-                >
-                  <ChevronRight className="size-3.5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Select
-              value={data.barberId ?? "all"}
-              onValueChange={(value) => {
-                startNavigation(() => {
-                  router.push(
-                    agendaHref({
-                      date: data.date,
-                      view: data.view,
-                      barberId: value === "all" ? null : value,
-                    }),
-                    { scroll: false },
-                  );
-                });
-              }}
-              disabled={isNavigating}
-            >
-              <SelectTrigger
-                className="h-9 w-full rounded-xl sm:w-44"
-                aria-label="Filtrar por profissional"
-              >
-                <UsersRound className="size-3.5 text-gold" />
-                <SelectValue placeholder="Todos os profissionais" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os profissionais</SelectItem>
-                {options.barbers.map((barber) => (
-                  <SelectItem key={barber.id} value={barber.id}>
-                    {barber.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button asChild variant="outline" className="h-9">
-              <Link
-                href={agendaHref({
-                  date: today,
-                  view: data.view,
-                  barberId: data.barberId,
-                })}
-                scroll={false}
-              >
-                <CalendarDays className="size-3.5" />
-                Hoje
-              </Link>
-            </Button>
-
-            {canManage ? (
-              <Button
-                type="button"
-                variant="gold"
-                className="h-9"
-                onClick={openNew}
-                disabled={!canCreateAppointments}
-              >
-                <Plus className="size-4" />
-                Agendar cliente presencial
-              </Button>
-            ) : (
-              <Badge variant="outline" className="w-fit text-muted-foreground">
-                Somente leitura
-              </Badge>
-            )}
-          </div>
+    <div className="j2-agenda">
+      <div className="j2-agenda-toolbar">
+        <div className="j2-agenda-controls">
+          <nav className="j2-agenda-view" aria-label="Modo de exibição da agenda">
+            <Link ref={periodLink} href={hrefFor(data.date, "day")} scroll={false} aria-current={!weekly ? "page" : undefined}>Dia</Link>
+            <Link href={hrefFor(data.date, "week")} scroll={false} aria-current={weekly ? "page" : undefined}>Semana</Link>
+          </nav>
+          <nav className="j2-agenda-period" aria-label="Navegação do período">
+            <Link href={hrefFor(previousDate)} scroll={false} aria-label="Período anterior"><ChevronLeft size={19} aria-hidden /></Link>
+            <strong>{dateDescription}</strong>
+            <Link href={hrefFor(nextDate)} scroll={false} aria-label="Próximo período"><ChevronRight size={19} aria-hidden /></Link>
+          </nav>
         </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <Clock3 className="size-3 text-gold" />
-            Fuso: {data.timeZone}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Ban className="size-3 text-amber-600" />
-            Bloqueios removem horários sem apagar registros
-          </span>
-          <span>
-            {data.view === "week"
-              ? `${totalWeekAppointments} agendamento(s) no período`
-              : `${data.appointments.length} agendamento(s) no dia`}
-          </span>
+        <div className="j2-agenda-filters">
+          <Select
+            value={data.barberId ?? "all"}
+            onValueChange={value => startNavigation(() => {
+              router.push(agendaHref(data.date, data.view, value === "all" ? null : value), { scroll: false });
+            })}
+            disabled={isNavigating}
+          >
+            <SelectTrigger className="j2-agenda-professional" aria-label="Filtrar por profissional">
+              <UsersRound size={16} aria-hidden /><SelectValue placeholder="Todos os profissionais" />
+            </SelectTrigger>
+            <SelectContent className="j2-panel-menu">
+              <SelectItem value="all">Todos os profissionais</SelectItem>
+              {options.barbers.map(barber => <SelectItem key={barber.id} value={barber.id}>{barber.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button asChild variant="outline" className="j2-operation-secondary">
+            <Link href={hrefFor(today)} scroll={false}><CalendarDays aria-hidden /> Hoje</Link>
+          </Button>
+          {canManage ? (
+            <Button ref={newButton} type="button" variant="gold" className="j2-operation-primary" onClick={openNew} disabled={!canCreateAppointments}>
+              <Plus aria-hidden /> Agendar cliente presencial
+            </Button>
+          ) : <p className="j2-agenda-readonly">Somente leitura</p>}
+          <span role="status" className="sr-only">{isNavigating ? "Atualizando agenda..." : ""}</span>
+        </div>
+        <div className="j2-agenda-toolbar-footer">
+          <span>Fuso: {data.timeZone}</span>
+          <Link href="/dashboard/horarios" className="j2-operation-link">Expediente e bloqueios</Link>
         </div>
       </div>
 
-      {data.view === "day" ? (
-        data.timelines.length === 0 ? (
-          <DashboardEmpty
-            icon={UsersRound}
-            title="Nenhum profissional ativo"
-            description="Ative ou cadastre profissionais para visualizar a agenda diária e os horários disponíveis."
-            action={
-              canCreateAppointments ? (
-                <Button type="button" variant="gold" onClick={openNew}>
-                  <CalendarPlus className="size-4" />
-                  Agendar cliente presencial
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
-            {data.timelines.map((timeline) => (
-              <BarberTimeline
-                key={timeline.barberId}
-                timeline={timeline}
-                timeZone={data.timeZone}
-                onSelect={setSelected}
-              />
+      {!weekly ? (
+        data.timelines.length ? (
+          <div className="j2-agenda-day">
+            {data.timelines.map(timeline => (
+              <BarberTimeline key={timeline.barberId} timeline={timeline} timeZone={data.timeZone} onSelect={selectAppointment} />
             ))}
+          </div>
+        ) : (
+          <div className="j2-operation-panel j2-operation-empty">
+            <strong>Nenhum profissional ativo</strong>
+            <p>Cadastre ou ative um profissional para consultar o expediente.</p>
+            <Link href="/dashboard/equipe" className="j2-operation-link">Abrir equipe</Link>
           </div>
         )
       ) : (
-        <div className="space-y-3">
-          {totalWeekAppointments === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/80 bg-card/45 px-4 py-3 text-center text-[11px] text-muted-foreground">
-              Nenhum agendamento nesta semana. Escolha um dia com horários
-              livres para criar o primeiro.
-            </div>
-          ) : null}
-
-          <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-7 lg:grid-cols-4">
-            {data.weekDays.map((day) => (
-              <Card
-                key={day.date}
-                className={cn(
-                  "min-w-0 overflow-hidden",
-                  day.isToday && "border-gold/40 shadow-gold",
-                )}
-              >
-                <CardHeader className="border-b border-border/70 px-3 py-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {shortWeekdayLabel(day.weekday)}
-                      </p>
-                      <CardTitle className="mt-0.5 text-xs">
-                        {formatDateOnlyBR(day.date)}
-                      </CardTitle>
-                    </div>
-                    {day.isToday ? (
-                      <Badge
-                        variant="outline"
-                        className="border-gold/30 bg-gold-soft/45 text-[9px]"
-                      >
-                        Hoje
-                      </Badge>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">
-                        {day.appointments.length}
-                      </span>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2 p-2.5">
-                  {day.appointments.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-border/70 px-2 py-5 text-center text-[10px] text-muted-foreground">
-                      Sem agendamentos
-                    </p>
-                  ) : (
-                    day.appointments.map((appointment) => (
-                      <AppointmentCard
-                        key={appointment.id}
-                        appointment={appointment}
-                        timeZone={data.timeZone}
-                        onSelect={setSelected}
-                        compact
-                      />
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <p className="text-[10px] text-muted-foreground">
-            A visão semanal carrega apenas os sete dias exibidos, já filtrados
-            pela barbearia ativa e pelo profissional selecionado.
-          </p>
+        <div className="j2-agenda-week">
+          {data.weekDays.map(day => (
+            <section key={day.date} className="j2-operation-panel j2-week-day" data-today={day.isToday ? "" : undefined}>
+              <header>
+                <div>
+                  <p>{shortWeekdayLabel(day.weekday)}</p>
+                  <h2><Link href={hrefFor(day.date, "day")} scroll={false}>{formatDateOnlyBR(day.date)}</Link></h2>
+                </div>
+                {day.isToday && <span>Hoje</span>}
+              </header>
+              {day.appointments.length ? (
+                <ul className="j2-agenda-entries">
+                  {day.appointments.map(appointment => (
+                    <li key={appointment.id}>
+                      <AppointmentRow appointment={appointment} timeZone={data.timeZone} onSelect={selectAppointment} showBarber />
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="j2-operation-empty">Sem agendamentos</p>}
+            </section>
+          ))}
         </div>
       )}
 
       <NewAppointmentDialog
-        key={`new-appointment-${newKey}`}
+        key={"new-appointment-" + newKey}
         open={newOpen && canCreateAppointments}
         onOpenChange={handleNewOpenChange}
         options={options}
@@ -597,46 +296,46 @@ export function AgendaBoard({
         today={today}
         timeZone={data.timeZone}
       />
-
       <AppointmentDetailsDialog
         key={selected?.id ?? "closed"}
         appointment={selected}
         timeZone={data.timeZone}
         canCreateAppointments={canCreateAppointments}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
             closeDetails();
+            restoreFocus(lastTrigger.current);
           }
         }}
-        onCancelRequest={(appointment) => {
+        onCancelRequest={appointment => {
           closeDetails();
           setCancelTarget(appointment);
         }}
-        onRescheduleRequest={(appointment) => {
+        onRescheduleRequest={appointment => {
           closeDetails();
           setRescheduleTarget(appointment);
         }}
       />
-
       <CancelAppointmentDialog
-        key={`cancel-${cancelTarget?.id ?? "none"}`}
+        key={"cancel-" + (cancelTarget?.id ?? "none")}
         appointment={cancelTarget}
         timeZone={data.timeZone}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
             setCancelTarget(null);
+            restoreFocus(lastTrigger.current);
           }
         }}
       />
-
       <RescheduleAppointmentDialog
-        key={`reschedule-${rescheduleTarget?.id ?? "none"}`}
+        key={"reschedule-" + (rescheduleTarget?.id ?? "none")}
         appointment={rescheduleTarget}
         timeZone={data.timeZone}
         today={today}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
             setRescheduleTarget(null);
+            restoreFocus(lastTrigger.current);
           }
         }}
       />

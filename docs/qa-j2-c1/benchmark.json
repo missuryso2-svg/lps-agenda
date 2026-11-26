@@ -1,0 +1,1143 @@
+{
+  "samplesPerVersion": 48,
+  "overall": {
+    "before": {
+      "lcp": 444,
+      "fcp": 98,
+      "ttfb": 19.5,
+      "cls": 0,
+      "jsBytes": 263325
+    },
+    "after": {
+      "lcp": 440,
+      "fcp": 96,
+      "ttfb": 21.65,
+      "cls": 0,
+      "jsBytes": 260348
+    }
+  },
+  "perRoute": {
+    "painel": {
+      "before": {
+        "lcp": 442,
+        "fcp": 94,
+        "jsBytes": 242059
+      },
+      "after": {
+        "lcp": 440,
+        "fcp": 114,
+        "jsBytes": 240306
+      }
+    },
+    "agenda": {
+      "before": {
+        "lcp": 452,
+        "fcp": 100,
+        "jsBytes": 263325
+      },
+      "after": {
+        "lcp": 440,
+        "fcp": 96,
+        "jsBytes": 260348
+      }
+    },
+    "semana": {
+      "before": {
+        "lcp": 438,
+        "fcp": 92,
+        "jsBytes": 263325
+      },
+      "after": {
+        "lcp": 446,
+        "fcp": 92,
+        "jsBytes": 260348
+      }
+    }
+  },
+  "maxCls": {
+    "before": 0,
+    "after": 0.00396357625970226
+  },
+  "contrast": {
+    "light": {
+      "text": 5.84,
+      "controls": 3.89
+    },
+    "dark": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  "runs": [
+    {
+      "run": 1,
+      "before": [
+        {
+          "route": "painel",
+          "width": 375,
+          "theme": "light",
+          "lcp": 324,
+          "cls": 0,
+          "fcp": 324,
+          "ttfb": 132.5,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 375,
+          "theme": "light",
+          "lcp": 452,
+          "cls": 0,
+          "fcp": 164,
+          "ttfb": 32.20000001788139,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 375,
+          "theme": "light",
+          "lcp": 464,
+          "cls": 0,
+          "fcp": 112,
+          "ttfb": 29.69999998807907,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 444,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 21,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 22.099999994039536,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 436,
+          "cls": 0,
+          "fcp": 84,
+          "ttfb": 17,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 768,
+          "theme": "light",
+          "lcp": 436,
+          "cls": 0,
+          "fcp": 92,
+          "ttfb": 17,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 768,
+          "theme": "light",
+          "lcp": 472,
+          "cls": 0,
+          "fcp": 84,
+          "ttfb": 18.700000017881393,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 768,
+          "theme": "light",
+          "lcp": 112,
+          "cls": 0,
+          "fcp": 112,
+          "ttfb": 31.900000005960464,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 432,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 16.099999994039536,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 436,
+          "cls": 0,
+          "fcp": 100,
+          "ttfb": 17.900000005960464,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 424,
+          "cls": 0,
+          "fcp": 76,
+          "ttfb": 17.80000001192093,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 88,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 20.299999982118607,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 128,
+          "ttfb": 22.80000001192093,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 460,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 23.200000017881393,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 16.400000005960464,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 432,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 15.200000017881393,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 16.799999982118607,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 488,
+          "cls": 0,
+          "fcp": 100,
+          "ttfb": 19.19999998807907,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 480,
+          "cls": 0,
+          "fcp": 92,
+          "ttfb": 21.299999982118607,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 448,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 17,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 460,
+          "cls": 0,
+          "fcp": 92,
+          "ttfb": 16.5,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 452,
+          "cls": 0,
+          "fcp": 100,
+          "ttfb": 19.80000001192093,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 432,
+          "cls": 0,
+          "fcp": 68,
+          "ttfb": 16.400000005960464,
+          "jsBytes": 263325,
+          "overflow": 0
+        }
+      ],
+      "after": [
+        {
+          "route": "painel",
+          "width": 375,
+          "theme": "light",
+          "lcp": 624,
+          "cls": 0,
+          "fcp": 408,
+          "ttfb": 97.80000001192093,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 375,
+          "theme": "light",
+          "lcp": 216,
+          "cls": 0,
+          "fcp": 216,
+          "ttfb": 33.599999994039536,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 375,
+          "theme": "light",
+          "lcp": 416,
+          "cls": 0,
+          "fcp": 112,
+          "ttfb": 22.299999982118607,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 460,
+          "cls": 0,
+          "fcp": 112,
+          "ttfb": 18,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 432,
+          "cls": 0,
+          "fcp": 76,
+          "ttfb": 16.399999976158142,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 456,
+          "cls": 0,
+          "fcp": 116,
+          "ttfb": 20.30000001192093,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 768,
+          "theme": "light",
+          "lcp": 436,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 21.900000005960464,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 768,
+          "theme": "light",
+          "lcp": 456,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 20.80000001192093,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 768,
+          "theme": "light",
+          "lcp": 428,
+          "cls": 0.00396357625970226,
+          "fcp": 88,
+          "ttfb": 15.5,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 84,
+          "ttfb": 15.400000005960464,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 448,
+          "cls": 0.00396357625970226,
+          "fcp": 96,
+          "ttfb": 16.30000001192093,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 436,
+          "cls": 0.00396357625970226,
+          "fcp": 80,
+          "ttfb": 20.600000023841858,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 456,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 18.099999994039536,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 436,
+          "cls": 0.0017464507894313082,
+          "fcp": 88,
+          "ttfb": 23.19999998807907,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 444,
+          "cls": 0.0017464507894313082,
+          "fcp": 92,
+          "ttfb": 23.400000005960464,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 436,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 21.400000005960464,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0.0017464507894313082,
+          "fcp": 88,
+          "ttfb": 14.800000011920929,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 424,
+          "cls": 0.0017464507894313082,
+          "fcp": 72,
+          "ttfb": 15.700000017881393,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 460,
+          "cls": 0,
+          "fcp": 112,
+          "ttfb": 28.099999994039536,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 440,
+          "cls": 0.0007762003508583592,
+          "fcp": 132,
+          "ttfb": 25.399999976158142,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 432,
+          "cls": 0.0007762003508583592,
+          "fcp": 76,
+          "ttfb": 17.799999982118607,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 452,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 21.200000017881393,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0.0007762003508583592,
+          "fcp": 96,
+          "ttfb": 14,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 436,
+          "cls": 0.0007762003508583592,
+          "fcp": 76,
+          "ttfb": 14.399999976158142,
+          "jsBytes": 260348,
+          "overflow": 0
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "before": [
+        {
+          "route": "painel",
+          "width": 375,
+          "theme": "light",
+          "lcp": 356,
+          "cls": 0,
+          "fcp": 356,
+          "ttfb": 148.59999999403954,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 375,
+          "theme": "light",
+          "lcp": 528,
+          "cls": 0,
+          "fcp": 168,
+          "ttfb": 57.70000001788139,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 375,
+          "theme": "light",
+          "lcp": 512,
+          "cls": 0,
+          "fcp": 144,
+          "ttfb": 39.79999998211861,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 508,
+          "cls": 0,
+          "fcp": 136,
+          "ttfb": 34.80000001192093,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 448,
+          "cls": 0,
+          "fcp": 168,
+          "ttfb": 16.30000001192093,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 136,
+          "cls": 0,
+          "fcp": 136,
+          "ttfb": 16,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 768,
+          "theme": "light",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 92,
+          "ttfb": 17.100000023841858,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 768,
+          "theme": "light",
+          "lcp": 504,
+          "cls": 0,
+          "fcp": 116,
+          "ttfb": 28.299999982118607,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 768,
+          "theme": "light",
+          "lcp": 72,
+          "cls": 0,
+          "fcp": 72,
+          "ttfb": 21,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 452,
+          "cls": 0,
+          "fcp": 108,
+          "ttfb": 23.19999998807907,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 444,
+          "cls": 0,
+          "fcp": 120,
+          "ttfb": 17.80000001192093,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 428,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 15,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 116,
+          "cls": 0,
+          "fcp": 116,
+          "ttfb": 21.400000005960464,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 464,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 17.799999982118607,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 176,
+          "cls": 0,
+          "fcp": 176,
+          "ttfb": 20.799999982118607,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 448,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 15.699999988079071,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 468,
+          "cls": 0,
+          "fcp": 100,
+          "ttfb": 21.400000005960464,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 14.099999994039536,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 520,
+          "cls": 0,
+          "fcp": 136,
+          "ttfb": 23.5,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 520,
+          "cls": 0,
+          "fcp": 116,
+          "ttfb": 16.900000005960464,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 484,
+          "cls": 0,
+          "fcp": 128,
+          "ttfb": 27,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 460,
+          "cls": 0,
+          "fcp": 92,
+          "ttfb": 16.19999998807907,
+          "jsBytes": 242059,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 16.30000001192093,
+          "jsBytes": 263325,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 464,
+          "cls": 0,
+          "fcp": 104,
+          "ttfb": 22.099999994039536,
+          "jsBytes": 263325,
+          "overflow": 0
+        }
+      ],
+      "after": [
+        {
+          "route": "painel",
+          "width": 375,
+          "theme": "light",
+          "lcp": 372,
+          "cls": 0,
+          "fcp": 372,
+          "ttfb": 158.80000001192093,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 375,
+          "theme": "light",
+          "lcp": 172,
+          "cls": 0,
+          "fcp": 172,
+          "ttfb": 37.599999994039536,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 375,
+          "theme": "light",
+          "lcp": 456,
+          "cls": 0,
+          "fcp": 104,
+          "ttfb": 25.900000005960464,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 460,
+          "cls": 0,
+          "fcp": 124,
+          "ttfb": 28.30000001192093,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 432,
+          "cls": 0,
+          "fcp": 120,
+          "ttfb": 19.30000001192093,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 464,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 23,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 768,
+          "theme": "light",
+          "lcp": 212,
+          "cls": 0,
+          "fcp": 212,
+          "ttfb": 38.39999997615814,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 768,
+          "theme": "light",
+          "lcp": 440,
+          "cls": 0.00396357625970226,
+          "fcp": 96,
+          "ttfb": 27.5,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 768,
+          "theme": "light",
+          "lcp": 448,
+          "cls": 0,
+          "fcp": 92,
+          "ttfb": 22,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 132,
+          "ttfb": 18.700000017881393,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 460,
+          "cls": 0.00396357625970226,
+          "fcp": 104,
+          "ttfb": 23.299999982118607,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 452,
+          "cls": 0.00396357625970226,
+          "fcp": 92,
+          "ttfb": 25.399999976158142,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 420,
+          "cls": 0,
+          "fcp": 116,
+          "ttfb": 14.699999988079071,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 452,
+          "cls": 0.0017464507894313082,
+          "fcp": 92,
+          "ttfb": 24.799999982118607,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 460,
+          "cls": 0.0017464507894313082,
+          "fcp": 100,
+          "ttfb": 23.30000001192093,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 464,
+          "cls": 0,
+          "fcp": 108,
+          "ttfb": 23.400000005960464,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 448,
+          "cls": 0.0017464507894313082,
+          "fcp": 80,
+          "ttfb": 16.299999982118607,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 444,
+          "cls": 0.0017464507894313082,
+          "fcp": 84,
+          "ttfb": 22,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 176,
+          "cls": 0,
+          "fcp": 176,
+          "ttfb": 26.099999994039536,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 432,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 18.400000005960464,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 456,
+          "cls": 0.0007762003508583592,
+          "fcp": 100,
+          "ttfb": 21.200000017881393,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "painel",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 188,
+          "cls": 0,
+          "fcp": 188,
+          "ttfb": 19.200000017881393,
+          "jsBytes": 240306,
+          "overflow": 0
+        },
+        {
+          "route": "agenda",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 500,
+          "cls": 0.0007762003508583592,
+          "fcp": 124,
+          "ttfb": 33.599999994039536,
+          "jsBytes": 260348,
+          "overflow": 0
+        },
+        {
+          "route": "semana",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 468,
+          "cls": 0,
+          "fcp": 100,
+          "ttfb": 20.700000017881393,
+          "jsBytes": 260348,
+          "overflow": 0
+        }
+      ]
+    }
+  ]
+}

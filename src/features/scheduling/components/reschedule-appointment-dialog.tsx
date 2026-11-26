@@ -110,7 +110,7 @@ function RescheduleForm({
         }
       }}
     >
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent overlayClassName="j2-agenda-overlay" className="j2-agenda-dialog max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Reagendar atendimento</DialogTitle>
           <DialogDescription>

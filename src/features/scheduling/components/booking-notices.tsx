@@ -81,7 +81,7 @@ export function BookingNotices({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85dvh] overflow-y-auto">
+      <DialogContent overlayClassName="j2-agenda-overlay" className="j2-agenda-dialog max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Notificações</DialogTitle>
           <DialogDescription>Reservas da barbearia ativa</DialogDescription>

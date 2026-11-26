@@ -258,7 +258,7 @@ export function NewAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={closeDialog}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent overlayClassName="j2-agenda-overlay" className="j2-agenda-dialog max-h-[92vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Agendar cliente presencial</DialogTitle>
           <DialogDescription>

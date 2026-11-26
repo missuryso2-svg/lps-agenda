@@ -75,7 +75,7 @@ export function CancelAppointmentDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent overlayClassName="j2-agenda-overlay" className="j2-agenda-dialog sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Cancelar agendamento?</DialogTitle>
           <DialogDescription>

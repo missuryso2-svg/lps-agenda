@@ -1,51 +1,33 @@
 "use client";
 
 import {
-  CalendarClock,
-  CalendarDays,
-  Check,
-  ChevronsUpDown,
-  CreditCard,
-  ExternalLink,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Scissors,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  UsersRound,
-  Wallet,
+  CalendarClock, CalendarDays, ChevronsUpDown, CreditCard, ExternalLink,
+  LayoutDashboard, LogOut, Menu, Scissors, Settings, ShieldCheck, Users,
+  UsersRound, Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { usePathname } from "next/navigation";
+import { useState, useTransition, type ComponentType, type ReactNode } from "react";
 
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/brand/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+  Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
 import { signOutAction } from "@/features/auth/actions";
 import { setActiveBarbershopAction } from "@/features/barbershop/actions";
+import { BookingNotices, type BookingNotice } from "@/features/scheduling/components/booking-notices";
 import { roleLabels, type AppRole } from "@/lib/auth/permissions";
 import { initialsFromName } from "@/lib/format";
-import { cn } from "@/lib/utils";
+
+import "./dashboard-j2.css";
 
 type MembershipSummary = {
   id: string;
@@ -58,7 +40,7 @@ type MembershipSummary = {
 type NavItem = {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   ownerOnly?: boolean;
   exact?: boolean;
 };
@@ -73,38 +55,29 @@ const operationNav: NavItem[] = [
 ];
 
 const managementNav: NavItem[] = [
-  {
-    href: "/dashboard/financeiro",
-    label: "Financeiro",
-    icon: Wallet,
-    ownerOnly: true,
-  },
-  {
-    href: "/dashboard/plano",
-    label: "Plano e assinatura",
-    icon: CreditCard,
-    ownerOnly: true,
-  },
-  {
-    href: "/dashboard/configuracoes",
-    label: "Configurações",
-    icon: Settings,
-    ownerOnly: true,
-  },
+  { href: "/dashboard/financeiro", label: "Financeiro", icon: Wallet, ownerOnly: true },
+  { href: "/dashboard/plano", label: "Plano e assinatura", icon: CreditCard, ownerOnly: true },
+  { href: "/dashboard/configuracoes", label: "Configurações", icon: Settings, ownerOnly: true },
 ];
 
 function isActive(pathname: string, item: NavItem) {
-  if (item.exact) {
-    return pathname === item.href;
-  }
-
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  return pathname === item.href || (!item.exact && pathname.startsWith(item.href + "/"));
 }
 
-import {
-  BookingNotices,
-  type BookingNotice,
-} from "@/features/scheduling/components/booking-notices";
+function ShopIdentity({ shop }: { shop: MembershipSummary }) {
+  return (
+    <>
+      <Avatar className="barbershop-logo-surface j2-shop-logo">
+        {shop.logoUrl && <AvatarImage src={shop.logoUrl} alt="" className="object-contain p-0.5" />}
+        <AvatarFallback>{initialsFromName(shop.name)}</AvatarFallback>
+      </Avatar>
+      <span className="j2-shop-label">
+        <strong title={shop.name}>{shop.name}</strong>
+        <small>{roleLabels[shop.role]}</small>
+      </span>
+    </>
+  );
+}
 
 export function DashboardShell({
   notices,
@@ -119,7 +92,7 @@ export function DashboardShell({
 }: {
   notices: BookingNotice[] | null;
   timeZone: string;
-  children: React.ReactNode;
+  children: ReactNode;
   userName: string;
   userEmail: string;
   memberships: MembershipSummary[];
@@ -128,288 +101,170 @@ export function DashboardShell({
   isPlatformAdmin: boolean;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pointerOpen, setPointerOpen] = useState(false);
   const [isChangingShop, startShopChange] = useTransition();
   const [isSigningOut, startSignOut] = useTransition();
 
   const canManage = role === "owner" || isPlatformAdmin;
+  const visibleManagement = managementNav.filter(item => !item.ownerOnly || canManage);
+  const current = [...operationNav, ...visibleManagement].find(item => isActive(pathname, item));
+  const currentLabel = current?.label ?? (pathname === "/dashboard/qr" ? "QR Code" : "Painel");
+  const primaryPage = pathname === "/dashboard" || pathname === "/dashboard/agenda";
+  const active = memberships.find(shop => shop.id === activeBarbershopId) ?? memberships[0];
 
-  const visibleNav = (items: NavItem[]) =>
-    items.filter((item) => !item.ownerOnly || canManage);
-
-  const allNav = [...visibleNav(operationNav), ...visibleNav(managementNav)];
-  const current = allNav.find((item) => isActive(pathname, item)) ?? allNav[0];
-
-  const activeMembership =
-    memberships.find((item) => item.id === activeBarbershopId) ??
-    memberships[0];
-
-  const changeShop = (barbershopId: string) => {
-    if (barbershopId === activeBarbershopId) {
-      return;
-    }
+  function changeShop(id: string) {
+    if (id === activeBarbershopId) return;
 
     startShopChange(async () => {
-      await setActiveBarbershopAction(barbershopId);
+      await setActiveBarbershopAction(id);
     });
-  };
-
-  const signOut = () => {
-    startSignOut(async () => {
-      await signOutAction();
-    });
-  };
+    setMobileOpen(false);
+  }
 
   const sidebar = (mobile: boolean) => (
-    <div className="flex h-full flex-col bg-sidebar">
-      <div className="flex h-[4.5rem] items-center px-5 pr-12">
-        <Link
-          href="/dashboard"
-          aria-label="LPS Agenda — painel"
-          onClick={() => mobile && setMobileOpen(false)}
-        >
-          <Logo />
-        </Link>
-      </div>
+    <div className="j2-sidebar">
+      <Link
+        className="j2-sidebar-brand"
+        href="/dashboard"
+        aria-label="LPS Agenda — painel"
+        onClick={mobile ? () => setMobileOpen(false) : undefined}
+      >
+        <Logo tone="inverse" />
+      </Link>
 
-      <div className="px-3 pb-4">
-        {activeMembership ? (
+      {active && (
+        <div className="j2-shop-picker">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border bg-card/70 px-2.5 py-2.5 text-left transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-ring/50"
-              >
-                <Avatar className="barbershop-logo-surface size-8 rounded-lg after:rounded-lg">
-                  {activeMembership.logoUrl ? (
-                    <AvatarImage
-                      src={activeMembership.logoUrl}
-                      alt=""
-                      className="rounded-lg object-contain p-0.5"
-                    />
-                  ) : null}
-                  <AvatarFallback className="rounded-lg bg-primary font-display text-[11px] font-semibold text-primary-foreground">
-                    {initialsFromName(activeMembership.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-medium text-sidebar-foreground">
-                    {activeMembership.name}
-                  </span>
-                  <span className="block text-[10px] text-muted-foreground">
-                    {roleLabels[activeMembership.role]}
-                  </span>
-                </span>
-                <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+              <button type="button" className="j2-shop-trigger" aria-label={"Barbearia ativa: " + active.name}>
+                <ShopIdentity shop={active} />
+                <ChevronsUpDown size={16} aria-hidden />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
-              <DropdownMenuLabel>Sua barbearia</DropdownMenuLabel>
-              {memberships.map((membership) => (
-                <DropdownMenuItem
-                  key={membership.id}
-                  onSelect={() => changeShop(membership.id)}
-                  disabled={isChangingShop}
-                  className="gap-2 py-2"
-                >
-                  <Avatar className="barbershop-logo-surface size-7 rounded-md after:rounded-md">
-                    {membership.logoUrl ? (
-                      <AvatarImage
-                        src={membership.logoUrl}
-                        alt=""
-                        className="rounded-md object-contain p-0.5"
-                      />
-                    ) : null}
-                    <AvatarFallback className="rounded-md bg-muted font-display text-[10px]">
-                      {initialsFromName(membership.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-xs font-medium">
-                      {membership.name}
-                    </span>
-                    <span className="block text-[10px] text-muted-foreground">
-                      {roleLabels[membership.role]}
-                    </span>
-                  </span>
-                  {membership.id === activeMembership.id ? (
-                    <Check className="size-3.5 text-gold" />
-                  ) : null}
-                </DropdownMenuItem>
-              ))}
+            <DropdownMenuContent align="start" className="j2-panel-menu w-64">
+              <DropdownMenuLabel>Trocar de barbearia</DropdownMenuLabel>
+              <DropdownMenuRadioGroup value={active.id} onValueChange={changeShop}>
+                {memberships.map(shop => (
+                  <DropdownMenuRadioItem key={shop.id} value={shop.id} disabled={isChangingShop}>
+                    <ShopIdentity shop={shop} />
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => router.push("/dashboard/configuracoes")}
-                disabled={!canManage}
-                className="gap-2 text-xs"
-              >
-                <Settings className="size-3.5" />
-                Dados da barbearia
+              <DropdownMenuItem asChild disabled={!canManage}>
+                <Link href="/dashboard/configuracoes" onClick={mobile ? () => setMobileOpen(false) : undefined}>
+                  <Settings aria-hidden /> Dados da barbearia
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-2 text-xs">
-                <Link
-                  href={`/agendar/${activeMembership.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <ExternalLink className="size-3.5" />
-                  Página pública
+              <DropdownMenuItem asChild>
+                <Link href={"/agendar/" + active.slug} target="_blank" rel="noreferrer">
+                  <ExternalLink aria-hidden /> Página pública
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : null}
-      </div>
+          <span className="sr-only" role="status">{isChangingShop ? "Trocando de barbearia..." : ""}</span>
+        </div>
+      )}
 
-      <nav
-        className="flex-1 space-y-5 overflow-y-auto px-3 pb-4"
-        aria-label="Navegação do painel"
-      >
-        <NavGroup
-          label="Operação"
-          items={visibleNav(operationNav)}
-          pathname={pathname}
-          onNavigate={mobile ? () => setMobileOpen(false) : undefined}
-        />
-        <NavGroup
-          label="Gestão"
-          items={visibleNav(managementNav)}
-          pathname={pathname}
-          onNavigate={mobile ? () => setMobileOpen(false) : undefined}
-        />
+      <nav className="j2-sidebar-nav" aria-label="Navegação do painel">
+        <NavGroup label="Operação" items={operationNav} pathname={pathname} onNavigate={mobile ? () => setMobileOpen(false) : undefined} />
+        {visibleManagement.length > 0 && (
+          <NavGroup label="Gestão" items={visibleManagement} pathname={pathname} onNavigate={mobile ? () => setMobileOpen(false) : undefined} />
+        )}
       </nav>
 
-      <div className="border-t border-sidebar-border p-3">
-        <div className="rounded-xl border border-gold/20 bg-gold-soft/35 p-3">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground">
-            <Sparkles className="size-3 text-gold" />
-            Plano e pagamentos
-          </div>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-            Acompanhe a assinatura da plataforma e regularize pagamentos
-            pendentes.
-          </p>
-          {canManage ? (
-            <Link
-              href="/dashboard/plano"
-              onClick={() => mobile && setMobileOpen(false)}
-              className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-foreground underline decoration-gold/50 underline-offset-4 hover:text-gold"
-            >
-              Ver plano e pagamentos
-            </Link>
-          ) : null}
-        </div>
-
-        {isPlatformAdmin ? (
-          <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-2 text-[10px] text-muted-foreground">
-            <ShieldCheck className="size-3 text-gold" />
-            Administrador da plataforma
-          </div>
-        ) : null}
-      </div>
+      {isPlatformAdmin && (
+        <p className="j2-sidebar-admin"><ShieldCheck size={16} aria-hidden /> Administrador da plataforma</p>
+      )}
     </div>
   );
 
   return (
-    <div className="min-h-svh bg-background lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-svh border-r border-sidebar-border lg:block">
-        {sidebar(false)}
-      </aside>
+    <div className="j2-dashboard">
+      <a href="#conteudo-painel" className="j2-dashboard-skip">Ir para o conteúdo</a>
+      <aside className="j2-dashboard-rail">{sidebar(false)}</aside>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <div className="flex min-h-svh min-w-0 flex-col">
-          <header className="sticky top-0 z-30 flex h-[4.5rem] items-center gap-3 border-b border-border/70 bg-background/85 px-4 backdrop-blur-xl sm:px-6">
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
-                aria-label="Abrir menu do painel"
-              >
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
-
-            <div className="min-w-0">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Painel
-              </p>
-              <h1 className="truncate font-display text-lg leading-tight tracking-tight">
-                {current?.label ?? "Painel"}
-              </h1>
+        <div className="j2-dashboard-body">
+          <header className="j2-dashboard-header">
+            <div className="j2-dashboard-mobile">
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Abrir menu do painel"
+                  onClick={event => setPointerOpen(event.detail > 0)}
+                >
+                  <Menu className="size-5" aria-hidden />
+                </Button>
+              </SheetTrigger>
+              {active && <div className="j2-mobile-shop"><ShopIdentity shop={active} /></div>}
             </div>
 
-            <div className="ml-auto flex items-center gap-1">
+            <div className="j2-dashboard-location">
+              <span className="j2-location-prefix">Painel da barbearia</span>
+              {primaryPage ? <span>{currentLabel}</span> : <h1>{currentLabel}</h1>}
+            </div>
+            {!primaryPage && <h1 className="j2-mobile-route-heading">{currentLabel}</h1>}
+
+            <div className="j2-dashboard-header-actions">
               <ThemeToggle />
-
               <BookingNotices notices={notices} tz={timeZone} />
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="ml-1 rounded-full p-0.5 transition-shadow focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                    aria-label="Abrir menu da conta"
-                  >
-                    <Avatar size="sm">
-                      <AvatarFallback className="bg-primary text-[10px] font-semibold text-primary-foreground">
-                        {initialsFromName(userName)}
-                      </AvatarFallback>
-                    </Avatar>
+                  <button type="button" className="j2-account-trigger" aria-label="Abrir menu da conta">
+                    <Avatar size="sm"><AvatarFallback>{initialsFromName(userName)}</AvatarFallback></Avatar>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-60">
-                  <div className="px-2 py-2">
-                    <p className="truncate text-xs font-medium">{userName}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {userEmail}
-                    </p>
-                  </div>
+                <DropdownMenuContent align="end" className="j2-panel-menu w-60">
+                  <DropdownMenuLabel className="j2-user-label"><strong>{userName}</strong><span>{userEmail}</span></DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => router.push("/dashboard/configuracoes")}
-                    disabled={!canManage}
-                    className="gap-2"
-                  >
-                    <Settings className="size-3.5" />
-                    Configurações
+                  <DropdownMenuItem asChild disabled={!canManage}>
+                    <Link href="/dashboard/configuracoes"><Settings aria-hidden /> Configurações</Link>
                   </DropdownMenuItem>
-                  {activeMembership ? (
-                    <DropdownMenuItem asChild className="gap-2">
-                      <Link
-                        href={`/agendar/${activeMembership.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <ExternalLink className="size-3.5" />
-                        Abrir página pública
+                  {active && (
+                    <DropdownMenuItem asChild>
+                      <Link href={"/agendar/" + active.slug} target="_blank" rel="noreferrer">
+                        <ExternalLink aria-hidden /> Abrir página pública
                       </Link>
                     </DropdownMenuItem>
-                  ) : null}
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"
-                    onSelect={signOut}
+                    onSelect={() => startSignOut(async () => { await signOutAction(); })}
                     disabled={isSigningOut}
-                    className="gap-2"
                   >
-                    <LogOut className="size-3.5" />
-                    {isSigningOut ? "Saindo..." : "Sair da conta"}
+                    <LogOut aria-hidden /> {isSigningOut ? "Saindo..." : "Sair da conta"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </header>
-
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="mx-auto w-full max-w-[86rem]">{children}</div>
+          <nav className="j2-dashboard-tabs" aria-label="Acesso rápido">
+            {operationNav.slice(0, 2).map(item => (
+              <Link key={item.href} href={item.href} aria-current={isActive(pathname, item) ? "page" : undefined}>
+                <item.icon aria-hidden /> {item.label}
+              </Link>
+            ))}
+          </nav>
+          <main id="conteudo-painel" tabIndex={-1} className="j2-dashboard-main">
+            <div className="j2-dashboard-container">{children}</div>
           </main>
         </div>
 
-        <SheetContent side="left" className="w-[86%] gap-0 p-0 sm:max-w-xs">
+        <SheetContent
+          side="left"
+          className="j2-dashboard-sheet"
+          overlayClassName="j2-dashboard-overlay"
+          data-pointer-open={pointerOpen ? "" : undefined}
+          onEscapeKeyDown={() => setPointerOpen(false)}
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>Menu do painel</SheetTitle>
+            <SheetDescription>Navegação e troca de barbearia ativa</SheetDescription>
           </SheetHeader>
           {sidebar(true)}
         </SheetContent>
@@ -429,44 +284,19 @@ function NavGroup({
   pathname: string;
   onNavigate?: () => void;
 }) {
-  if (items.length === 0) {
-    return null;
-  }
-
   return (
-    <div>
-      <p className="px-2.5 pb-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-        {label}
-      </p>
-      <div className="space-y-0.5">
-        {items.map((item) => {
-          const active = isActive(pathname, item);
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors",
-                active
-                  ? "bg-[var(--brand-yellow)] text-[var(--ink)]"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
-              )}
-            >
-              <item.icon
-                className={cn(
-                  "size-4 shrink-0",
-                  active ? "text-[var(--ink)]" : "text-muted-foreground/80",
-                )}
-              />
-              <span className="flex-1">{item.label}</span>
-
+    <div className="j2-nav-group">
+      <p>{label}</p>
+      <ul>
+        {items.map(item => (
+          <li key={item.href}>
+            <Link href={item.href} onClick={onNavigate} aria-current={isActive(pathname, item) ? "page" : undefined}>
+              <item.icon aria-hidden />
+              <span>{item.label}</span>
             </Link>
-          );
-        })}
-      </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -19,7 +19,7 @@ const appointmentStyles: Record<AppointmentStatus, string> = {
     "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
 };
 
-const appointmentLabels: Record<AppointmentStatus, string> = {
+export const appointmentLabels: Record<AppointmentStatus, string> = {
   scheduled: "Agendado",
   confirmed: "Confirmado",
   in_progress: "Em atendimento",
@@ -79,6 +79,7 @@ export function AppointmentStatusBadge({
     <Badge
       variant="outline"
       className={appointmentStyles[status]}
+      data-appointment-status={status}
       aria-label={`Status: ${appointmentLabels[status]}`}
     >
       {appointmentLabels[status]}

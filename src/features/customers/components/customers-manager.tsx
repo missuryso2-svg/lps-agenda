@@ -185,15 +185,16 @@ export function CustomersManager({
 
   return (
     <div>
-      <div className="space-y-3 border-b border-border/70 p-4">
+      <div className="j2-list-toolbar j2-customer-toolbar">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-1.5">
+          <nav className="j2-list-filters" aria-label="Situação dos clientes">
             {statusFilters.map((filter) => {
               const active = filter.value === status;
 
               return (
                 <Link
                   key={filter.value}
+                  aria-current={active ? "page" : undefined}
                   href={buildHref({
                     q: search,
                     status: filter.value,
@@ -219,7 +220,7 @@ export function CustomersManager({
                 </Link>
               );
             })}
-          </div>
+          </nav>
 
           <div className="flex items-center justify-between gap-3 sm:justify-end">
             <p className="text-[11px] text-muted-foreground">
@@ -253,6 +254,7 @@ export function CustomersManager({
               key={`customer-search-${search}-${status}`}
               name="q"
               type="search"
+              data-management-focus
               defaultValue={search}
               placeholder="Buscar por nome, telefone ou e-mail..."
               aria-label="Buscar clientes"
@@ -275,7 +277,7 @@ export function CustomersManager({
 
       {error ? (
         <div className="p-6">
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
+          <div role="alert" className="j2-management-empty">
             <p className="text-sm font-medium">
               Não foi possível carregar os clientes
             </p>
@@ -329,7 +331,7 @@ export function CustomersManager({
         </div>
       ) : (
         <>
-          <div className="hidden md:block">
+          <div className="j2-management-table hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -347,7 +349,7 @@ export function CustomersManager({
                 {customers.map((customer) => (
                   <TableRow
                     key={customer.id}
-                    className={customer.is_active ? undefined : "opacity-70"}
+                    data-inactive={customer.is_active ? undefined : ""}
                   >
                     <TableCell className="pl-4">
                       <button
@@ -451,14 +453,11 @@ export function CustomersManager({
             </Table>
           </div>
 
-          <div className="space-y-3 p-4 md:hidden">
+          <div className="j2-management-mobile md:hidden">
             {customers.map((customer) => (
               <article
                 key={customer.id}
-                className={cn(
-                  "rounded-2xl border border-border/80 bg-card p-4",
-                  !customer.is_active && "opacity-80",
-                )}
+                className="j2-management-list-row"
               >
                 <div className="flex items-start justify-between gap-3">
                   <button
@@ -642,6 +641,7 @@ export function CustomersManager({
             : ""
         }
         confirmLabel="Arquivar"
+        pendingLabel="Arquivando..."
         pending={isArchiving}
         error={archiveError}
         onConfirm={confirmArchive}

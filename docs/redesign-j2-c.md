@@ -85,8 +85,87 @@ O FCP do painel passou de 94 para 114 ms e o maior CLS do C1 foi 0,00396. As dif
 
 ## Pendências e próximos checkpoints
 
-O escopo do C1 é a estrutura compartilhada, a visão geral e a agenda. C2 e C3 aguardam a aprovação visual do C1. A J2-D e o lançamento comercial permanecem fechados.
+O escopo do C1 é a estrutura compartilhada, a visão geral e a agenda. O C1 recebeu aprovação visual e serviu de base para o C2. A J2-D e o lançamento comercial permanecem fechados.
 
 Permanecem abertas a validação manual em leitor de tela NVDA ou Narrador, a investigação dos quatro timeouts sem causa atribuída, a proteção das transições diretas de atendimentos, a reconciliação de fotos privadas órfãs, a homologação do Images Binding real, os controles de abuso e autenticação, a confiança nos headers do proxy e a revisão das permissões da Data API. [Auditoria I4](security-audit-i4.md), [Workers J1](cloudflare-migration-j1.md), [Images Binding J1.1](cloudflare-images-j1-1.md).
 
 As alterações foram locais. Os controles de autorização, RLS, concorrência de agenda, segurança de Storage, preços históricos, contrato, pagamentos, migrations e arquivos de configuração do Workers estão nos artefatos existentes.
+
+## J2-C2 — Clientes, Serviços, Equipe e Horários
+
+**GO técnico local para aprovação visual do J2-C2. Lançamento comercial em NO-GO.**
+
+### Decisões de interface
+
+| Área | Entrega |
+| --- | --- |
+| Clientes | Indicadores em uma faixa, filtros por situação com seleção acessível, busca e tabela no desktop, linhas empilhadas no mobile. Contato, WhatsApp quando disponível, observações e histórico do cadastro aparecem no diálogo. Arquivamento mantém confirmação e reativação pela mesma ação. O histórico exibido é de criação e atualização, conforme os dados já consultados. |
+| Serviços | Catálogo com nome e descrição, duração, preço e situação. Os estados de busca vazia, leitura e validação seguem no fluxo original. Valores permanecem em centavos e a edição atualiza apenas o catálogo. |
+| Equipe | Perfis com foto maior e iniciais de fallback, serviço associado e situação. O indicador usa o RPC de plano vigente e o catálogo autenticado do banco. Básico 1, Profissional 5 e Premium 10. A tela distingue ausência de plano, limite indefinido e falha na consulta. O upload mantém o mesmo endpoint, versão esperada e validação de servidor. |
+| Horários | A rota existente /dashboard/horarios mantém as abas de barbearia, profissionais e bloqueios, e a pausa recorrente onde autorizada. Dias fechados ou de folga ficam identificados por texto e superfície. Horários ficam em pares com rótulos visíveis. Erros de intervalo apontam para os campos relacionados. |
+
+### Arquivos modificados
+
+- Páginas de clientes, serviços, equipe e horários em src/app/dashboard, mais o skeleton de clientes.
+- Estrutura, estilo e diálogos em src/components/dashboard/management-page.tsx, management-j2.css, management-dialog.tsx, confirm-delete-dialog.tsx e operation-loading.tsx.
+- Componentes visuais em src/features/customers/components, src/features/services/components, src/features/barbers/components e src/features/schedule/components.
+- Testes em tests/integration/j2c2-visual.mjs, j2c2-management.mjs e o ajuste de interação de product-f1.mjs. Evidências em docs/qa-j2-c2.
+
+### Skills e movimento
+
+Emil-design-eng orientou a hierarquia, o foco e os controles. Review-animations e improve-animations orientaram a remoção das transições genéricas de diálogos, abas e filtros de uso frequente. Animation-performance orientou a ausência de animações de layout e a manutenção de estados estáticos com movimento reduzido.
+
+| Antes | Depois | Por quê |
+| --- | --- | --- |
+| Diálogos herdavam zoom, fade e desfoque. | Aparição imediata, sobreposição sólida e devolução do foco ao controle anterior ou à busca. | Ações recorrentes respondem sem atraso e preservam o contexto. |
+| Filtros, switches e abas herdavam transições amplas. | O estado troca imediatamente, acompanhado de texto ou semântica de seleção. | A operação funciona com ponteiro, teclado e preferência por movimento reduzido. |
+| Envio de foto tinha apenas desabilitação temporária. | Envio e remoção exibem texto de progresso. Descartar a seleção restaura a imagem anterior. | O estado fica claro sem depender do giro de um ícone. |
+
+### Evidências comparativas
+
+| Tela | 1280 px claro | 375 px escuro |
+| --- | --- | --- |
+| Clientes | [Antes](qa-j2-c2/screenshots/before/clientes-1280-light.webp) · [Depois](qa-j2-c2/screenshots/after/clientes-1280-light.webp) | [Antes](qa-j2-c2/screenshots/before/clientes-375-dark.webp) · [Depois](qa-j2-c2/screenshots/after/clientes-375-dark.webp) |
+| Serviços | [Antes](qa-j2-c2/screenshots/before/servicos-1280-light.webp) · [Depois](qa-j2-c2/screenshots/after/servicos-1280-light.webp) | [Antes](qa-j2-c2/screenshots/before/servicos-375-dark.webp) · [Depois](qa-j2-c2/screenshots/after/servicos-375-dark.webp) |
+| Equipe | [Antes](qa-j2-c2/screenshots/before/equipe-1280-light.webp) · [Depois](qa-j2-c2/screenshots/after/equipe-1280-light.webp) | [Antes](qa-j2-c2/screenshots/before/equipe-375-dark.webp) · [Depois](qa-j2-c2/screenshots/after/equipe-375-dark.webp) |
+| Horários | [Antes](qa-j2-c2/screenshots/before/horarios-1280-light.webp) · [Depois](qa-j2-c2/screenshots/after/horarios-1280-light.webp) | [Antes](qa-j2-c2/screenshots/before/horarios-375-dark.webp) · [Depois](qa-j2-c2/screenshots/after/horarios-375-dark.webp) |
+
+A [galeria completa](qa-j2-c2/README.md) reúne 64 capturas das quatro telas em 375, 768, 1280 e 1920 px, nos temas claro e escuro. Os PNG originais ficam em C:/Users/missu/source/lps-agenda-j2c2-visual.
+
+### Testes e desempenho
+
+| Verificação | Resultado |
+| --- | --- |
+| Vitest | 810 testes em 39 suítes. [Log](qa-j2-c2/vitest.log) |
+| Typecheck, lint e diff | Saídas 0. [Typecheck](qa-j2-c2/typecheck.log), [lint](qa-j2-c2/lint.log), [Git](qa-j2-c2/diff-check.log) |
+| Builds | Next.js e OpenNext aprovados. O aviso preexistente de middleware Node.js experimental permanece. [Next.js](qa-j2-c2/next-build.log), [OpenNext](qa-j2-c2/opennext-build.log) |
+| Navegador | 32 combinações antes e 32 depois. CSP estrita, árvore de acessibilidade, foco visível, ausência de overflow, teclado e movimento reduzido. [Antes](qa-j2-c2/before.log), [depois](qa-j2-c2/after.log) |
+| Integração de gestão | Criação, edição, arquivamento e reativação de clientes. Criação, edição, ativação e desativação de serviços e profissionais, vínculos de serviço, preço histórico de R$ 65,00 preservado após passar o serviço a R$ 82,90, limite concorrente do Básico, permissão de staff, dados isolados por tenant e intervalos válidos e inválidos. [Log](qa-j2-c2/management.log) |
+| Imagens no Node | Storage real de QA, proprietário, equipe, outro tenant, substituição por versão e remoção. Na suíte F1, a asserção dos termos de teste abre o detalhe nativo do cadastro aprovado no J2-B. [Log](qa-j2-c2/product-f1.log) |
+| Imagens no Workers | Binding local simulado, JPG, PNG e WebP, saída, mídia inválida, isolamento, CSRF, substituição concorrente e limpeza. [Log](qa-j2-c2/worker-images.log) |
+| Disponibilidade | Pausas, agendamentos concorrentes, confirmações, notificações e cobertura preservadas no QA local da F3. [Log](qa-j2-c2/operations-f3.log) |
+| Prévia | Login real owner/staff, quatro rotas em loopback e envio visível de foto em QA. [Log](qa-j2-c2/preview.log) |
+
+Mínimos dos pares semânticos no claro foram 5,84:1 para texto e 3,89:1 para controles. No escuro, 7,40:1 e 4,61:1. A primeira execução paralela apresentou timeout no WSL, e as execuções isoladas passaram sem aumento dos limites de espera. Esse incidente local é independente dos quatro timeouts anteriores ainda sem atribuição.
+
+A prévia usa [localhost na porta 59330](http://localhost:59330/login) e Supabase descartável. As credenciais sintéticas de avaliação ficam fora do repositório.
+
+A matriz controlada teve 32 visitas por versão em Chromium local, com contexto novo por visita e CSP estrita. [Amostras completas](qa-j2-c2/benchmark.json).
+
+| Mediana local | Antes | Depois |
+| --- | ---: | ---: |
+| LCP geral | 440 ms | 462 ms |
+| FCP geral | 90 ms | 134 ms |
+| TTFB geral | 21,90 ms | 28,20 ms |
+| JavaScript transferido | 302.626 B | 302.982 B |
+| CLS | 0 | 0 |
+| LCP de Clientes | 446 ms | 466 ms |
+| LCP de Serviços na matriz | 308 ms | 450 ms |
+| LCP de Equipe | 446 ms | 466 ms |
+| LCP de Horários | 438 ms | 484 ms |
+
+A repetição isolada de Serviços em ordem invertida registrou 434 ms antes e 414 ms depois. Com as 16 amostras de cada versão combinadas, a mediana ficou em 428 ms antes e 430 ms depois. O maior CLS foi 0,00006 na versão nova. Os tempos variaram por rota e por ordem, e a matriz geral registrou aumento de latência. O teste caracteriza o loopback local e preserva as amostras para a homologação.
+
+### Pendências
+
+O C3 aguarda aprovação visual explícita. Permanecem abertas as pendências registradas no C1, incluindo NVDA ou Narrador, transições diretas de atendimentos, quatro timeouts ainda sem causa atribuída, reconciliação de fotos privadas órfãs, homologação do binding real, confiança em headers e revisão de abuso e Data API. O lançamento comercial permanece em NO-GO.

@@ -1,0 +1,482 @@
+[
+  {
+    "route": "clientes",
+    "width": 375,
+    "theme": "light",
+    "lcp": 324,
+    "cls": 0,
+    "fcp": 324,
+    "ttfb": 108.59999999403954,
+    "jsBytes": 344963,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "servicos",
+    "width": 375,
+    "theme": "light",
+    "lcp": 424,
+    "cls": 0,
+    "fcp": 160,
+    "ttfb": 28.30000001192093,
+    "jsBytes": 294404,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "equipe",
+    "width": 375,
+    "theme": "light",
+    "lcp": 464,
+    "cls": 0,
+    "fcp": 108,
+    "ttfb": 20.30000001192093,
+    "jsBytes": 296816,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "horarios",
+    "width": 375,
+    "theme": "light",
+    "lcp": 464,
+    "cls": 0.000029406768715886887,
+    "fcp": 84,
+    "ttfb": 23.30000001192093,
+    "jsBytes": 309147,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "clientes",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 416,
+    "cls": 0,
+    "fcp": 76,
+    "ttfb": 17.5,
+    "jsBytes": 344963,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "servicos",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 416,
+    "cls": 0,
+    "fcp": 80,
+    "ttfb": 14.799999982118607,
+    "jsBytes": 294404,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "equipe",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 436,
+    "cls": 0,
+    "fcp": 84,
+    "ttfb": 21.30000001192093,
+    "jsBytes": 296816,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "horarios",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 444,
+    "cls": 0.000029406768715886887,
+    "fcp": 88,
+    "ttfb": 21.099999994039536,
+    "jsBytes": 309147,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "clientes",
+    "width": 768,
+    "theme": "light",
+    "lcp": 432,
+    "cls": 0,
+    "fcp": 84,
+    "ttfb": 19.5,
+    "jsBytes": 344963,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "servicos",
+    "width": 768,
+    "theme": "light",
+    "lcp": 408,
+    "cls": 0,
+    "fcp": 76,
+    "ttfb": 18,
+    "jsBytes": 294404,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "equipe",
+    "width": 768,
+    "theme": "light",
+    "lcp": 428,
+    "cls": 0,
+    "fcp": 104,
+    "ttfb": 17.900000005960464,
+    "jsBytes": 296816,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "horarios",
+    "width": 768,
+    "theme": "light",
+    "lcp": 432,
+    "cls": 0.00005787840360103554,
+    "fcp": 80,
+    "ttfb": 16.399999976158142,
+    "jsBytes": 309147,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "clientes",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 436,
+    "cls": 0,
+    "fcp": 80,
+    "ttfb": 15.300000011920929,
+    "jsBytes": 344963,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "servicos",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 432,
+    "cls": 0,
+    "fcp": 84,
+    "ttfb": 21.299999982118607,
+    "jsBytes": 294404,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "equipe",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 444,
+    "cls": 0,
+    "fcp": 92,
+    "ttfb": 19.600000023841858,
+    "jsBytes": 296816,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "horarios",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 448,
+    "cls": 0.00005787840360103554,
+    "fcp": 144,
+    "ttfb": 23.700000017881393,
+    "jsBytes": 309147,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "clientes",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 400,
+    "cls": 0,
+    "fcp": 100,
+    "ttfb": 13.899999976158142,
+    "jsBytes": 344963,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "servicos",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 412,
+    "cls": 0,
+    "fcp": 116,
+    "ttfb": 18.19999998807907,
+    "jsBytes": 294404,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "equipe",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 440,
+    "cls": 0,
+    "fcp": 80,
+    "ttfb": 16.900000005960464,
+    "jsBytes": 296816,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "horarios",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 440,
+    "cls": 0.000020402137269365026,
+    "fcp": 80,
+    "ttfb": 18.80000001192093,
+    "jsBytes": 309147,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "clientes",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 440,
+    "cls": 0,
+    "fcp": 92,
+    "ttfb": 19.5,
+    "jsBytes": 344963,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "servicos",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 428,
+    "cls": 0,
+    "fcp": 72,
+    "ttfb": 14.700000017881393,
+    "jsBytes": 294404,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "equipe",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 452,
+    "cls": 0,
+    "fcp": 96,
+    "ttfb": 22.900000005960464,
+    "jsBytes": 296816,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "horarios",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 428,
+    "cls": 0.000020402137269365026,
+    "fcp": 72,
+    "ttfb": 14.700000017881393,
+    "jsBytes": 309147,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "clientes",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 424,
+    "cls": 0,
+    "fcp": 72,
+    "ttfb": 14.799999982118607,
+    "jsBytes": 344963,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "servicos",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 444,
+    "cls": 0,
+    "fcp": 92,
+    "ttfb": 24.30000001192093,
+    "jsBytes": 294404,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "equipe",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 452,
+    "cls": 0,
+    "fcp": 104,
+    "ttfb": 24.400000005960464,
+    "jsBytes": 296816,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "horarios",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 428,
+    "cls": 0.000009067616564162234,
+    "fcp": 108,
+    "ttfb": 16,
+    "jsBytes": 309147,
+    "overflow": 0,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "route": "clientes",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 400,
+    "cls": 0,
+    "fcp": 100,
+    "ttfb": 16.5,
+    "jsBytes": 344963,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "servicos",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 408,
+    "cls": 0,
+    "fcp": 68,
+    "ttfb": 13.699999988079071,
+    "jsBytes": 294404,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "equipe",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 444,
+    "cls": 0,
+    "fcp": 72,
+    "ttfb": 16.799999982118607,
+    "jsBytes": 296816,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "route": "horarios",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 428,
+    "cls": 0.000009067616564162234,
+    "fcp": 72,
+    "ttfb": 16.69999998807907,
+    "jsBytes": 309147,
+    "overflow": 0,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  }
+]

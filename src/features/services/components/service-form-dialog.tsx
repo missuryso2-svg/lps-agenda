@@ -8,9 +8,9 @@ import { toast } from "sonner";
 
 import { FormError } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
+import { ManagementDialogContent } from "@/components/dashboard/management-dialog";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -83,7 +83,7 @@ export function ServiceFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <ManagementDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{service ? "Editar serviço" : "Novo serviço"}</DialogTitle>
           <DialogDescription>
@@ -93,7 +93,7 @@ export function ServiceFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
           <FormError message={serverError} />
 
           <div className="space-y-2">
@@ -230,7 +230,7 @@ export function ServiceFormDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </ManagementDialogContent>
     </Dialog>
   );
 }

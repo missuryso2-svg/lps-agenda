@@ -1,0 +1,4 @@
+PASS customer creation, focus return, search, record history, editing, archive and restore; foreign tenant separated
+PASS service create/edit/toggle, cent amounts, historical price and staff read-only
+PASS real catalog 1/5/10, professional create/edit/assignment/toggle and concurrent Basic activation limit
+PASS weekly hours invalid/valid intervals, ARIA error association, keyboard tabs, staff restriction and strict CSP

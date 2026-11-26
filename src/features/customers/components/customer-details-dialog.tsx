@@ -11,9 +11,9 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ManagementDialogContent } from "@/components/dashboard/management-dialog";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -39,7 +39,7 @@ export function CustomerDetailsDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <ManagementDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2">
             {customer?.full_name ?? "Detalhes do cliente"}
@@ -57,13 +57,13 @@ export function CustomerDetailsDialog({
             ) : null}
           </DialogTitle>
           <DialogDescription>
-            Dados de contato e observações internas da barbearia ativa.
+            Contato e histórico do cadastro.
           </DialogDescription>
         </DialogHeader>
 
         {customer ? (
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="j2-contact-details">
               <div className="rounded-xl border border-border/80 bg-muted/20 p-3.5">
                 <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   <Phone className="size-3.5 text-gold" />
@@ -95,7 +95,8 @@ export function CustomerDetailsDialog({
               </p>
             </div>
 
-            <div className="grid gap-3 text-[11px] text-muted-foreground sm:grid-cols-2">
+            <h3 className="j2-list-name">Histórico do cadastro</h3>
+            <div className="j2-contact-history">
               <p className="inline-flex items-center gap-1.5">
                 <CalendarDays className="size-3.5" />
                 Cadastrado em {formatDateBR(customer.created_at, timeZone)}
@@ -130,7 +131,7 @@ export function CustomerDetailsDialog({
             </Button>
           ) : null}
         </DialogFooter>
-      </DialogContent>
+      </ManagementDialogContent>
     </Dialog>
   );
 }

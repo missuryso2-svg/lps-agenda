@@ -4,9 +4,9 @@ import { Loader2, Trash2 } from "lucide-react";
 
 import { FormError } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
+import { ManagementDialogContent } from "@/components/dashboard/management-dialog";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -20,6 +20,7 @@ export function ConfirmDeleteDialog({
   description,
   itemName,
   confirmLabel = "Excluir",
+  pendingLabel = "Excluindo...",
   pending = false,
   error,
   onConfirm,
@@ -30,6 +31,7 @@ export function ConfirmDeleteDialog({
   description: string;
   itemName: string;
   confirmLabel?: string;
+  pendingLabel?: string;
   pending?: boolean;
   error?: string | null;
   onConfirm: () => void;
@@ -43,7 +45,7 @@ export function ConfirmDeleteDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <ManagementDialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -73,7 +75,7 @@ export function ConfirmDeleteDialog({
             {pending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Excluindo...
+                {pendingLabel}
               </>
             ) : (
               <>
@@ -83,7 +85,7 @@ export function ConfirmDeleteDialog({
             )}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ManagementDialogContent>
     </Dialog>
   );
 }

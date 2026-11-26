@@ -11,10 +11,10 @@ import { toast } from "sonner";
 import { FormError } from "@/components/forms/form-message";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ManagementDialogContent } from "@/components/dashboard/management-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -123,7 +123,7 @@ export function BarberFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <ManagementDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {barber ? "Editar profissional" : "Novo profissional"}
@@ -136,7 +136,7 @@ export function BarberFormDialog({
         </DialogHeader>
         {barber && canEditPhoto && <BarberPhoto barber={barber} />}
 
-        <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
           <FormError message={serverError} />
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -356,7 +356,7 @@ export function BarberFormDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </ManagementDialogContent>
     </Dialog>
   );
 }

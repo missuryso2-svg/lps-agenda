@@ -133,7 +133,7 @@ export function BarbersManager({
   };
 
   return (
-    <Card>
+    <Card className="j2-management-roster">
       <CardHeader className="border-b border-border/70 pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -156,14 +156,14 @@ export function BarbersManager({
       </CardHeader>
 
       <CardContent className="p-4">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="j2-list-toolbar j2-list-toolbar-inline">
           <div className="relative w-full sm:max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar por nome"
-              aria-label="Buscar profissionais por nome"
+              aria-label="Buscar profissionais por nome" data-management-focus
               className="h-10 rounded-xl pl-9 pr-9"
             />
             {query ? (
@@ -197,7 +197,7 @@ export function BarbersManager({
             }
           />
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/80 bg-card/45 px-6 py-10 text-center">
+          <div className="j2-management-empty">
             <Search className="mx-auto size-5 text-muted-foreground/70" />
             <p className="mt-3 text-sm font-medium">
               Nenhum profissional encontrado
@@ -216,7 +216,7 @@ export function BarbersManager({
             </Button>
           </div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="j2-professional-list">
             {filtered.map((barber) => {
               const linkedServices = barber.serviceIds
                 .map((serviceId) => servicesById.get(serviceId))
@@ -225,10 +225,10 @@ export function BarbersManager({
               return (
                 <article
                   key={barber.id}
-                  className="flex flex-col rounded-2xl border border-border/80 bg-card p-4"
+                  className="j2-professional"
                 >
-                  <div className="flex items-start gap-3">
-                    <Avatar size="lg">
+                  <div className="j2-professional-identity">
+                    <Avatar className="j2-professional-photo" size="lg">
                       <AvatarImage src={photoSrc(barber.id,barber.avatar_url)} alt=""/>
                       <AvatarFallback className="bg-primary font-display text-xs text-primary-foreground">
                         {initialsFromName(barber.name)}

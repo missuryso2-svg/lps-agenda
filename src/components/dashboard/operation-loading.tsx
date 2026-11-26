@@ -1,7 +1,7 @@
-export function OperationLoading({ agenda = false }: { agenda?: boolean }) {
+export function OperationLoading({ agenda = false, label }: { agenda?: boolean; label?: string }) {
   return (
     <div className="j2-operation" role="status" aria-busy="true">
-      <span className="sr-only">{agenda ? "Carregando agenda" : "Carregando painel"}</span>
+      <span className="sr-only">{label ?? (agenda ? "Carregando agenda" : "Carregando painel")}</span>
       <div className="j2-loading-line" aria-hidden />
       <div className="j2-operation-metrics" aria-hidden>
         {Array.from({ length: 4 }, (_, index) => <div key={index}><div className="j2-loading-line" /></div>)}

@@ -237,7 +237,7 @@ export function WorkingHoursEditor({
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
+    <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-medium">Jornada do profissional</p>
@@ -293,7 +293,7 @@ export function WorkingHoursEditor({
 
       <FormError message={serverError} />
 
-      <div className="overflow-hidden rounded-2xl border border-border/80">
+      <div className="j2-week-rows">
         {days.map((day, index) => {
           const errors = form.formState.errors.days?.[index];
           const shopDay = shopHoursFor(businessHours, day.weekday);
@@ -302,14 +302,11 @@ export function WorkingHoursEditor({
           return (
             <div
               key={day.weekday}
-              className={
-                day.isActive
-                  ? "border-b border-border/70 bg-card px-4 py-3.5 last:border-b-0"
-                  : "border-b border-border/70 bg-muted/25 px-4 py-3.5 last:border-b-0"
-              }
+              className="j2-week-row"
+              data-closed={day.isActive ? undefined : ""}
             >
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="j2-week-row-content">
+                <div className="j2-week-day-label">
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-border/80 bg-card text-[10px] font-semibold text-muted-foreground">
                     {shortWeekdayLabel(day.weekday)}
                   </span>
@@ -327,7 +324,7 @@ export function WorkingHoursEditor({
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="j2-week-controls">
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={Boolean(day.isActive)}
@@ -354,13 +351,13 @@ export function WorkingHoursEditor({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className="space-y-1">
+                  <div className="j2-week-time-pair">
+                    <div>
                       <Label
                         htmlFor={`work-start-${day.weekday}`}
-                        className="sr-only"
+                        className="j2-week-time-label"
                       >
-                        Início de {weekdayLabel(day.weekday)}
+                        Início <span className="sr-only">de {weekdayLabel(day.weekday)}</span>
                       </Label>
                       <Input
                         id={`work-start-${day.weekday}`}
@@ -368,17 +365,17 @@ export function WorkingHoursEditor({
                         step={300}
                         disabled={!canManage || isPending}
                         aria-invalid={Boolean(errors?.startsAt) || outside}
-                        className="h-9 w-[7.25rem] rounded-lg px-2.5 tabular-nums"
+                        aria-describedby={errors?.startsAt || errors?.endsAt || outside ? "working-error-" + day.weekday : undefined}
+                        className="j2-week-time-input"
                         {...form.register(`days.${index}.startsAt`)}
                       />
                     </div>
-                    <span className="text-xs text-muted-foreground">até</span>
-                    <div className="space-y-1">
+                    <div>
                       <Label
                         htmlFor={`work-end-${day.weekday}`}
-                        className="sr-only"
+                        className="j2-week-time-label"
                       >
-                        Término de {weekdayLabel(day.weekday)}
+                        Término <span className="sr-only">de {weekdayLabel(day.weekday)}</span>
                       </Label>
                       <Input
                         id={`work-end-${day.weekday}`}
@@ -386,7 +383,8 @@ export function WorkingHoursEditor({
                         step={300}
                         disabled={!canManage || isPending}
                         aria-invalid={Boolean(errors?.endsAt) || outside}
-                        className="h-9 w-[7.25rem] rounded-lg px-2.5 tabular-nums"
+                        aria-describedby={errors?.startsAt || errors?.endsAt || outside ? "working-error-" + day.weekday : undefined}
+                        className="j2-week-time-input"
                         {...form.register(`days.${index}.endsAt`)}
                       />
                     </div>
@@ -395,11 +393,11 @@ export function WorkingHoursEditor({
               </div>
 
               {errors?.startsAt?.message || errors?.endsAt?.message ? (
-                <p className="mt-2 text-xs text-destructive lg:pl-12">
+                <p className="j2-week-error" id={"working-error-" + day.weekday}>
                   {errors?.startsAt?.message ?? errors?.endsAt?.message}
                 </p>
               ) : outside ? (
-                <p className="mt-2 text-xs text-destructive lg:pl-12">
+                <p className="j2-week-error" id={"working-error-" + day.weekday}>
                   Este horário está fora do funcionamento da barbearia.
                 </p>
               ) : null}

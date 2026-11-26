@@ -23,8 +23,9 @@ export function BarberPhoto({ barber }: { barber: ManagedBarber }) {
   const [current, setCurrent] = useState(barber.avatar_url);
   const [file, setFile] = useState<File | null>(null),
     [preview, setPreview] = useState("");
-  const [busy, setBusy] = useState(false),
+  const [operation, setOperation] = useState<"upload" | "remove" | null>(null),
     [message, setMessage] = useState("");
+  const busy = operation !== null;
   const input = useRef<HTMLInputElement>(null);
   useEffect(
     () => () => {
@@ -39,7 +40,7 @@ export function BarberPhoto({ barber }: { barber: ManagedBarber }) {
   }
   async function save(remove: boolean) {
     if (!remove && !file) return;
-    setBusy(true);
+    setOperation(remove ? "remove" : "upload");
     setMessage("");
     try {
       const result = await fetch("/api/equipe/foto/" + barber.id, {
@@ -62,19 +63,19 @@ export function BarberPhoto({ barber }: { barber: ManagedBarber }) {
         "Não foi possível salvar a foto. Reabra o perfil para conferir.",
       );
     } finally {
-      setBusy(false);
+      setOperation(null);
     }
   }
   return (
     <section
-      className="space-y-3 rounded-xl border p-4"
+      className="j2-management-photo"
       aria-label="Foto do profissional"
     >
       <div className="flex items-center gap-3">
-        <Avatar size="lg">
+        <Avatar className="j2-professional-photo" size="lg">
           <AvatarImage
             src={preview || photoSrc(barber.id, current)}
-            alt={barber.name}
+            alt={preview ? "Prévia da nova foto" : barber.name}
           />
           <AvatarFallback>{initialsFromName(barber.name)}</AvatarFallback>
         </Avatar>
@@ -117,9 +118,10 @@ export function BarberPhoto({ barber }: { barber: ManagedBarber }) {
             onClick={() => save(false)}
             disabled={busy}
           >
-            Salvar foto
+            {operation === "upload" ? "Enviando foto..." : "Salvar foto"}
           </Button>
         )}
+        {file && <Button type="button" variant="ghost" size="sm" onClick={clear} disabled={busy}>Descartar seleção</Button>}
         {current && (
           <Button
             type="button"
@@ -128,12 +130,12 @@ export function BarberPhoto({ barber }: { barber: ManagedBarber }) {
             onClick={() => save(true)}
             disabled={busy}
           >
-            Remover foto
+            {operation === "remove" ? "Removendo foto..." : "Remover foto"}
           </Button>
         )}
       </div>
       <p role="status" className="text-xs">
-        {message}
+        {operation === "upload" ? "Enviando foto..." : operation === "remove" ? "Removendo foto..." : message}
       </p>
     </section>
   );

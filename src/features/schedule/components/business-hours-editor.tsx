@@ -79,7 +79,7 @@ export function BusinessHoursEditor({
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
+    <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-medium">Funcionamento semanal</p>
@@ -106,7 +106,7 @@ export function BusinessHoursEditor({
 
       <FormError message={serverError} />
 
-      <div className="overflow-hidden rounded-2xl border border-border/80">
+      <div className="j2-week-rows">
         {days.map((day, index) => {
           const errors = form.formState.errors.days?.[index];
           const closed = !day.isActive;
@@ -114,14 +114,11 @@ export function BusinessHoursEditor({
           return (
             <div
               key={day.weekday}
-              className={
-                closed
-                  ? "border-b border-border/70 bg-muted/25 px-4 py-3.5 last:border-b-0"
-                  : "border-b border-border/70 bg-card px-4 py-3.5 last:border-b-0"
-              }
+              className="j2-week-row"
+              data-closed={day.isActive ? undefined : ""}
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="j2-week-row-content">
+                <div className="j2-week-day-label">
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-border/80 bg-card text-[10px] font-semibold text-muted-foreground">
                     {shortWeekdayLabel(day.weekday)}
                   </span>
@@ -137,7 +134,7 @@ export function BusinessHoursEditor({
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="j2-week-controls">
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={Boolean(day.isActive)}
@@ -157,13 +154,13 @@ export function BusinessHoursEditor({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className="space-y-1">
+                  <div className="j2-week-time-pair">
+                    <div>
                       <Label
                         htmlFor={`opens-${day.weekday}`}
-                        className="sr-only"
+                        className="j2-week-time-label"
                       >
-                        Abertura de {weekdayLabel(day.weekday)}
+                        Abertura <span className="sr-only">de {weekdayLabel(day.weekday)}</span>
                       </Label>
                       <Input
                         id={`opens-${day.weekday}`}
@@ -171,17 +168,17 @@ export function BusinessHoursEditor({
                         step={300}
                         disabled={!canManage || isPending}
                         aria-invalid={Boolean(errors?.opensAt)}
-                        className="h-9 w-[7.25rem] rounded-lg px-2.5 tabular-nums"
+                        aria-describedby={errors?.opensAt || errors?.closesAt ? "business-error-" + day.weekday : undefined}
+                        className="j2-week-time-input"
                         {...form.register(`days.${index}.opensAt`)}
                       />
                     </div>
-                    <span className="text-xs text-muted-foreground">até</span>
-                    <div className="space-y-1">
+                    <div>
                       <Label
                         htmlFor={`closes-${day.weekday}`}
-                        className="sr-only"
+                        className="j2-week-time-label"
                       >
-                        Fechamento de {weekdayLabel(day.weekday)}
+                        Fechamento <span className="sr-only">de {weekdayLabel(day.weekday)}</span>
                       </Label>
                       <Input
                         id={`closes-${day.weekday}`}
@@ -189,7 +186,8 @@ export function BusinessHoursEditor({
                         step={300}
                         disabled={!canManage || isPending}
                         aria-invalid={Boolean(errors?.closesAt)}
-                        className="h-9 w-[7.25rem] rounded-lg px-2.5 tabular-nums"
+                        aria-describedby={errors?.opensAt || errors?.closesAt ? "business-error-" + day.weekday : undefined}
+                        className="j2-week-time-input"
                         {...form.register(`days.${index}.closesAt`)}
                       />
                     </div>
@@ -198,7 +196,7 @@ export function BusinessHoursEditor({
               </div>
 
               {errors?.opensAt?.message || errors?.closesAt?.message ? (
-                <p className="mt-2 text-xs text-destructive sm:pl-12">
+                <p className="j2-week-error" id={"business-error-" + day.weekday}>
                   {errors?.opensAt?.message ?? errors?.closesAt?.message}
                 </p>
               ) : null}

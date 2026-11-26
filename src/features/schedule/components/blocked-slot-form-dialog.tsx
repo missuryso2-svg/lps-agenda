@@ -8,9 +8,9 @@ import { toast } from "sonner";
 
 import { FormError } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
+import { ManagementDialogContent } from "@/components/dashboard/management-dialog";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -128,7 +128,7 @@ export function BlockedSlotFormDialog({
         }
       }}
     >
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <ManagementDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {slot ? "Editar bloqueio" : "Novo bloqueio"}
@@ -139,7 +139,7 @@ export function BlockedSlotFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
           <FormError message={serverError} />
 
           <div className="space-y-2">
@@ -319,7 +319,7 @@ export function BlockedSlotFormDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </ManagementDialogContent>
     </Dialog>
   );
 }

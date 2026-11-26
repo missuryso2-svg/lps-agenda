@@ -32,7 +32,7 @@ function BreakTimes({
   const router = useRouter();
   return (
     <form
-      className="mt-3 flex flex-wrap items-end gap-3"
+      method="post" className="j2-break-fields"
       onSubmit={(e) => {
         e.preventDefault();
         transition(async () => {
@@ -75,7 +75,7 @@ function BreakTimes({
         Pausa ativa
       </label>
       <Button variant="gold" disabled={pending}>
-        Salvar pausa
+        {pending ? "Salvando pausa..." : "Salvar pausa"}
       </Button>
       <p role="status" className="w-full">
         {message}
@@ -93,14 +93,14 @@ export function BarberBreaks({
   const [barber, setBarber] = useState(barbers[0]?.id ?? "");
   const [weekday, setWeekday] = useState(1);
   return (
-    <section className="space-y-3 rounded-2xl border bg-card p-5 text-sm">
+    <section className="j2-operation-panel j2-management-breaks">
       <h2 className="font-display text-xl">Pausa recorrente</h2>
       <p className="text-muted-foreground">
         Reserve um intervalo semanal no fuso da barbearia.
       </p>
       {barbers.length ? (
         <>
-          <div className="flex flex-wrap gap-3">
+          <div className="j2-break-selectors">
             <label className="grid gap-1">
               Profissional
               <select

@@ -1,0 +1,950 @@
+{
+  "samplesPerVersion": 32,
+  "overall": {
+    "before": {
+      "lcp": 440,
+      "fcp": 90,
+      "ttfb": 21.9,
+      "jsBytes": 302625.5,
+      "cls": 0
+    },
+    "after": {
+      "lcp": 462,
+      "fcp": 134,
+      "ttfb": 28.2,
+      "jsBytes": 302981.5,
+      "cls": 0
+    }
+  },
+  "perRoute": {
+    "clientes": {
+      "before": 446,
+      "after": 466
+    },
+    "servicos": {
+      "before": 308,
+      "after": 450
+    },
+    "equipe": {
+      "before": 446,
+      "after": 466
+    },
+    "horarios": {
+      "before": 438,
+      "after": 484
+    }
+  },
+  "maxCls": {
+    "before": 0.000010655606046636053,
+    "after": 0.00005787840360103554
+  },
+  "before": [
+    {
+      "route": "clientes",
+      "width": 375,
+      "theme": "light",
+      "lcp": 312,
+      "cls": 0,
+      "fcp": 312,
+      "ttfb": 166.80000001192093,
+      "jsBytes": 344574,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 375,
+      "theme": "light",
+      "lcp": 188,
+      "cls": 0,
+      "fcp": 188,
+      "ttfb": 27.400000005960464,
+      "jsBytes": 294124,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 375,
+      "theme": "light",
+      "lcp": 448,
+      "cls": 0,
+      "fcp": 92,
+      "ttfb": 29.80000001192093,
+      "jsBytes": 296418,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 375,
+      "theme": "light",
+      "lcp": 456,
+      "cls": 0,
+      "fcp": 100,
+      "ttfb": 41,
+      "jsBytes": 308833,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 375,
+      "theme": "dark",
+      "lcp": 456,
+      "cls": 0,
+      "fcp": 88,
+      "ttfb": 24.099999994039536,
+      "jsBytes": 344574,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 375,
+      "theme": "dark",
+      "lcp": 132,
+      "cls": 0,
+      "fcp": 132,
+      "ttfb": 21.900000005960464,
+      "jsBytes": 294124,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 375,
+      "theme": "dark",
+      "lcp": 424,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 22.900000005960464,
+      "jsBytes": 296418,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 375,
+      "theme": "dark",
+      "lcp": 444,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 20.80000001192093,
+      "jsBytes": 308833,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 768,
+      "theme": "light",
+      "lcp": 440,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 20.600000023841858,
+      "jsBytes": 344574,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 768,
+      "theme": "light",
+      "lcp": 436,
+      "cls": 0,
+      "fcp": 88,
+      "ttfb": 21.80000001192093,
+      "jsBytes": 294124,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 768,
+      "theme": "light",
+      "lcp": 440,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 25.5,
+      "jsBytes": 296418,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 768,
+      "theme": "light",
+      "lcp": 496,
+      "cls": 0,
+      "fcp": 88,
+      "ttfb": 20.80000001192093,
+      "jsBytes": 308833,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 768,
+      "theme": "dark",
+      "lcp": 452,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 20.399999976158142,
+      "jsBytes": 344574,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 768,
+      "theme": "dark",
+      "lcp": 428,
+      "cls": 0,
+      "fcp": 76,
+      "ttfb": 27.600000023841858,
+      "jsBytes": 294124,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 768,
+      "theme": "dark",
+      "lcp": 428,
+      "cls": 0,
+      "fcp": 80,
+      "ttfb": 20.19999998807907,
+      "jsBytes": 296418,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 768,
+      "theme": "dark",
+      "lcp": 432,
+      "cls": 0,
+      "fcp": 80,
+      "ttfb": 20.299999982118607,
+      "jsBytes": 308833,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 1280,
+      "theme": "light",
+      "lcp": 440,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 23.599999994039536,
+      "jsBytes": 344574,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 1280,
+      "theme": "light",
+      "lcp": 440,
+      "cls": 0,
+      "fcp": 88,
+      "ttfb": 23.5,
+      "jsBytes": 294124,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 1280,
+      "theme": "light",
+      "lcp": 448,
+      "cls": 0,
+      "fcp": 80,
+      "ttfb": 19.099999994039536,
+      "jsBytes": 296418,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 1280,
+      "theme": "light",
+      "lcp": 464,
+      "cls": 0.000010655606046636053,
+      "fcp": 92,
+      "ttfb": 21,
+      "jsBytes": 308833,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 1280,
+      "theme": "dark",
+      "lcp": 484,
+      "cls": 0,
+      "fcp": 100,
+      "ttfb": 24.69999998807907,
+      "jsBytes": 344574,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 1280,
+      "theme": "dark",
+      "lcp": 132,
+      "cls": 0,
+      "fcp": 132,
+      "ttfb": 20.5,
+      "jsBytes": 294124,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 1280,
+      "theme": "dark",
+      "lcp": 468,
+      "cls": 0,
+      "fcp": 92,
+      "ttfb": 23.400000005960464,
+      "jsBytes": 296418,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 1280,
+      "theme": "dark",
+      "lcp": 160,
+      "cls": 0,
+      "fcp": 160,
+      "ttfb": 21.599999994039536,
+      "jsBytes": 308833,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 1920,
+      "theme": "light",
+      "lcp": 484,
+      "cls": 0,
+      "fcp": 124,
+      "ttfb": 42.30000001192093,
+      "jsBytes": 344574,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 1920,
+      "theme": "light",
+      "lcp": 452,
+      "cls": 0,
+      "fcp": 104,
+      "ttfb": 25.599999994039536,
+      "jsBytes": 294124,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 1920,
+      "theme": "light",
+      "lcp": 448,
+      "cls": 0,
+      "fcp": 96,
+      "ttfb": 24.30000001192093,
+      "jsBytes": 296418,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 1920,
+      "theme": "light",
+      "lcp": 148,
+      "cls": 0,
+      "fcp": 148,
+      "ttfb": 20.599999994039536,
+      "jsBytes": 308833,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 1920,
+      "theme": "dark",
+      "lcp": 440,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 20.400000005960464,
+      "jsBytes": 344574,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 1920,
+      "theme": "dark",
+      "lcp": 140,
+      "cls": 0,
+      "fcp": 140,
+      "ttfb": 19.099999994039536,
+      "jsBytes": 294124,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 1920,
+      "theme": "dark",
+      "lcp": 444,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 19.900000005960464,
+      "jsBytes": 296418,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 1920,
+      "theme": "dark",
+      "lcp": 152,
+      "cls": 0.000004735824909616024,
+      "fcp": 152,
+      "ttfb": 21.899999976158142,
+      "jsBytes": 308833,
+      "overflow": 0
+    }
+  ],
+  "after": [
+    {
+      "route": "clientes",
+      "width": 375,
+      "theme": "light",
+      "lcp": 356,
+      "cls": 0,
+      "fcp": 356,
+      "ttfb": 96.90000000596046,
+      "jsBytes": 344963,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 375,
+      "theme": "light",
+      "lcp": 228,
+      "cls": 0,
+      "fcp": 228,
+      "ttfb": 44.80000001192093,
+      "jsBytes": 294404,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 375,
+      "theme": "light",
+      "lcp": 104,
+      "cls": 0,
+      "fcp": 104,
+      "ttfb": 26.700000017881393,
+      "jsBytes": 296816,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 375,
+      "theme": "light",
+      "lcp": 152,
+      "cls": 0.000029406768715886887,
+      "fcp": 152,
+      "ttfb": 28.30000001192093,
+      "jsBytes": 309147,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 375,
+      "theme": "dark",
+      "lcp": 432,
+      "cls": 0,
+      "fcp": 128,
+      "ttfb": 22.600000023841858,
+      "jsBytes": 344963,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 375,
+      "theme": "dark",
+      "lcp": 460,
+      "cls": 0,
+      "fcp": 112,
+      "ttfb": 26.69999998807907,
+      "jsBytes": 294404,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 375,
+      "theme": "dark",
+      "lcp": 444,
+      "cls": 0,
+      "fcp": 136,
+      "ttfb": 26.399999976158142,
+      "jsBytes": 296816,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 375,
+      "theme": "dark",
+      "lcp": 584,
+      "cls": 0.000029406768715886887,
+      "fcp": 216,
+      "ttfb": 24.80000001192093,
+      "jsBytes": 309147,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 768,
+      "theme": "light",
+      "lcp": 512,
+      "cls": 0,
+      "fcp": 116,
+      "ttfb": 28.099999994039536,
+      "jsBytes": 344963,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 768,
+      "theme": "light",
+      "lcp": 432,
+      "cls": 0,
+      "fcp": 136,
+      "ttfb": 28,
+      "jsBytes": 294404,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 768,
+      "theme": "light",
+      "lcp": 592,
+      "cls": 0,
+      "fcp": 268,
+      "ttfb": 45.30000001192093,
+      "jsBytes": 296816,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 768,
+      "theme": "light",
+      "lcp": 452,
+      "cls": 0.00005787840360103554,
+      "fcp": 132,
+      "ttfb": 25.299999982118607,
+      "jsBytes": 309147,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 768,
+      "theme": "dark",
+      "lcp": 464,
+      "cls": 0,
+      "fcp": 132,
+      "ttfb": 42.60000002384186,
+      "jsBytes": 344963,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 768,
+      "theme": "dark",
+      "lcp": 456,
+      "cls": 0,
+      "fcp": 172,
+      "ttfb": 33.5,
+      "jsBytes": 294404,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 768,
+      "theme": "dark",
+      "lcp": 460,
+      "cls": 0,
+      "fcp": 128,
+      "ttfb": 24,
+      "jsBytes": 296816,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 768,
+      "theme": "dark",
+      "lcp": 592,
+      "cls": 0,
+      "fcp": 168,
+      "ttfb": 32.599999994039536,
+      "jsBytes": 309147,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 1280,
+      "theme": "light",
+      "lcp": 552,
+      "cls": 0,
+      "fcp": 172,
+      "ttfb": 33.69999998807907,
+      "jsBytes": 344963,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 1280,
+      "theme": "light",
+      "lcp": 488,
+      "cls": 0,
+      "fcp": 140,
+      "ttfb": 38.599999994039536,
+      "jsBytes": 294404,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 1280,
+      "theme": "light",
+      "lcp": 472,
+      "cls": 0,
+      "fcp": 104,
+      "ttfb": 18.799999982118607,
+      "jsBytes": 296816,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 1280,
+      "theme": "light",
+      "lcp": 504,
+      "cls": 0.000020402137269365026,
+      "fcp": 204,
+      "ttfb": 55.5,
+      "jsBytes": 309147,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 1280,
+      "theme": "dark",
+      "lcp": 440,
+      "cls": 0,
+      "fcp": 84,
+      "ttfb": 19.799999982118607,
+      "jsBytes": 344963,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 1280,
+      "theme": "dark",
+      "lcp": 480,
+      "cls": 0,
+      "fcp": 196,
+      "ttfb": 37.900000005960464,
+      "jsBytes": 294404,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 1280,
+      "theme": "dark",
+      "lcp": 500,
+      "cls": 0,
+      "fcp": 120,
+      "ttfb": 29.19999998807907,
+      "jsBytes": 296816,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 1280,
+      "theme": "dark",
+      "lcp": 468,
+      "cls": 0.000020402137269365026,
+      "fcp": 100,
+      "ttfb": 26.200000017881393,
+      "jsBytes": 309147,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 1920,
+      "theme": "light",
+      "lcp": 468,
+      "cls": 0,
+      "fcp": 120,
+      "ttfb": 30.099999994039536,
+      "jsBytes": 344963,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 1920,
+      "theme": "light",
+      "lcp": 444,
+      "cls": 0,
+      "fcp": 100,
+      "ttfb": 29.5,
+      "jsBytes": 294404,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 1920,
+      "theme": "light",
+      "lcp": 496,
+      "cls": 0,
+      "fcp": 188,
+      "ttfb": 44.5,
+      "jsBytes": 296816,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 1920,
+      "theme": "light",
+      "lcp": 500,
+      "cls": 0.000009067616564162234,
+      "fcp": 132,
+      "ttfb": 29,
+      "jsBytes": 309147,
+      "overflow": 0
+    },
+    {
+      "route": "clientes",
+      "width": 1920,
+      "theme": "dark",
+      "lcp": 468,
+      "cls": 0,
+      "fcp": 116,
+      "ttfb": 27.599999994039536,
+      "jsBytes": 344963,
+      "overflow": 0
+    },
+    {
+      "route": "servicos",
+      "width": 1920,
+      "theme": "dark",
+      "lcp": 428,
+      "cls": 0,
+      "fcp": 136,
+      "ttfb": 22.700000017881393,
+      "jsBytes": 294404,
+      "overflow": 0
+    },
+    {
+      "route": "equipe",
+      "width": 1920,
+      "theme": "dark",
+      "lcp": 444,
+      "cls": 0,
+      "fcp": 140,
+      "ttfb": 25.099999994039536,
+      "jsBytes": 296816,
+      "overflow": 0
+    },
+    {
+      "route": "horarios",
+      "width": 1920,
+      "theme": "dark",
+      "lcp": 436,
+      "cls": 0.000009067616564162234,
+      "fcp": 72,
+      "ttfb": 16.69999998807907,
+      "jsBytes": 309147,
+      "overflow": 0
+    }
+  ],
+  "servicesOrderCheck": {
+    "order": [
+      "after",
+      "before"
+    ],
+    "samplesPerVersion": 8,
+    "first": {
+      "before": 308,
+      "after": 450
+    },
+    "reversed": {
+      "before": 434,
+      "after": 414
+    },
+    "all": {
+      "before": 428,
+      "after": 430
+    },
+    "samples": {
+      "before": [
+        {
+          "route": "servicos",
+          "width": 375,
+          "theme": "light",
+          "lcp": 484,
+          "cls": 0,
+          "fcp": 484,
+          "ttfb": 106,
+          "jsBytes": 294124,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 240,
+          "cls": 0,
+          "fcp": 240,
+          "ttfb": 37.80000001192093,
+          "jsBytes": 294124,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 768,
+          "theme": "light",
+          "lcp": 408,
+          "cls": 0,
+          "fcp": 76,
+          "ttfb": 20.299999982118607,
+          "jsBytes": 294124,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 428,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 21.099999994039536,
+          "jsBytes": 294124,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 456,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 25.80000001192093,
+          "jsBytes": 294124,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 428,
+          "cls": 0,
+          "fcp": 84,
+          "ttfb": 22.19999998807907,
+          "jsBytes": 294124,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 452,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 30.900000005960464,
+          "jsBytes": 294124,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 440,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 23.5,
+          "jsBytes": 294124,
+          "overflow": 0
+        }
+      ],
+      "after": [
+        {
+          "route": "servicos",
+          "width": 375,
+          "theme": "light",
+          "lcp": 332,
+          "cls": 0,
+          "fcp": 332,
+          "ttfb": 100.09999999403954,
+          "jsBytes": 294404,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 375,
+          "theme": "dark",
+          "lcp": 208,
+          "cls": 0,
+          "fcp": 208,
+          "ttfb": 22.599999994039536,
+          "jsBytes": 294404,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 768,
+          "theme": "light",
+          "lcp": 416,
+          "cls": 0,
+          "fcp": 84,
+          "ttfb": 20.899999976158142,
+          "jsBytes": 294404,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 768,
+          "theme": "dark",
+          "lcp": 412,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 18.69999998807907,
+          "jsBytes": 294404,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 1280,
+          "theme": "light",
+          "lcp": 84,
+          "cls": 0,
+          "fcp": 84,
+          "ttfb": 22.5,
+          "jsBytes": 294404,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 1280,
+          "theme": "dark",
+          "lcp": 444,
+          "cls": 0,
+          "fcp": 96,
+          "ttfb": 30.19999998807907,
+          "jsBytes": 294404,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 1920,
+          "theme": "light",
+          "lcp": 436,
+          "cls": 0,
+          "fcp": 88,
+          "ttfb": 22.099999994039536,
+          "jsBytes": 294404,
+          "overflow": 0
+        },
+        {
+          "route": "servicos",
+          "width": 1920,
+          "theme": "dark",
+          "lcp": 428,
+          "cls": 0,
+          "fcp": 80,
+          "ttfb": 22.80000001192093,
+          "jsBytes": 294404,
+          "overflow": 0
+        }
+      ]
+    }
+  }
+}

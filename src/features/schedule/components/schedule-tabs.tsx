@@ -29,8 +29,8 @@ export function ScheduleTabs({
   canManage: boolean;
 }) {
   return (
-    <Tabs defaultValue="barbearia" className="gap-4">
-      <TabsList className="grid h-auto w-full grid-cols-3 sm:w-fit">
+    <Tabs defaultValue="barbearia" className="j2-schedule-tabs">
+      <TabsList className="j2-schedule-tablist" aria-label="Configuração de horários">
         <TabsTrigger value="barbearia" className="h-9 gap-1.5 px-3">
           <Building2 className="size-3.5" />
           Barbearia

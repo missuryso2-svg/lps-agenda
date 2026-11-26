@@ -124,14 +124,14 @@ export function ServicesManager({
 
   return (
     <div>
-      <div className="flex flex-col gap-3 border-b border-border/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="j2-list-toolbar j2-list-toolbar-inline">
         <div className="relative w-full sm:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar por nome"
-            aria-label="Buscar serviços por nome"
+            aria-label="Buscar serviços por nome" data-management-focus
             className="h-10 rounded-xl pl-9 pr-9"
           />
           {query ? (
@@ -181,7 +181,7 @@ export function ServicesManager({
         </div>
       ) : filtered.length === 0 ? (
         <div className="p-6">
-          <div className="rounded-2xl border border-dashed border-border/80 bg-card/45 px-6 py-10 text-center">
+          <div className="j2-management-empty">
             <Search className="mx-auto size-5 text-muted-foreground/70" />
             <p className="mt-3 text-sm font-medium">Nenhum serviço encontrado</p>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -200,7 +200,7 @@ export function ServicesManager({
         </div>
       ) : (
         <>
-          <div className="hidden md:block">
+          <div className="j2-management-table hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -217,7 +217,7 @@ export function ServicesManager({
                 {filtered.map((service) => (
                   <TableRow key={service.id}>
                     <TableCell className="max-w-md pl-4 whitespace-normal">
-                      <p className="text-xs font-medium">{service.name}</p>
+                      <p className="j2-list-name">{service.name}</p>
                       <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground">
                         {service.description ?? "Sem descrição"}
                       </p>
@@ -225,7 +225,7 @@ export function ServicesManager({
                     <TableCell className="text-xs text-muted-foreground">
                       {service.duration_minutes} min
                     </TableCell>
-                    <TableCell className="text-xs font-medium tabular-nums">
+                    <TableCell className="j2-service-price">
                       {formatCurrencyFromCents(service.price_cents)}
                     </TableCell>
                     <TableCell>
@@ -284,15 +284,15 @@ export function ServicesManager({
             </Table>
           </div>
 
-          <div className="space-y-3 p-4 md:hidden">
+          <div className="j2-management-mobile md:hidden">
             {filtered.map((service) => (
               <article
                 key={service.id}
-                className="rounded-2xl border border-border/80 bg-card p-4"
+                className="j2-management-list-row"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium">{service.name}</p>
+                    <p className="j2-list-name">{service.name}</p>
                     <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
                       {service.description ?? "Sem descrição"}
                     </p>

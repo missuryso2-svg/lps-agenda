@@ -130,6 +130,7 @@ try {
         await page.locator("#planos").scrollIntoViewIfNeeded();
       }
       if (route === "/cadastro") {
+        await page.getByText("Condições comerciais e de teste", { exact: true }).click();
         assert.match(
           await page.locator("body").innerText(),
           /sujeito à liberação pela LPS Solutions/,

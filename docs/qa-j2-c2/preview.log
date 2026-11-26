@@ -1,0 +1,3 @@
+PASS owner desktop with actual photo upload · four routes and strict CSP
+PASS staff mobile sees photo with no management controls · four routes and strict CSP
+PASS listener 127.0.0.1:59330

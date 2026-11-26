@@ -1,0 +1,337 @@
+.j2-management-heading h2 {
+  font: 400 clamp(2.35rem, 4.8vw, 3.75rem)/1 var(--lps-display);
+  letter-spacing: -0.045em;
+}
+.j2-management-panel h3,
+.j2-management-breaks h2,
+.j2-management-roster [data-slot="card-title"] {
+  font: 400 clamp(1.2rem, 2.4vw, 1.65rem)/1.13 var(--lps-display);
+  letter-spacing: -0.025em;
+}
+.j2-management .j2-operation-metrics:has(> div:nth-child(3):last-child) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.j2-management .j2-operation-metrics:has(> div:nth-child(3):last-child) > div + div {
+  border-top: 0;
+  border-inline-start: 1px solid var(--lps-line);
+}
+.j2-management-inner,
+.j2-management-breaks,
+.j2-management-limit,
+.j2-management-rating,
+.j2-list-toolbar {
+  padding: clamp(0.8rem, 1.8vw, 1.25rem);
+}
+.j2-list-toolbar,
+.j2-customer-toolbar {
+  display: grid;
+  gap: 0.7rem;
+  border-bottom: 1px solid var(--lps-line);
+}
+.j2-list-toolbar-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+.j2-list-toolbar-inline > .relative {
+  width: min(100%, 22rem);
+}
+.j2-list-toolbar-inline > .relative:has(button) input {
+  padding-inline-end: 3.25rem;
+}
+.j2-list-toolbar-inline > .relative > button {
+  inset-inline-end: 0.15rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+.j2-list-toolbar [role="search"] {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.j2-list-toolbar [role="search"] > a {
+  grid-column: 2;
+}
+.j2-list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.j2-list-filters a {
+  min-height: var(--lps-control);
+  border-color: var(--lps-edge);
+  border-radius: var(--lps-radius-control);
+  background: var(--lps-surface);
+  color: var(--lps-muted);
+  font-size: 0.8rem;
+  transition: none;
+}
+.j2-list-filters a[aria-current="page"] {
+  border-color: var(--lps-accent);
+  background: var(--lps-accent-soft);
+  color: var(--lps-accent);
+}
+.j2-list-filters a span {
+  background: transparent;
+  color: inherit;
+}
+.j2-management-table [data-slot="table-head"] {
+  height: 2.8rem;
+  background: var(--lps-subtle);
+  color: var(--lps-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+.j2-management-table [data-slot="table-cell"] {
+  padding-block: 0.65rem;
+  font-size: 0.83rem;
+  color: var(--lps-ink);
+}
+.j2-management-table [data-slot="table-row"] {
+  border-color: var(--lps-line);
+  transition: none;
+}
+.j2-management-table tbody tr:hover {
+  background: var(--lps-subtle);
+}
+.j2-management-table [data-slot="table-cell"] :is(.truncate,.text-muted-foreground) {
+  color: var(--lps-muted);
+}
+.j2-management-table [data-slot="table-cell"] p {
+  overflow-wrap: anywhere;
+}
+.j2-management-table [data-slot="table-cell"] .text-\[10px\],
+.j2-management-table [data-slot="table-cell"] > button .text-xs {
+  font-size: 0.78rem;
+}
+.j2-management-list-row {
+  min-width: 0;
+  border-bottom: 1px solid var(--lps-line);
+  padding: 0.95rem 0.9rem;
+  overflow-wrap: anywhere;
+}
+.j2-management-list-row:last-child { border-bottom: 0; }
+.j2-management-list-row :where(.text-\[11px\], .text-\[10px\]) { font-size: 0.8rem; }
+.j2-list-name {
+  color: var(--lps-ink);
+  font-size: 1rem;
+  font-weight: 680;
+  overflow-wrap: anywhere;
+}
+.j2-service-price {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.j2-management-empty { padding: 1.35rem; color: var(--lps-muted); text-align: center; }
+.j2-management-empty > p:first-child { color: var(--lps-ink); }
+.j2-management :where([data-slot="input"], [data-slot="select-trigger"]),
+.j2-management-dialog :where([data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]) {
+  width: 100%;
+  min-height: var(--lps-control);
+  min-width: 0;
+  border-color: var(--lps-edge);
+  border-radius: var(--lps-radius-control);
+  background: var(--lps-surface);
+  color: var(--lps-ink);
+  font-size: 1rem;
+}
+.j2-management-dialog [aria-invalid="true"] { border-color: var(--lps-danger); }
+.j2-management :where([data-slot="button"], [data-slot="switch"], [data-slot="input"], [data-slot="tabs-trigger"]),
+.j2-management-dialog :where([data-slot="switch"], [data-slot="checkbox"]) {
+  translate: none;
+  transition: none;
+}
+.j2-management [data-slot="button"],
+.j2-management-dialog [data-slot="button"] {
+  min-height: 2.75rem;
+}
+.j2-management [data-slot="button"][data-size^="icon"] { min-width: 2.75rem; }
+.j2-management [data-slot="button"][data-variant="gold"],
+.j2-management-dialog [data-slot="button"][data-variant="gold"] {
+  border-radius: var(--lps-radius-control);
+  background: var(--lps-action);
+  color: var(--lps-on-action);
+  font-weight: 700;
+}
+.j2-management [data-slot="button"][data-variant="gold"]:hover,
+.j2-management-dialog [data-slot="button"][data-variant="gold"]:hover { background: var(--lps-action-hover); }
+.j2-management [data-slot="switch"][data-state="checked"],
+.j2-management-dialog [data-slot="switch"][data-state="checked"] { background: var(--lps-accent); }
+.j2-management .text-muted-foreground,
+.j2-management-dialog .text-muted-foreground { color: var(--lps-muted); }
+.j2-contact-details,
+.j2-contact-history {
+  display: grid;
+  gap: 0.6rem;
+}
+.j2-contact-history {
+  color: var(--lps-muted);
+  font-size: 0.82rem;
+}
+.j2-contact-history p { min-width: 0; }
+.j2-management-limit {
+  display: grid;
+  gap: 0.9rem;
+  color: var(--lps-muted);
+  font-size: 0.83rem;
+}
+.j2-management-limit strong { color: var(--lps-ink); font-size: 1rem; }
+.j2-management-limit progress {
+  display: block;
+  margin-top: 0.35rem;
+  width: min(100%, 19rem);
+  height: 0.75rem;
+  accent-color: var(--lps-accent);
+}
+.j2-management-limit dl,
+.j2-management-rating {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+.j2-management-rating > div,
+.j2-management-limit dl > div {
+  border-inline-start: 1px solid var(--lps-line);
+  padding-inline-start: 0.65rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+.j2-management-limit dd,
+.j2-management-rating dd:first-of-type {
+  font-weight: 700;
+  color: var(--lps-ink);
+}
+.j2-management-rating dd + dd { color: var(--lps-muted); }
+.j2-management-access-list > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.55rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--lps-line);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+.j2-management-access-list > li:last-child { border-bottom: 0; }
+.j2-management-access-list > li > div:last-child { grid-column: 2; }
+.j2-management-access-list p { color: var(--lps-muted); }
+.j2-management-roster[data-slot="card"] {
+  min-width: 0;
+  gap: 0;
+  border-color: var(--lps-line);
+  background: var(--lps-surface);
+}
+.j2-management-roster [data-slot="card-header"] { padding-bottom: 0.85rem; }
+.j2-management-roster [data-slot="card-content"] { padding: 0; }
+.j2-professional-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1px;
+  background: var(--lps-line);
+}
+.j2-professional {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: var(--lps-surface);
+  padding: 1rem;
+  overflow-wrap: anywhere;
+}
+.j2-professional:last-child { border-bottom-right-radius: var(--lps-radius-panel); }
+.j2-professional-identity { display: flex; align-items: center; gap: 0.75rem; }
+.j2-professional-photo[data-slot="avatar"] {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--lps-radius-control);
+}
+.j2-professional-photo img { object-fit: cover; }
+.j2-professional-photo [data-slot="avatar-fallback"] {
+  border-radius: inherit;
+  background: var(--lps-accent-soft);
+  color: var(--lps-accent);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.j2-management-photo {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid var(--lps-line);
+  border-radius: var(--lps-radius-control);
+  background: var(--lps-subtle);
+}
+.j2-management-photo [role="status"]:empty { display: none; }
+.j2-management-photo [role="status"] { color: var(--lps-ink); font-size: 0.8rem; }
+.j2-schedule-tabs { gap: 0.8rem; }
+.j2-schedule-tablist {
+  display: grid;
+  width: min(100%, 36rem);
+  height: auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--lps-subtle);
+}
+.j2-schedule-tablist button {
+  min-width: 0;
+  min-height: var(--lps-control);
+  white-space: normal;
+  padding: 0.3rem;
+  gap: 0.3rem;
+  color: var(--lps-muted);
+}
+.j2-schedule-tablist button[data-state="active"] {
+  border-color: var(--lps-edge);
+  background: var(--lps-surface);
+  color: var(--lps-ink);
+}
+.j2-schedule-tablist button svg { flex-shrink: 0; }
+.j2-week-rows { border-block: 1px solid var(--lps-line); }
+.j2-week-row {
+  padding: 0.8rem 0.65rem;
+  border-bottom: 1px solid var(--lps-line);
+}
+.j2-week-row:last-child { border-bottom: 0; }
+.j2-week-row[data-closed] { background: var(--lps-subtle); }
+.j2-week-row-content,
+.j2-week-controls { display: grid; gap: 0.55rem; align-items: center; }
+.j2-week-day-label { display: flex; align-items: center; gap: 0.55rem; }
+.j2-week-day-label > span {
+  background: var(--lps-accent-soft);
+  color: var(--lps-accent);
+}
+.j2-week-row[data-closed] .j2-week-day-label > span { background: var(--lps-surface); color: var(--lps-muted); }
+.j2-week-time-pair { display: grid; min-width: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
+.j2-week-time-label { color: var(--lps-muted); font-size: 0.73rem; margin-bottom: 0.2rem; }
+.j2-week-time-input { font-variant-numeric: tabular-nums; padding-inline: 0.55rem; }
+.j2-week-row .j2-week-error { padding-top: 0.45rem; font-size: 0.8rem; color: var(--lps-danger); }
+.j2-management-breaks { display: grid; gap: 0.65rem; }
+.j2-management-breaks > p { color: var(--lps-muted); font-size: 0.83rem; }
+.j2-break-selectors,
+.j2-break-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+}
+.j2-break-selectors select,
+.j2-break-fields input[type="time"] { min-height: var(--lps-control); }
+@media (max-width: 32rem) {
+  .j2-schedule-tablist button { font-size: 0.73rem; }
+  .j2-schedule-tablist button svg { display: none; }
+  .j2-management .j2-operation-metrics:has(> div:nth-child(3):last-child) > div { padding: 0.65rem 0.4rem; }
+}
+@media (min-width: 43rem) {
+  .j2-list-toolbar [role="search"] { display: flex; align-items: center; }
+  .j2-contact-details, .j2-contact-history { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .j2-management-limit { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  .j2-management-access-list > li { grid-template-columns: auto minmax(0, 1fr) minmax(8rem, 0.45fr); }
+  .j2-management-access-list > li > div:last-child { grid-column: auto; }
+  .j2-week-row-content { grid-template-columns: minmax(10rem, 1fr) minmax(0, 1.35fr); }
+  .j2-week-controls { grid-template-columns: minmax(5rem, 0.52fr) minmax(0, 1.5fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .j2-management .animate-spin, .j2-management-dialog .animate-spin { animation: none; }
+}

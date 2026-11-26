@@ -1,18 +1,7 @@
-import {
-  CalendarCheck2,
-  CalendarClock,
-  CalendarOff,
-  Clock3,
-  ShieldCheck,
-  UsersRound,
-} from "lucide-react";
 import type { Metadata } from "next";
 
-import { NoticeCard } from "@/components/dashboard/notice-card";
-import { PageHeader } from "@/components/dashboard/page-header";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ManagementHeading, ManagementSection } from "@/components/dashboard/management-page";
+import { OperationMetrics } from "@/components/dashboard/operation-page";
 import {
   getBarbers,
   getBarberWorkingHours,
@@ -72,93 +61,27 @@ export default async function SchedulePage() {
   }));
 
   return (
-    <div className="space-y-7">
-      <PageHeader
-        eyebrow="Operação"
+    <div className="j2-operation j2-management">
+      <ManagementHeading
         title="Horários e disponibilidade"
-        description="Defina quando a barbearia abre, a jornada individual de cada profissional e os períodos indisponíveis. Essas regras serão a base do próximo mecanismo de agendamento."
-        actions={
-          <Badge variant="outline" className="w-fit">
-            <Clock3 className="size-3.5 text-gold" />
-            Fuso {shop.timezone || "America/Sao_Paulo"}
-          </Badge>
-        }
+        description={"Configure o expediente, a jornada da equipe e os bloqueios no fuso " + (shop.timezone || "America/Sao_Paulo") + "."}
       />
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Dias abertos"
-          value={`${openDays.length} de 7`}
-          hint="Dias com funcionamento ativo"
-          icon={CalendarCheck2}
-          tone="gold"
-        />
-        <StatCard
-          label="Carga semanal"
-          value={`${Math.floor(weeklyMinutes / 60)}h${String(
-            weeklyMinutes % 60,
-          ).padStart(2, "0")}`}
-          hint="Somatório das faixas abertas"
-          icon={CalendarClock}
-        />
-        <StatCard
-          label="Profissionais com jornada"
-          value={`${scheduledBarbers.size} de ${barbers.length}`}
-          hint="Com ao menos um dia ativo"
-          icon={UsersRound}
-        />
-        <StatCard
-          label="Bloqueios cadastrados"
-          value={String(blockedSlots.length)}
-          hint="Inclui períodos encerrados"
-          icon={CalendarOff}
-          tone="muted"
-        />
-      </div>
-
-      <Card>
-        <CardHeader className="border-b border-border/70 pb-4">
-          <CardTitle>Configuração semanal</CardTitle>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Alterações em {shop.name} são gravadas no Supabase e revalidadas
-            para toda a equipe. A jornada precisa caber no funcionamento da
-            barbearia.
-          </p>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-5">
-          <ScheduleTabs
-            businessHours={businessHours}
-            workingHours={workingHours}
-            blockedSlots={blockedSlots}
-            barbers={scheduleBarbers}
-            timeZone={shop.timezone || "America/Sao_Paulo"}
-            canManage={canManage}
-          />
-        </CardContent>
-      </Card>
-
-      {context.active.role === "owner" &&
-        (pauses.error ? (
-          <p>Não foi possível carregar as pausas.</p>
-        ) : (
-          <BarberBreaks barbers={scheduleBarbers} pauses={pauses.data ?? []} />
-        ))}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <NoticeCard icon={Clock3} title="Horários locais da barbearia">
-          O funcionamento e a jornada usam horários locais, sem conversão
-          indevida para UTC. Apenas os bloqueios são gravados como instantes,
-          convertidos pelo fuso da barbearia.
-        </NoticeCard>
-        <NoticeCard
-          icon={ShieldCheck}
-          title="Permissões de horários"
-          tone="gold"
-        >
-          Proprietários e administradores da plataforma configuram horários e
-          bloqueios. A equipe consulta em modo somente leitura, e a RLS aplica a
-          mesma regra no banco.
-        </NoticeCard>
-      </div>
+      <OperationMetrics label="Resumo do expediente" entries={[
+        { label: "Dias abertos", value: openDays.length + " de 7" },
+        { label: "Carga semanal", value: Math.floor(weeklyMinutes / 60) + "h" + String(weeklyMinutes % 60).padStart(2, "0") },
+        { label: "Com jornada", value: scheduledBarbers.size + " de " + barbers.length },
+        { label: "Bloqueios registrados", value: String(blockedSlots.length) },
+      ]} />
+      <ManagementSection id="expediente-semanal" title="Configuração semanal">
+        <div className="j2-management-inner">
+          <ScheduleTabs businessHours={businessHours} workingHours={workingHours} blockedSlots={blockedSlots} barbers={scheduleBarbers} timeZone={shop.timezone || "America/Sao_Paulo"} canManage={canManage} />
+        </div>
+      </ManagementSection>
+      {context.active.role === "owner" && (pauses.error ? (
+        <p role="alert" className="j2-operation-callout">Não foi possível carregar as pausas.</p>
+      ) : (
+        <BarberBreaks barbers={scheduleBarbers} pauses={pauses.data ?? []} />
+      ))}
     </div>
   );
 }

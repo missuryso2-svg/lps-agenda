@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 
 import { FormError, FormSuccess } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -13,199 +12,91 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateBarbershopAction } from "@/features/barbershop/actions";
 import { applyServerFieldErrors } from "@/lib/form-errors";
-import {
-  updateBarbershopSchema,
-  type UpdateBarbershopInput,
-} from "@/lib/validation/barbershop";
+import { updateBarbershopSchema, type UpdateBarbershopInput } from "@/lib/validation/barbershop";
 
-export function BarbershopSettingsForm({
-  defaultValues,
-  timezone,
-}: {
-  defaultValues: UpdateBarbershopInput;
-  timezone: string;
-}) {
+export function BarbershopSettingsForm({ defaultValues }: { defaultValues: UpdateBarbershopInput }) {
   const form = useForm<UpdateBarbershopInput>({
     resolver: zodResolver(updateBarbershopSchema),
     defaultValues,
   });
-
+  const { errors } = form.formState;
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const description =
-    useWatch({ control: form.control, name: "description" }) ?? "";
+  const description = useWatch({ control: form.control, name: "description" }) ?? "";
 
-  const onSubmit = (values: UpdateBarbershopInput) => {
+  function onSubmit(values: UpdateBarbershopInput) {
     setServerError(null);
     setSuccessMessage(null);
-
     startTransition(async () => {
-      const result = await updateBarbershopAction(values);
-
-      if (result.status === "error") {
-        setServerError(result.message ?? "Não foi possível salvar os dados.");
-        applyServerFieldErrors(form, result.fieldErrors);
-        toast.error(result.message ?? "Não foi possível salvar os dados.");
-        return;
+      try {
+        const result = await updateBarbershopAction(values);
+        if (result.status === "error") {
+          setServerError(result.message ?? "Não foi possível salvar os dados.");
+          applyServerFieldErrors(form, result.fieldErrors);
+          return;
+        }
+        setSuccessMessage(result.message ?? "Dados atualizados.");
+        form.reset(values);
+      } catch {
+        setServerError("Não foi possível confirmar a alteração. Confira os dados antes de tentar novamente.");
       }
-
-      setSuccessMessage(result.message ?? "Dados atualizados.");
-      toast.success(result.message ?? "Dados atualizados.");
-      form.reset(values);
     });
-  };
+  }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-      <FormError message={serverError} />
-      <FormSuccess message={successMessage} />
-
-      <div className="space-y-5">
+    <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate className="mt-5 space-y-6">
+      <fieldset className="min-w-0 space-y-4" disabled={isPending}>
+        <legend className="mb-3 text-sm font-semibold">Identificação</legend>
         <div className="space-y-2">
           <Label htmlFor="name">Nome da barbearia</Label>
-          <Input
-            id="name"
-            autoComplete="organization"
-            className="h-11 rounded-xl px-3"
-            aria-invalid={Boolean(form.formState.errors.name)}
-            disabled={isPending}
-            {...form.register("name")}
-          />
-          {form.formState.errors.name ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.name.message}
-            </p>
-          ) : null}
+          <Input id="name" autoComplete="organization" aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? "name-error" : undefined} {...form.register("name")} />
+          {errors.name && <p id="name-error" className="text-sm text-destructive">{errors.name.message}</p>}
         </div>
-
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <Label htmlFor="description">Descrição pública</Label>
-            <span className="text-[10px] text-muted-foreground">
-              {description.length}/1000
-            </span>
-          </div>
-          <Textarea
-            id="description"
-            rows={4}
-            placeholder="Conte o que torna sua barbearia única."
-            className="rounded-xl"
-            aria-invalid={Boolean(form.formState.errors.description)}
-            disabled={isPending}
-            {...form.register("description")}
-          />
-          {form.formState.errors.description ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.description.message}
-            </p>
-          ) : (
-            <p className="text-[11px] text-muted-foreground">
-              Texto usado na futura página pública da barbearia.
-            </p>
-          )}
+          <Label htmlFor="description">Descrição pública</Label>
+          <Textarea id="description" rows={4} placeholder="Ex.: Cortes e barba com hora marcada."
+            aria-invalid={Boolean(errors.description)} aria-describedby="description-feedback"
+            {...form.register("description")} />
+          <p id="description-feedback" className={errors.description ? "text-sm text-destructive" : "j2-c3-meta"}>
+            {errors.description?.message ?? description.length + "/1000 caracteres"}
+          </p>
         </div>
+      </fieldset>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="phone">
-              Telefone{" "}
-              <span className="font-normal text-muted-foreground">
-                (opcional)
-              </span>
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="(11) 99999-9999"
-              className="h-11 rounded-xl px-3"
-              aria-invalid={Boolean(form.formState.errors.phone)}
-              disabled={isPending}
-              {...form.register("phone")}
-            />
-            {form.formState.errors.phone ? (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.phone.message}
-              </p>
-            ) : null}
-          </div>
-
+      <fieldset className="min-w-0 space-y-4 border-t pt-4" disabled={isPending}>
+        <legend className="mb-3 text-sm font-semibold">Contato e localização</legend>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Telefone (opcional)</Label>
+          <Input id="phone" type="tel" autoComplete="tel" placeholder="(11) 99999-9999"
+            aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "phone-error" : undefined}
+            {...form.register("phone")} />
+          {errors.phone && <p id="phone-error" className="text-sm text-destructive">{errors.phone.message}</p>}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_8rem]">
           <div className="space-y-2">
             <Label htmlFor="city">Cidade</Label>
-            <Input
-              id="city"
-              autoComplete="address-level2"
-              placeholder="São Paulo"
-              className="h-11 rounded-xl px-3"
-              aria-invalid={Boolean(form.formState.errors.city)}
-              disabled={isPending}
-              {...form.register("city")}
-            />
-            {form.formState.errors.city ? (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.city.message}
-              </p>
-            ) : null}
+            <Input id="city" autoComplete="address-level2" aria-invalid={Boolean(errors.city)}
+              aria-describedby={errors.city ? "city-error" : undefined} {...form.register("city")} />
+            {errors.city && <p id="city-error" className="text-sm text-destructive">{errors.city.message}</p>}
           </div>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-[1fr_8rem]">
           <div className="space-y-2">
             <Label htmlFor="state">Estado (UF)</Label>
-            <Input
-              id="state"
-              autoComplete="address-level1"
-              placeholder="SP"
-              maxLength={2}
-              className="h-11 rounded-xl px-3 uppercase"
-              aria-invalid={Boolean(form.formState.errors.state)}
-              disabled={isPending}
-              {...form.register("state")}
-            />
-            {form.formState.errors.state ? (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.state.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="timezone">Fuso</Label>
-            <Input
-              id="timezone"
-              value={timezone}
-              readOnly
-              disabled
-              className="h-11 rounded-xl px-3 text-xs"
-              placeholder="Fuso da barbearia"
-            />
+            <Input id="state" autoComplete="address-level1" maxLength={2} className="uppercase"
+              aria-invalid={Boolean(errors.state)} aria-describedby={errors.state ? "state-error" : undefined}
+              {...form.register("state")} />
+            {errors.state && <p id="state-error" className="text-sm text-destructive">{errors.state.message}</p>}
           </div>
         </div>
-      </div>
+      </fieldset>
 
-      <div className="mt-6 flex flex-col-reverse gap-2 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[11px] leading-relaxed text-muted-foreground">
-          As alterações são validadas no servidor e na RLS.
-        </p>
-        <Button
-          type="submit"
-          variant="gold"
-          size="xl"
-          disabled={isPending}
-          className="sm:min-w-40"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            <>
-              <Save className="size-4" />
-              Salvar alterações
-            </>
-          )}
+      <div className="space-y-3 border-t pt-4">
+        <FormError message={serverError} />
+        <FormSuccess message={successMessage} />
+        <Button type="submit" variant="gold" size="lg" disabled={isPending} className="w-full sm:w-auto">
+          {isPending ? <Loader2 className="motion-safe:animate-spin" aria-hidden /> : <Save aria-hidden />}
+          {isPending ? "Salvando…" : "Salvar alterações"}
         </Button>
       </div>
     </form>

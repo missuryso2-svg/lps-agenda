@@ -1,0 +1,6 @@
+all [{"ttfb":26.05,"fcp":122,"lcp":464,"js":273667.5,"cls":0},{"ttfb":23,"fcp":124,"lcp":436,"js":258242.5,"cls":0}]
+financeiro [{"ttfb":27.9,"fcp":124,"lcp":450,"js":233774,"cls":0},{"ttfb":23.4,"fcp":132,"lcp":430,"js":232097,"cls":0}]
+configuracoes [{"ttfb":23.85,"fcp":92,"lcp":452,"js":283626,"cls":0},{"ttfb":24.2,"fcp":108,"lcp":424,"js":283561,"cls":0}]
+plano [{"ttfb":27.7,"fcp":122,"lcp":480,"js":281572,"cls":0},{"ttfb":21.95,"fcp":126,"lcp":436,"js":281651,"cls":0}]
+qr [{"ttfb":25.4,"fcp":146,"lcp":464,"js":265763,"cls":0},{"ttfb":21.45,"fcp":126,"lcp":464,"js":234834,"cls":0}]
+matrix [ 32, 32 ] minimum contrast 5.54 CSP probes [ 24, 0 ]

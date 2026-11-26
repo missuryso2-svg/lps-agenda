@@ -42,7 +42,7 @@ async function openTab(actor) {
     const u = new URL(route.request().url());
     if (u.hostname === "wa.me")
       return route.fulfill({ status: 200, body: "Local link interception" });
-    if (u.hostname !== "127.0.0.1") {
+    if (![nextURL, process.env.NEXT_PUBLIC_SUPABASE_URL].includes(u.origin)) {
       issues.push("Unexpected external request: " + u.hostname);
       return route.abort();
     }
@@ -298,12 +298,18 @@ try {
       [empty, planRoute],
     ]) {
       await visit(page, path);
-      const cards = page.locator(".lp-plan-grid article");
+      const publicCatalog = page === guest;
+      const cards = page.locator(publicCatalog ? ".lp-plan-grid article" : ".j2-c3-catalog article");
       assert.equal(await cards.count(), 3);
-      assert.doesNotMatch(await page.locator("main").innerText(), prices);
+      const catalogText = await page.locator("main").innerText();
+      if (publicCatalog) assert.doesNotMatch(catalogText, prices);
+      else {
+        assert.match(catalogText, prices);
+        assert.match(catalogText, /Preços de referência do catálogo/);
+      }
       for (const [i, name] of planCodes.entries()) {
         const card = cards.nth(i);
-        assert.equal(await card.getByRole("heading").innerText(), name);
+        assert.match(await card.getByRole("heading").innerText(), new RegExp("^" + name));
         assert.match(
           await card.innerText(),
           [
@@ -349,7 +355,8 @@ try {
     assert.match(contractText, /43,21/);
     assert.match(contractText, /Primeiro vencimento/);
     assert.match(contractText, /Vencimento mais antigo em aberto/);
-    assert.doesNotMatch(contractText, prices);
+    assert.match(contractText, prices);
+    assert.match(contractText, /Preços de referência do catálogo/);
     assert.match(await trialPage.locator("main").innerText(), /Teste gratuito/);
     for (const page of [privatePlan, trialPage, empty])
       assert.doesNotMatch(

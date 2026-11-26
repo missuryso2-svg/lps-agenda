@@ -173,3 +173,53 @@ O C3 aguarda aprovação visual explícita. Permanecem abertas as pendências re
 ### Checkpoint do trial Premium automático
 
 A implementação do trial foi isolada em um commit do redesign e validada em QA local. O [relatório do trial](trial-premium-automatico.md) reúne o parecer, a migration incremental, as capturas nos dois temas e as evidências de cobertura e conversão manual. A J2-C3 aguarda a confirmação visual explícita da J2-C2. O lançamento comercial segue em NO-GO.
+
+## J2-C3 — Financeiro, Configurações, Plano e QR Code
+
+A J2-C3 parte de a73ab28 em codex/redesign-j2, após a aprovação visual da J2-C2. A identidade do painel usa as mesmas fontes, superfícies e cores semânticas já aprovadas.
+
+### Implementação
+
+| Tela | Mudança | Arquivos principais |
+| --- | --- | --- |
+| Financeiro | Filtros do mês atual e anterior, com limites no fuso da barbearia. Recebimentos de serviços são separados de mensalidades e de atendimentos concluídos. O gráfico só aparece com pagamentos confirmados em mais de uma faixa de dias, pela data de lançamento. A agenda usa o preço histórico gravado no atendimento. | [Página](../src/app/dashboard/financeiro/page.tsx) · [Consultas](../src/features/dashboard/queries.ts) |
+| Configurações | Identificação, contato e localização ficam no formulário com erros associados aos campos. Logo, página pública e conta ficam em painéis próprios. O formulário remonta ao trocar o tenant. Autorização, CAS de versão, Storage, Sharp e Cloudflare Images Binding foram preservados. | [Página](../src/app/dashboard/configuracoes/page.tsx) · [Formulário](../src/features/settings/components/barbershop-settings-form.tsx) · [Logo](../src/features/settings/components/barbershop-logo-card.tsx) |
+| Plano e assinatura | Mostra cobertura, prazo do trial e dados de pagamento existentes. A comparação lê valores de referência, limites e recursos do catálogo. O valor negociado fica no acordo. Planos com capacidade inferior à equipe ativa exibem a orientação para abrir Equipe. A contratação continua manual, com confirmação do impacto sobre a cobertura gratuita e conferência de Pix. | [Página](../src/app/dashboard/plano/page.tsx) · [Projeção do trial](../src/features/premium-trial/queries.ts) |
+| QR Code | Apresenta marca, endereço verificado, visualização ampliada, cópia e compartilhamento nativo com fallback. Preserva o PNG, a geração do cartaz A4 e os limites para origem local. | [Página](../src/app/dashboard/qr/page.tsx) · [QR e compartilhamento](../src/features/public-booking/qr/booking-qr.tsx) |
+| Componentes compartilhados | CSS limitado às quatro telas, com grid responsivo, foco, tokens de contraste e movimento reduzido. Configuração explícita do interpretador Zod no navegador para evitar a consulta de suporte a eval sob CSP estrita. | [CSS](../src/components/dashboard/account-j2.css) · [Zod](../src/lib/validation/browser-safe-zod.ts) |
+
+O overflow do plano vinha da largura mínima implícita do grid, determinada pelo conteúdo dos cartões e da tabela Asaas. A 375 px, o commit-base excedeu a viewport em 115 px nos dois temas. A coluna principal com minmax(0, 1fr) permite reduzir os itens e preserva a rolagem horizontal dentro da tabela de mensalidades. O financeiro tinha excesso de 81 px nessa largura e a listagem responsiva eliminou a expansão da página. A matriz posterior exige scrollWidth igual ou inferior à viewport. [Antes](qa-j2-c3/before.log) · [Depois](qa-j2-c3/after.log).
+
+As quatro skills de Emil foram usadas. emil-design-eng orientou hierarquia e estados. review-animations e improve-animations revisaram os pontos de maior frequência, com ações de teclado imediatas e diálogo QR nativo. animation-performance orientou a ausência de animações de layout e o spinner condicionado à preferência de movimento. As leituras SSR reaproveitam o SDK e as autorizações existentes do Supabase. A revisão React usou paralelismo nas consultas independentes e cache restrito à requisição para a projeção do trial. [Referência do SDK](https://supabase.com/docs/reference/javascript/select) · [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+### Evidências, testes e desempenho
+
+A [galeria](qa-j2-c3/README.md) reúne 64 capturas reais em 375, 768, 1280 e 1920 px, nos temas claro e escuro. Os estados de plano têm capturas complementares de [trial ativo](qa-j2-c3/states/trial-ativo.png), [trial expirado](qa-j2-c3/states/trial-expirado.png) e [assinatura paga](qa-j2-c3/states/assinatura-paga.png).
+
+| Verificação | Resultado |
+| --- | --- |
+| Vitest, typecheck e lint | 817 testes em 40 suítes. [Vitest](qa-j2-c3/vitest.log) · [Typecheck](qa-j2-c3/typecheck.log) · [Lint](qa-j2-c3/lint.log) |
+| Builds | Next.js e OpenNext aprovados. Continua o aviso do adaptador sobre middleware Node.js experimental. [Next.js](qa-j2-c3/next-build.log) · [OpenNext](qa-j2-c3/opennext-build.log) |
+| Navegador com CSP estrita | 32 visitas por versão com dados sintéticos. A matriz final verifica nonce, política sem violações, viewport, contraste de tokens, movimento reduzido e ausência de comunicação em horas. O baseline capturou 24 sondagens bloqueadas do Zod. [Amostras](qa-j2-c3/metrics-after.json) |
+| Operações redesenhadas | Filtro, estado vazio, preço histórico, validação e gravação das configurações, papéis, isolamento, trial ativo, último dia, expiração, plano incompatível, conversão explícita e Pix conferido. [Integração](qa-j2-c3/management.log) |
+| Marca e QR | Upload e substituição com Sharp e com o binding local, QR decodificado, cartaz A4, teclado, foco, cópia, compartilhamento e reserva real de QA. [Node](qa-j2-c3/logo-node.log) · [Workers](qa-j2-c3/workers.log) · [QR](qa-j2-c3/qr.log) |
+| Regressões | Fluxo comercial, autorização, Pix, trial e limite de profissionais. A base descartável permanece com 33 migrations. [Comercial](qa-j2-c3/commercial.log) · [PostgreSQL](qa-j2-c3/postgres.log) · [Diff](qa-j2-c3/diff-check.log) |
+
+Na amostra local, a mediana geral do LCP foi de 464 para 436 ms, o TTFB de 26,05 para 23,00 ms e o JavaScript de 273,7 para 258,2 kB. O CLS mediano foi zero nas duas versões. O menor contraste medido nos pares de cor selecionados foi 5,54:1. [Medições](qa-j2-c3/performance.log).
+
+| Rota | LCP anterior → atual | FCP anterior → atual | JS anterior → atual |
+| --- | ---: | ---: | ---: |
+| Financeiro | 450 → 430 ms | 124 → 132 ms | 233,8 → 232,1 kB |
+| Configurações | 452 → 424 ms | 92 → 108 ms | 283,6 → 283,6 kB |
+| Plano | 480 → 436 ms | 122 → 126 ms | 281,6 → 281,7 kB |
+| QR Code | 464 → 464 ms | 146 → 126 ms | 265,8 → 234,8 kB |
+
+Houve aumento de FCP mediano em Financeiro, Configurações e Plano, de até 16 ms. A primeira forma de configurar o Zod aumentou os bytes em Configurações e Plano. A configuração isolada e a remoção da dependência desnecessária de Zod do componente cliente do QR foram adotadas na medição final.
+
+### Pendências e parecer
+
+A homologação hospedada continua pendente, incluindo NVDA ou Narrador, binding real de imagens, confiança em headers, acesso direto e análise de abuso e da Data API. Permanecem abertos os quatro timeouts ainda sem atribuição, a restrição das transições diretas de atendimentos e a reconciliação de fotos privadas órfãs. O teste de desempenho caracteriza a máquina e o loopback usados na validação.
+
+**GO técnico local para avaliação visual da J2-C3.** O lançamento comercial continua em **NO-GO**. A J2-D aguarda aprovação visual explícita da J2-C3.
+
+A [prévia local](http://localhost:59330/login) usa o Next.js em modo de desenvolvimento, com dados sintéticos e bind somente no loopback. O PNG aponta para a própria prévia. O PDF fica condicionado à origem pública, conforme a regra atual, e foi validado com uma origem sintética em QA nos dois runtimes. [Verificação da prévia](qa-j2-c3/preview.log).

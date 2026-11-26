@@ -1,0 +1,434 @@
+[
+  {
+    "width": 375,
+    "colorScheme": "light",
+    "route": "financeiro",
+    "ttfb": 1197.2000000178814,
+    "fcp": 1404,
+    "js": 233774,
+    "overflow": 81,
+    "lcp": 1404,
+    "cls": 0,
+    "csp": []
+  },
+  {
+    "width": 375,
+    "colorScheme": "light",
+    "route": "configuracoes",
+    "ttfb": 63.900000005960464,
+    "fcp": 156,
+    "js": 283626,
+    "overflow": 0,
+    "lcp": 512,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 375,
+    "colorScheme": "light",
+    "route": "plano",
+    "ttfb": 53.5,
+    "fcp": 184,
+    "js": 281572,
+    "overflow": 115,
+    "lcp": 516,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 375,
+    "colorScheme": "light",
+    "route": "qr",
+    "ttfb": 26.099999994039536,
+    "fcp": 268,
+    "js": 265763,
+    "overflow": 0,
+    "lcp": 268,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 375,
+    "colorScheme": "dark",
+    "route": "financeiro",
+    "ttfb": 28.200000017881393,
+    "fcp": 88,
+    "js": 233774,
+    "overflow": 81,
+    "lcp": 452,
+    "cls": 0,
+    "csp": []
+  },
+  {
+    "width": 375,
+    "colorScheme": "dark",
+    "route": "configuracoes",
+    "ttfb": 26.19999998807907,
+    "fcp": 112,
+    "js": 283626,
+    "overflow": 0,
+    "lcp": 472,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 375,
+    "colorScheme": "dark",
+    "route": "plano",
+    "ttfb": 31.900000005960464,
+    "fcp": 124,
+    "js": 281572,
+    "overflow": 115,
+    "lcp": 484,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 375,
+    "colorScheme": "dark",
+    "route": "qr",
+    "ttfb": 22.400000005960464,
+    "fcp": 120,
+    "js": 265763,
+    "overflow": 0,
+    "lcp": 460,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 768,
+    "colorScheme": "light",
+    "route": "financeiro",
+    "ttfb": 31.599999994039536,
+    "fcp": 120,
+    "js": 233774,
+    "overflow": 0,
+    "lcp": 508,
+    "cls": 0,
+    "csp": []
+  },
+  {
+    "width": 768,
+    "colorScheme": "light",
+    "route": "configuracoes",
+    "ttfb": 33.400000005960464,
+    "fcp": 236,
+    "js": 283626,
+    "overflow": 0,
+    "lcp": 236,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 768,
+    "colorScheme": "light",
+    "route": "plano",
+    "ttfb": 34.60000002384186,
+    "fcp": 192,
+    "js": 281572,
+    "overflow": 0,
+    "lcp": 504,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 768,
+    "colorScheme": "light",
+    "route": "qr",
+    "ttfb": 23,
+    "fcp": 128,
+    "js": 265763,
+    "overflow": 0,
+    "lcp": 468,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 768,
+    "colorScheme": "dark",
+    "route": "financeiro",
+    "ttfb": 21.299999982118607,
+    "fcp": 84,
+    "js": 233774,
+    "overflow": 0,
+    "lcp": 444,
+    "cls": 0,
+    "csp": []
+  },
+  {
+    "width": 768,
+    "colorScheme": "dark",
+    "route": "configuracoes",
+    "ttfb": 23.799999982118607,
+    "fcp": 76,
+    "js": 283626,
+    "overflow": 0,
+    "lcp": 428,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 768,
+    "colorScheme": "dark",
+    "route": "plano",
+    "ttfb": 28.299999982118607,
+    "fcp": 112,
+    "js": 281572,
+    "overflow": 0,
+    "lcp": 472,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 768,
+    "colorScheme": "dark",
+    "route": "qr",
+    "ttfb": 25.19999998807907,
+    "fcp": 180,
+    "js": 265763,
+    "overflow": 0,
+    "lcp": 460,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1280,
+    "colorScheme": "light",
+    "route": "financeiro",
+    "ttfb": 27.600000023841858,
+    "fcp": 192,
+    "js": 233774,
+    "overflow": 0,
+    "lcp": 192,
+    "cls": 0,
+    "csp": []
+  },
+  {
+    "width": 1280,
+    "colorScheme": "light",
+    "route": "configuracoes",
+    "ttfb": 23.900000005960464,
+    "fcp": 84,
+    "js": 283626,
+    "overflow": 0,
+    "lcp": 480,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1280,
+    "colorScheme": "light",
+    "route": "plano",
+    "ttfb": 21.599999994039536,
+    "fcp": 120,
+    "js": 281572,
+    "overflow": 0,
+    "lcp": 436,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1280,
+    "colorScheme": "light",
+    "route": "qr",
+    "ttfb": 26.599999994039536,
+    "fcp": 140,
+    "js": 265763,
+    "overflow": 0,
+    "lcp": 472,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1280,
+    "colorScheme": "dark",
+    "route": "financeiro",
+    "ttfb": 22.599999994039536,
+    "fcp": 96,
+    "js": 233774,
+    "overflow": 0,
+    "lcp": 448,
+    "cls": 0,
+    "csp": []
+  },
+  {
+    "width": 1280,
+    "colorScheme": "dark",
+    "route": "configuracoes",
+    "ttfb": 21.600000023841858,
+    "fcp": 76,
+    "js": 283626,
+    "overflow": 0,
+    "lcp": 436,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1280,
+    "colorScheme": "dark",
+    "route": "plano",
+    "ttfb": 23.599999994039536,
+    "fcp": 92,
+    "js": 281572,
+    "overflow": 0,
+    "lcp": 484,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1280,
+    "colorScheme": "dark",
+    "route": "qr",
+    "ttfb": 26.799999982118607,
+    "fcp": 152,
+    "js": 265763,
+    "overflow": 0,
+    "lcp": 500,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1920,
+    "colorScheme": "light",
+    "route": "financeiro",
+    "ttfb": 45.30000001192093,
+    "fcp": 128,
+    "js": 233774,
+    "overflow": 0,
+    "lcp": 532,
+    "cls": 0,
+    "csp": []
+  },
+  {
+    "width": 1920,
+    "colorScheme": "light",
+    "route": "configuracoes",
+    "ttfb": 23.5,
+    "fcp": 76,
+    "js": 283626,
+    "overflow": 0,
+    "lcp": 444,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1920,
+    "colorScheme": "light",
+    "route": "plano",
+    "ttfb": 27.100000023841858,
+    "fcp": 104,
+    "js": 281572,
+    "overflow": 0,
+    "lcp": 476,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1920,
+    "colorScheme": "light",
+    "route": "qr",
+    "ttfb": 25.599999994039536,
+    "fcp": 172,
+    "js": 265763,
+    "overflow": 0,
+    "lcp": 172,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1920,
+    "colorScheme": "dark",
+    "route": "financeiro",
+    "ttfb": 26,
+    "fcp": 140,
+    "js": 233774,
+    "overflow": 0,
+    "lcp": 436,
+    "cls": 0,
+    "csp": []
+  },
+  {
+    "width": 1920,
+    "colorScheme": "dark",
+    "route": "configuracoes",
+    "ttfb": 23.799999982118607,
+    "fcp": 100,
+    "js": 283626,
+    "overflow": 0,
+    "lcp": 460,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1920,
+    "colorScheme": "dark",
+    "route": "plano",
+    "ttfb": 23.099999994039536,
+    "fcp": 152,
+    "js": 281572,
+    "overflow": 0,
+    "lcp": 456,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  },
+  {
+    "width": 1920,
+    "colorScheme": "dark",
+    "route": "qr",
+    "ttfb": 22.400000005960464,
+    "fcp": 120,
+    "js": 265763,
+    "overflow": 0,
+    "lcp": 468,
+    "cls": 0,
+    "csp": [
+      "script-src"
+    ]
+  }
+]

@@ -1,0 +1,54 @@
+QA PostgreSQL local
+SUITE automatic-premium-trial
+NOTICE:  PASS automatic switch starts disabled
+NOTICE:  PASS dedicated insertion role has no payment or update grants
+NOTICE:  PASS public announcement follows local switch
+NOTICE:  PASS anon cannot create or claim
+NOTICE:  PASS unconfirmed owner cannot start a trial
+NOTICE:  PASS same owner and identifier is an idempotent retry
+NOTICE:  PASS owner sees unclaimed trial
+NOTICE:  PASS owner can claim welcome once
+NOTICE:  PASS reload cannot claim welcome again
+NOTICE:  PASS owner cannot turn on offer
+NOTICE:  PASS owner cannot write grant
+NOTICE:  PASS owner cannot register a financial agreement
+NOTICE:  PASS owner of another tenant cannot read trial
+NOTICE:  PASS owner of another tenant cannot claim welcome
+NOTICE:  PASS staff cannot read the owner trial
+NOTICE:  PASS historical owner and invited staff do not get grants
+NOTICE:  PASS original pending contract remains
+NOTICE:  PASS real Premium catalog and exact 604800 seconds with no billing terms
+NOTICE:  PASS active at start and immediately before exact expiry
+NOTICE:  PASS at exact expiry and immediately after, bookings stop
+NOTICE:  PASS expiry evaluation creates no payment
+NOTICE:  PASS Data API service role cannot alter the trial plan or time
+NOTICE:  PASS Data API service role cannot delete the subscription directly
+NOTICE:  PASS Premium rejects the eleventh active professional
+NOTICE:  PASS operator sees automatic Premium in existing directory
+NOTICE:  PASS early conversion requires explicit booking impact consent through Data API
+NOTICE:  PASS downgrade above the agreed cap is rejected
+NOTICE:  PASS failed downgrade preserves ten professionals, full trial and no payment
+NOTICE:  PASS early conversion is pending and operation is idempotent
+NOTICE:  PASS pending conversion ends free booking without writing a payment
+NOTICE:  PASS directory classifies only verified Pix as conversion
+NOTICE:  PASS verified manual Pix restores coverage; original trial history is intact
+NOTICE:  PASS tenant deletion preserves history and recreation never grants again
+SUITE automatic-premium-trial-concurrency
+NOTICE:  PASS concurrency starts with release disabled
+NOTICE:  PASS parallel distinct requests grant one Premium period
+NOTICE:  PASS first concurrent window claims welcome
+NOTICE:  PASS concurrent second window cannot claim again
+NOTICE:  PASS invitation committed first disqualifies the competing onboarding
+SUITE i31-capacity-cleanup
+NOTICE:  PASS unenrolled booking is initially allowed
+NOTICE:  PASS future pending agreement below cap blocks booking immediately
+NOTICE:  PASS agreement above cap rejected after concurrent activation
+NOTICE:  PASS team preserved and agreement rolled back
+NOTICE:  PASS activation waits for contract and cannot exceed cap
+NOTICE:  PASS agreement at exact cap and one active professional
+NOTICE:  PASS administrative claim rejects another tenant key
+NOTICE:  PASS claim racing a replacement preserves the referenced logo
+NOTICE:  PASS retirement survives tenant deletion
+NOTICE:  PASS deleted tenant can be reconciled
+NOTICE:  PASS claim is repeatable
+NOTICE:  PASS single audit entry and no premature acknowledgement

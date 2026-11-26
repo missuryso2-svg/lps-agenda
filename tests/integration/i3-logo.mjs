@@ -16,7 +16,7 @@ try {
   await startNext(false);
   const context = await browser.newContext();
   await context.route("**/*", (route) => {
-    return new URL(route.request().url()).hostname === "127.0.0.1"
+    return [nextURL, process.env.NEXT_PUBLIC_SUPABASE_URL].includes(new URL(route.request().url()).origin)
       ? route.continue() : route.abort();
   });
   await context.addCookies(owner.cookies().split("; ").map((pair) => {

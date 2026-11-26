@@ -166,22 +166,19 @@ export function BarbershopLogoCard({
   const preview = selection?.previewUrl ?? logoUrl;
 
   return (
-    <section className="rounded-xl border border-border/80 bg-card p-5 shadow-premium sm:p-6" aria-labelledby="barbershop-logo-title">
+    <section className="j2-c3-panel" aria-labelledby="barbershop-logo-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="barbershop-logo-title" className="font-heading text-base font-semibold">
+          <h2 id="barbershop-logo-title" className="j2-c3-card-title">
             Logo da barbearia
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Envie a identidade visual da sua barbearia. A imagem é otimizada sem recorte e exibida na página pública.
+            A logo aparece na página pública e no painel. Envie PNG, JPG ou WebP de até 2 MB.
           </p>
         </div>
-        <span className="rounded-full border border-gold/30 bg-gold-soft/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground">
-          PNG · JPG · WebP
-        </span>
       </div>
 
-      <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,0.85fr)] sm:items-center">
+      <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-center">
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {selection ? "Pré-visualização antes de salvar" : "Logo atual"}
@@ -244,7 +241,7 @@ export function BarbershopLogoCard({
               >
                 {pending ? (
                   <>
-                    <LoaderCircle className="size-4 animate-spin" />
+                    <LoaderCircle className="size-4 motion-safe:animate-spin" />
                     Enviando logo…
                   </>
                 ) : (

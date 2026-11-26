@@ -26,11 +26,11 @@ export const automaticTrialAvailable = cache(async () => {
   }
 });
 
-export async function getOwnerAutomaticTrial(shop: string) {
+export const getOwnerAutomaticTrial = cache(async (shop: string) => {
   const db = await createClient();
   const { data, error } = await db.rpc("get_owner_automatic_trial", { p_shop: shop });
   if (error) throw error;
   const trial = trialSchema.nullable().safeParse(data);
   if (!trial.success) throw trial.error;
   return trial.data;
-}
+});

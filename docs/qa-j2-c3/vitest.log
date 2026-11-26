@@ -1,0 +1,66 @@
+
+> lps-agenda@0.1.0 test
+> vitest run
+
+
+ RUN  v5.1.0 C:/Users/missu/source/lps-agenda-j1
+
+ ✓ tests/security-and-schema.test.ts (64 tests) 219ms
+ ✓ tests/billing-compensation.test.ts (21 tests) 56ms
+ ✓ tests/billing-service.test.ts (27 tests) 64ms
+ ✓ tests/adsense-g2.test.ts (23 tests) 77ms
+ ✓ tests/availability.test.ts (12 tests) 118ms
+ ✓ tests/billing-trial.test.ts (34 tests) 171ms
+ ✓ tests/scheduling-actions.test.ts (40 tests) 389ms
+ ✓ tests/asaas-webhook-route.test.ts (18 tests) 118ms
+stderr | tests/public-booking.test.ts > actions públicas e rate limiting > consulta disponibilidade mesmo se o rate limit estiver indisponível
+[public-booking] rate limit unavailable (availability)
+
+ ✓ tests/image-cloudflare.test.ts (5 tests) 460ms
+   ✓ Cloudflare image processing (5)
+     ✓ rejects structural corruption, animation and excess before the binding 334ms
+stderr | tests/public-booking.test.ts > actions públicas e rate limiting > falha fechado quando o rate limit de criação está indisponível
+[public-booking] rate limit unavailable (create ip)
+
+ ✓ tests/schedule-actions.test.ts (26 tests) 81ms
+stderr | tests/public-booking.test.ts > actions públicas e rate limiting > falha fechado quando o rate limit de cancelamento está indisponível
+[public-booking] rate limit unavailable (cancel)
+
+ ✓ tests/network-guard.test.ts (4 tests) 47ms
+ ✓ tests/public-booking.test.ts (48 tests) 644ms
+ ✓ tests/asaas-webhook.test.ts (54 tests) 74ms
+ ✓ tests/customer-actions.test.ts (22 tests) 44ms
+ ✓ tests/barbershop-logo.test.ts (18 tests) 554ms
+ ✓ tests/product-f1.test.ts (10 tests) 86ms
+ ✓ tests/asaas-client.test.ts (11 tests) 98ms
+ ✓ tests/billing-cron-auth.test.ts (6 tests) 42ms
+ ✓ tests/validation.test.ts (75 tests) 68ms
+ ✓ tests/catalog-actions.test.ts (52 tests) 74ms
+ ✓ tests/premium-trial-display.test.ts (6 tests) 30ms
+ ✓ tests/billing-compensation-route.test.ts (8 tests) 31ms
+ ✓ tests/billing-queries.test.ts (29 tests) 42ms
+ ✓ tests/billing-checkout-fencing.test.ts (9 tests) 42ms
+ ✓ tests/format.test.ts (15 tests) 29ms
+ ✓ tests/plan-catalog.test.ts (16 tests) 24ms
+ ✓ tests/billing-trial-route.test.ts (9 tests) 35ms
+ ✓ tests/admin-billing.test.ts (31 tests) 57ms
+ ✓ tests/commercial.test.ts (21 tests) 20ms
+ ✓ tests/manual-trial-actions.test.ts (9 tests) 35ms
+ ✓ tests/billing-scheduler.test.ts (3 tests) 11ms
+ ✓ tests/billing-actions.test.ts (8 tests) 23ms
+ ✓ tests/permissions.test.ts (12 tests) 10ms
+ ✓ tests/security-i4.test.ts (6 tests) 34ms
+ ✓ tests/billing-validation.test.ts (8 tests) 16ms
+ ✓ tests/booking-qr.test.ts (19 tests) 19ms
+ ✓ tests/manual-calendar.test.ts (17 tests) 12ms
+ ✓ tests/operations-f3.test.ts (10 tests) 11ms
+ ✓ tests/asaas-env.test.ts (7 tests) 12ms
+ ✓ tests/booking-access.test.ts (4 tests) 5ms
+
+ Test Files  40 passed (40)
+      Tests  817 passed (817)
+   Start at  19:47:14
+   Duration  4.26s (import 69%, tests 17%, transform 9%, setup 2%, worker 2%)
+
+    Isolate  40 workers spawned · ~429ms startup each (spawn + environment, per file)
+             at least ~1.13s faster with isolate: false — reuses workers across files instead of one per file

@@ -80,6 +80,18 @@ try {
     animations: "disabled",
   });
   await page.keyboard.press("Escape");
+  await page.waitForFunction(() => document.activeElement?.textContent?.includes("Mostrar QR Code"));
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: "Copiar link" }).focus();
+  assert.ok(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle === "solid"));
+  await page.keyboard.press("Enter");
+  await page.getByRole("status").getByText("Link copiado.").waitFor();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), expected);
+  await page.evaluate(() => Object.defineProperty(navigator, "share", {
+    configurable: true, value: async payload => { window.sharedBookingURL = payload.url; },
+  }));
+  await page.getByRole("button", { name: "Compartilhar" }).click();
+  assert.equal(await page.evaluate(() => window.sharedBookingURL), expected);
   const tenant = await tab(other);
   await tenant.goto(nextURL + "/dashboard/qr?slug=" + slug);
   assert.equal(await tenant.getByRole("link", { name: expected }).count(), 0);
@@ -116,6 +128,7 @@ try {
     const request = route.request(),
       url = new URL(request.url()),
       headers = { ...request.headers() };
+    if (headers["next-router-prefetch"] || headers["next-router-segment-prefetch"]) return route.abort();
     delete headers.host;
     delete headers.cookie;
     if (headers.origin) headers.origin = nextURL;
@@ -155,7 +168,7 @@ try {
     "2",
   );
   console.log(
-    "PASS QR tenant, PNG decode, A4, phone layout, anonymous booking, lunch and F3 notices",
+    "PASS QR tenant, keyboard and focus, clipboard, sharing, PNG decode, A4, anonymous booking and F3 notices",
   );
 } finally {
   await browser.close();

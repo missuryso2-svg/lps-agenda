@@ -5,7 +5,7 @@ import type {
   CustomerStats,
   CustomerStatus,
 } from "@/features/customers/types";
-import { getDayRange, getMonthRange } from "@/lib/format";
+import { getDayRange, getMonthRange, localDateString } from "@/lib/format";
 import { normalizePhoneDigits } from "@/lib/validation/customers";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
@@ -453,55 +453,86 @@ export async function getSubscription(barbershopId: string) {
   return { subscription, plan };
 }
 
-export async function getRecentPayments(barbershopId: string) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("payments")
-    .select("*")
-    .eq("barbershop_id", barbershopId)
-    .is("subscription_id", null)
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  return data ?? [];
-}
-
 export async function getFinancialOverview(
   barbershopId: string,
   timeZone: string,
+  previousMonth: boolean,
 ) {
   const supabase = await createClient();
-  const month = getMonthRange(new Date(), timeZone);
+  const current = getMonthRange(new Date(), timeZone);
+  const period = previousMonth
+    ? getMonthRange(new Date(current.start.getTime() - 1), timeZone)
+    : current;
+  const start = period.start.toISOString();
+  const end = period.end.toISOString();
 
-  const [monthResult, recent, subscription] = await Promise.all([
+  const pageSize = 500;
+  async function readTotals() {
+    let paidCents = 0;
+    let pendingCents = 0;
+    let paidCount = 0;
+    let pendingCount = 0;
+    const receivedByWeek = [0, 0, 0, 0, 0];
+
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await supabase
+        .from("payments")
+        .select("amount_cents, status, created_at")
+        .eq("barbershop_id", barbershopId)
+        .eq("scope", "shop_service")
+        .is("subscription_id", null)
+        .in("status", ["paid", "pending", "overdue"])
+        .gte("created_at", start)
+        .lt("created_at", end)
+        .order("created_at")
+        .order("id")
+        .range(offset, offset + pageSize - 1);
+      if (error) throw new Error("Não foi possível consultar os totais do financeiro.");
+
+      for (const payment of data) {
+        if (payment.status === "paid") {
+          paidCents += payment.amount_cents;
+          paidCount++;
+          const day = Number(localDateString(payment.created_at, timeZone).slice(-2));
+          receivedByWeek[Math.floor((day - 1) / 7)] += payment.amount_cents;
+        } else {
+          pendingCents += payment.amount_cents;
+          pendingCount++;
+        }
+      }
+
+      if (data.length < pageSize) break;
+    }
+    return { paidCents, pendingCents, paidCount, pendingCount, receivedByWeek };
+  }
+
+  const [totals, recent, history] = await Promise.all([
+    readTotals(),
     supabase
       .from("payments")
-      .select("amount_cents, status")
+      .select("id, amount_cents, status, method, created_at, due_date")
       .eq("barbershop_id", barbershopId)
+      .eq("scope", "shop_service")
       .is("subscription_id", null)
-      .gte("created_at", month.start.toISOString())
-      .lt("created_at", month.end.toISOString()),
-    getRecentPayments(barbershopId),
-    getSubscription(barbershopId),
+      .gte("created_at", start)
+      .lt("created_at", end)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("appointments")
+      .select("id, starts_at, price_cents")
+      .eq("barbershop_id", barbershopId)
+      .eq("status", "completed")
+      .gte("starts_at", start)
+      .lt("starts_at", end)
+      .order("starts_at", { ascending: false })
+      .limit(10),
   ]);
+  if (recent.error || history.error) {
+    throw new Error("Não foi possível consultar o histórico do financeiro.");
+  }
 
-  const payments = monthResult.data ?? [];
-  const isPending = (status: string) =>
-    status === "pending" || status === "overdue";
-
-  return {
-    paidCents: payments
-      .filter((payment) => payment.status === "paid")
-      .reduce((total, payment) => total + payment.amount_cents, 0),
-    pendingCents: payments
-      .filter((payment) => isPending(payment.status))
-      .reduce((total, payment) => total + payment.amount_cents, 0),
-    paidCount: payments.filter((payment) => payment.status === "paid").length,
-    pendingCount: payments.filter((payment) => isPending(payment.status)).length,
-    recent,
-    subscription,
-    period: month,
-  };
+  return { ...totals, recent: recent.data, history: history.data, period };
 }
 
 export async function getPlans() {

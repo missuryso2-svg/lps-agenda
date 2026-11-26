@@ -1,52 +1,19 @@
-import {
-  CalendarClock,
-  CheckCircle2,
-  CreditCard,
-  LockKeyhole,
-  ReceiptText,
-  ShieldCheck,
-  Wallet,
-} from "lucide-react";
-import { getOwnerManualPlan } from "@/features/billing/queries";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ReceiptText } from "lucide-react";
 
 import { DashboardEmpty } from "@/components/dashboard/dashboard-empty";
-import { NoticeCard } from "@/components/dashboard/notice-card";
 import { PageHeader } from "@/components/dashboard/page-header";
-import {
-  PaymentStatusBadge,
-  SubscriptionStatusBadge,
-} from "@/components/dashboard/status-badge";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { PrototypeAction } from "@/components/prototype-action";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { PaymentStatusBadge } from "@/components/dashboard/status-badge";
 import { getFinancialOverview } from "@/features/dashboard/queries";
 import { requireOwnerDashboardContext } from "@/lib/auth/dal";
-import {
-  formatCurrencyFromCents,
-  formatDateBR,
-  formatDateOnlyBR,
-} from "@/lib/format";
+import { formatCurrencyFromCents, formatDateBR, formatDateOnlyBR } from "@/lib/format";
 import type { Database } from "@/types/database";
+import "@/components/dashboard/account-j2.css";
 
-export const metadata: Metadata = {
-  title: "Financeiro",
-};
+export const metadata: Metadata = { title: "Financeiro" };
 
-const methodLabels: Record<
-  Database["public"]["Enums"]["payment_method"],
-  string
-> = {
+const methodLabels: Record<Database["public"]["Enums"]["payment_method"], string> = {
   boleto: "Boleto",
   pix: "Pix",
   credit_card: "Cartão de crédito",
@@ -56,185 +23,127 @@ const methodLabels: Record<
   other: "Outro",
 };
 
-export default async function FinancialPage() {
-  const context = await requireOwnerDashboardContext();
-  const shop = context.active.barbershop;
-  const financial = await getFinancialOverview(shop.id, shop.timezone);
-  const manual = context.active.role === "owner" ? await getOwnerManualPlan(shop.id) : null;
-  const subscription = manual ? null : financial.subscription;
+export default async function FinancialPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ periodo?: string | string[] }>;
+}) {
+  const [{ active: { barbershop: shop } }, { periodo }] = await Promise.all([
+    requireOwnerDashboardContext(),
+    searchParams,
+  ]);
+  const previous = periodo === "anterior";
+  const financial = await getFinancialOverview(shop.id, shop.timezone, previous);
+  const month = new Intl.DateTimeFormat("pt-BR", {
+    month: "long", year: "numeric", timeZone: shop.timezone,
+  }).format(financial.period.start);
+  const weeks = financial.receivedByWeek;
+  const showChart = weeks.filter(value => value > 0).length > 1;
 
   return (
-    <div className="space-y-7">
+    <section className="j2-c3">
       <PageHeader
-        eyebrow="Gestão"
+        className="j2-c3-heading"
         title="Financeiro"
-        description="Uma visão sóbria do mês da barbearia. Os valores vêm dos pagamentos de serviços; a mensalidade do LPS Agenda é gerenciada em Plano e assinatura."
-        actions={
-          <PrototypeAction
-            triggerLabel="Exportar relatório"
-            triggerSize="lg"
-            title="Exportação de relatório"
-            description="A exportação em CSV/PDF ainda não está habilitada. Nesta versão, os dados podem ser consultados diretamente no banco."
-            steps={[
-              {
-                title: "Período e filtros",
-                description:
-                  "Seleção de intervalo, status e forma de pagamento.",
-              },
-              {
-                title: "Arquivo",
-                description:
-                  "Geração no servidor, com controle de acesso por papel.",
-              },
-              {
-                title: "Privacidade",
-                description:
-                  "Exportações financeiras ficam restritas ao proprietário.",
-              },
-            ]}
-            footnote="O botão é um protótipo identificado e não gera arquivos."
-          />
-        }
+        description="Acompanhe os recebimentos e os atendimentos da sua barbearia."
+        actions={<Link className="text-sm underline underline-offset-4" href="/dashboard/plano">Plano e assinatura</Link>}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Recebido no mês"
-          value={formatCurrencyFromCents(financial.paidCents)}
-          hint={`${financial.paidCount} pagamento(s) com status pago`}
-          icon={Wallet}
-          tone="gold"
-        />
-        <StatCard
-          label="Pendente"
-          value={formatCurrencyFromCents(financial.pendingCents)}
-          hint={`${financial.pendingCount} cobrança(s) aguardando`}
-          icon={CalendarClock}
-        />
-        <StatCard
-          label="Pagamentos no mês"
-          value={String(financial.paidCount + financial.pendingCount)}
-          hint="Criados no período atual"
-          icon={ReceiptText}
-        />
-        <StatCard
-          label="Assinatura"
-          value={manual?.plan ?? subscription?.plan?.name ?? "Sem plano"}
-          hint={
-            manual ? "Assinatura manual" : subscription
-              ? "Mensalidade do LPS Agenda"
-              : "Sem plano contratado"
-          }
-          icon={CreditCard}
-          tone="muted"
-        />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-semibold capitalize">{month}</p>
+        <nav className="j2-c3-period flex flex-wrap gap-2" aria-label="Período financeiro">
+          <Link className="rounded-md border px-3 py-2 text-sm" href="/dashboard/financeiro" aria-current={!previous ? "page" : undefined}>
+            Este mês
+          </Link>
+          <Link className="rounded-md border px-3 py-2 text-sm" href="/dashboard/financeiro?periodo=anterior" aria-current={previous ? "page" : undefined}>
+            Mês anterior
+          </Link>
+        </nav>
       </div>
 
-      {subscription ? (
-        <Card className="border-gold/20 bg-gold-soft/20">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium">
-                Plano {subscription.plan?.name ?? "vinculado"}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {subscription.subscription.current_period_end
-                  ? `Período atual até ${formatDateBR(subscription.subscription.current_period_end, shop.timezone)}.`
-                  : "Período atual ainda não definido."}{" "}
-                Cobrança recorrente via Asaas Sandbox.
-              </p>
-            </div>
-            <SubscriptionStatusBadge status={subscription.subscription.status} />
-          </CardContent>
-        </Card>
-      ) : null}
+      <dl className="j2-c3-metrics" aria-label="Resumo do período">
+        <div>
+          <dt className="text-sm font-semibold">Recebido</dt>
+          <dd>{formatCurrencyFromCents(financial.paidCents)}</dd>
+          <dd className="j2-c3-meta mt-1">{financial.paidCount} pagamento(s) confirmado(s)</dd>
+        </div>
+        <div>
+          <dt className="text-sm font-semibold">A receber</dt>
+          <dd>{formatCurrencyFromCents(financial.pendingCents)}</dd>
+          <dd className="j2-c3-meta mt-1">{financial.pendingCount} cobrança(s) pendente(s) ou vencida(s)</dd>
+        </div>
+        <div>
+          <dt className="text-sm font-semibold">Pagamentos no período</dt>
+          <dd>{financial.paidCount + financial.pendingCount}</dd>
+          <dd className="j2-c3-meta mt-1">Pagos, pendentes e vencidos</dd>
+        </div>
+      </dl>
 
-      <Card>
-        <CardHeader className="border-b border-border/70 pb-4">
-          <CardTitle>Recebimentos de serviços</CardTitle>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Últimos dez pagamentos de serviços da barbearia. A mensalidade do LPS
-            Agenda não entra nesta lista.
-          </p>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
-          {financial.recent.length > 0 ? (
-            <div className="px-4 pb-2">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Referência</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Forma</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {financial.recent.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell>
-                        <p className="font-mono text-[10px] text-muted-foreground">
-                          {payment.id.slice(0, 8)}
-                        </p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          criado em{" "}
-                          {formatDateBR(payment.created_at, shop.timezone)}
-                        </p>
-                      </TableCell>
-                      <TableCell className="text-xs font-medium tabular-nums">
-                        {formatCurrencyFromCents(payment.amount_cents)}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {payment.method
-                          ? methodLabels[payment.method]
-                          : "Não informada"}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {formatDateOnlyBR(payment.due_date)}
-                      </TableCell>
-                      <TableCell>
-                        <PaymentStatusBadge status={payment.status} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+      {showChart && (
+        <figure className="j2-c3-panel">
+          <figcaption className="j2-c3-card-title">Recebido por faixa de dias</figcaption>
+          <div className="mt-3 space-y-2">
+            {weeks.slice(0, Math.ceil(Number(new Intl.DateTimeFormat("pt-BR", {
+              day: "numeric", timeZone: shop.timezone,
+            }).format(new Date(financial.period.end.getTime() - 1))) / 7)).map((value, index) => {
+              const label = ["1 a 7", "8 a 14", "15 a 21", "22 a 28", "29 em diante"][index];
+              return (
+                <div className="j2-c3-chart text-sm" key={label}>
+                  <span>{label}</span>
+                  <meter min={0} max={Math.max(...weeks)} value={value} aria-label={"Dias " + label} />
+                  <span className="font-medium tabular-nums">{formatCurrencyFromCents(value)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </figure>
+      )}
+
+      <div className="j2-c3-two-columns">
+        <section className="j2-c3-panel" aria-labelledby="receipts-heading">
+          <h3 id="receipts-heading">Recebimentos de serviços</h3>
+          <p className="j2-c3-meta mt-1">Até dez registros do período, pela data de lançamento. A mensalidade do LPS Agenda fica em Plano e assinatura.</p>
+          {financial.recent.length ? (
+            <ul className="j2-c3-ledger mt-4">
+              {financial.recent.map(payment => (
+                <li key={payment.id}>
+                  <div>
+                    <p className="text-sm font-semibold">{payment.method ? methodLabels[payment.method] : "Forma não informada"}</p>
+                    <p className="j2-c3-meta">{formatDateBR(payment.created_at, shop.timezone)}</p>
+                    {payment.due_date && <p className="j2-c3-meta">Vencimento em {formatDateOnlyBR(payment.due_date)}</p>}
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <p className="text-sm font-semibold tabular-nums">{formatCurrencyFromCents(payment.amount_cents)}</p>
+                    <PaymentStatusBadge status={payment.status} />
+                  </div>
+                </li>
+              ))}
+            </ul>
           ) : (
-            <div className="px-4 pb-4">
-              <DashboardEmpty
-                icon={ReceiptText}
-                title="Nenhum pagamento de serviço registrado"
-                description="A receita dos serviços da barbearia é registrada manualmente nesta fase. A mensalidade do LPS Agenda fica separada em Plano e assinatura."
-                action={
-                  <Button asChild variant="outline" size="sm">
-                    <Link href="/dashboard/plano">Gerenciar assinatura</Link>
-                  </Button>
-                }
-              />
-            </div>
+            <DashboardEmpty icon={ReceiptText} title="Nenhum pagamento de serviço neste período" description="Consulte outro mês para conferir os lançamentos anteriores." />
           )}
-        </CardContent>
-      </Card>
+        </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <NoticeCard icon={ShieldCheck} title="Acesso restrito ao proprietário" tone="gold">
-          A página exige vínculo de proprietário (ou administrador da
-          plataforma). A RLS limita a leitura dos pagamentos à barbearia ativa.
-        </NoticeCard>
-        <NoticeCard icon={LockKeyhole} title="Nenhuma chave no navegador">
-          A cobrança da assinatura usa exclusivamente variáveis de servidor.
-          Nenhuma credencial administrativa é enviada ao
-          cliente.
-        </NoticeCard>
+        <section className="j2-c3-panel" aria-labelledby="history-heading">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 id="history-heading">Atendimentos concluídos</h3>
+            <Link className="text-sm underline underline-offset-4" href="/dashboard/agenda">Abrir agenda</Link>
+          </div>
+          <p className="j2-c3-meta mt-1">Até dez atendimentos no período, com o valor registrado na agenda.</p>
+          {financial.history.length ? (
+            <ul className="j2-c3-ledger mt-4">
+              {financial.history.map(appointment => (
+                <li className="text-sm" key={appointment.id}>
+                  <time dateTime={appointment.starts_at}>{formatDateBR(appointment.starts_at, shop.timezone)}</time>
+                  <span className="font-semibold tabular-nums">{formatCurrencyFromCents(appointment.price_cents)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="j2-c3-meta mt-5">Nenhum atendimento concluído no período.</p>
+          )}
+        </section>
       </div>
-
-      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-        <CheckCircle2 className="size-3.5 text-gold" />
-        Financeiro da barbearia · mensalidade do LPS Agenda separada em Plano e
-        assinatura.
-      </div>
-    </div>
+    </section>
   );
 }

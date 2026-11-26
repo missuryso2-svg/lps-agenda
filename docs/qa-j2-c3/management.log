@@ -1,0 +1,3 @@
+PASS finance periods, stored historical price, empty state, owner/staff and tenant isolation
+PASS settings inline validation, save, explicit staff denial and strict CSP
+PASS active, last day, expired, team incompatibility, early conversion consent and verified paid coverage

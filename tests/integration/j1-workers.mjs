@@ -65,7 +65,7 @@ await check("authenticated Server Action writes only into the active tenant", as
   assert.equal(sql(`select count(*) from public.customers where barbershop_id='${shop}' and full_name='${name}'`), "1");
   assert.equal(sql(`select count(*) from public.customers where barbershop_id='${foreign}' and full_name='${name}'`), "0");
 
-  const manifest = JSON.parse(await readFile(".next/server/server-reference-manifest.json", "utf8"));
+  const manifest = JSON.parse(await readFile(process.env.B2A2_QA_ACTION_MANIFEST ?? ".next/server/server-reference-manifest.json", "utf8"));
   const [id] = Object.entries(manifest.node).find(([, entry]) => entry.exportedName === "createCustomerAction");
   const denied = await fetch(nextURL + "/dashboard/clientes", {
     method: "POST", redirect: "manual",
@@ -130,10 +130,23 @@ for (const [label, path, headers, bucket] of [
       if (res.status === 503) assert.match((await res.json()).message, /processador de imagens/i);
     }
     assert.equal(res.status, 200);
-    const read = label === "logo" ? await fetch((await res.json()).logoUrl) : await get(path, owner);
+    const initial = label === "logo" ? await res.json() : null;
+    const read = initial ? await fetch(initial.logoUrl) : await get(path, owner);
     assert.equal(read.status, 200);
     assert.match(read.headers.get("content-type") ?? "", /^image\/webp/);
     assert.equal((await sharp(Buffer.from(await read.arrayBuffer())).metadata()).format, "webp");
+    if (initial) {
+      const replacement = await sharp({ create: { width: 96, height: 64, channels: 3, background: "#be9744" } }).png().toBuffer();
+      const replaced = await upload(path, owner, { ...headers, "x-logo-version": initial.version }, replacement);
+      assert.equal(replaced.status, 200);
+      const latest = await replaced.json();
+      assert.notEqual(latest.logoUrl, initial.logoUrl);
+      const current = await fetch(latest.logoUrl);
+      assert.equal(current.status, 200);
+      const metadata = await sharp(Buffer.from(await current.arrayBuffer())).metadata();
+      assert.deepEqual([metadata.format, metadata.width, metadata.height], ["webp", 96, 64]);
+      assert.equal(objects(bucket), "1");
+    }
   });
 }
 

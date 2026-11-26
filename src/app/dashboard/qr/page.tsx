@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@/components/dashboard/account-j2.css";
 import QRCode from "qrcode";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { requireDashboardContext } from "@/lib/auth/dal";
@@ -27,12 +28,13 @@ export default async function BookingQrPage() {
         color: { dark: "#000000", light: "#ffffff" },
       })
     : null;
+  const displayLogo = publicBarbershopLogoUrl(shop.id, shop.logo_url);
   return (
-    <div className="space-y-6">
+    <section className="j2-c3">
       <PageHeader
-        eyebrow="Agenda"
+        className="j2-c3-heading"
         title="QR Code de agendamento"
-        description={shop.name}
+        description="Divulgue a agenda nas redes sociais e facilite a reserva no estabelecimento."
       />
       {address && image ? (
         <BookingQr
@@ -40,15 +42,19 @@ export default async function BookingQrPage() {
           slug={shop.slug}
           address={address}
           image={image}
+          displayLogo={displayLogo}
           logo={printableLogo(
-            publicBarbershopLogoUrl(shop.id, shop.logo_url),
+            displayLogo,
             address.url,
             process.env.NEXT_PUBLIC_SUPABASE_URL,
           )}
         />
       ) : (
-        <p className="rounded-xl border bg-card p-5">{printOriginMessage}</p>
+        <section className="j2-c3-panel">
+          <h3>Endereço de divulgação indisponível</h3>
+          <p className="j2-c3-meta mt-2">{printOriginMessage}</p>
+        </section>
       )}
-    </div>
+    </section>
   );
 }

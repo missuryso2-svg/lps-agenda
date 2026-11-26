@@ -40,7 +40,7 @@ const admin = createClient(url, key, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 const manifests = JSON.parse(
-  readFileSync(".next/server/server-reference-manifest.json", "utf8"),
+  readFileSync(process.env.B2A2_QA_ACTION_MANIFEST ?? ".next/server/server-reference-manifest.json", "utf8"),
 );
 const actions = Object.fromEntries(
   Object.entries(manifests.node).map(([id, entry]) => [entry.exportedName, id]),

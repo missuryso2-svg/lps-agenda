@@ -1,30 +1,21 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Loader2, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 
-import { FormError } from "@/components/forms/form-message";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  AccountError, AccountField, AccountSubmit, accountFieldAttributes,
+} from "@/features/auth/components/account-form";
 import { createBarbershopAction } from "@/features/barbershop/actions";
 import { applyServerFieldErrors } from "@/lib/form-errors";
 import { slugify } from "@/lib/slug";
-import {
-  createBarbershopSchema,
-  type CreateBarbershopInput,
-} from "@/lib/validation/barbershop";
+import { createBarbershopSchema, type CreateBarbershopInput } from "@/lib/validation/barbershop";
 
 const timezones = [
   { value: "America/Sao_Paulo", label: "Brasília · São Paulo (GMT-3)" },
@@ -40,14 +31,9 @@ const timezones = [
 export function OnboardingForm({ manualUserId }: { manualUserId: string | null }) {
   const form = useForm<CreateBarbershopInput>({
     resolver: zodResolver(createBarbershopSchema),
-    defaultValues: {
-      name: "",
-      slug: "",
-      phone: "",
-      timezone: "America/Sao_Paulo",
-    },
+    defaultValues: { name: "", slug: "", phone: "", timezone: "America/Sao_Paulo" },
   });
-
+  const { errors } = form.formState;
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
   const slugEdited = useRef(false);
@@ -65,10 +51,9 @@ export function OnboardingForm({ manualUserId }: { manualUserId: string | null }
     setServerError(null);
     let intent: string | undefined;
     if (manualUserId) {
-      // This tab retains a registration attempt across reloads/lost responses.
-      // A different slug starts a distinct shop registration. No contact data is stored.
+      // Keep the attempt across reloads without storing contact data.
       try {
-        const key = `lps.onboarding.${manualUserId}.${values.slug}`;
+        const key = "lps.onboarding." + manualUserId + "." + values.slug;
         intent = sessionStorage.getItem(key) ?? crypto.randomUUID();
         sessionStorage.setItem(key, intent);
       } catch {
@@ -79,182 +64,107 @@ export function OnboardingForm({ manualUserId }: { manualUserId: string | null }
 
     startTransition(async () => {
       const result = await createBarbershopAction(values, intent);
-
       if (result?.status === "error") {
         setServerError(result.message ?? "Não foi possível criar a barbearia.");
         applyServerFieldErrors(form, result.fieldErrors);
-        toast.error(result.message ?? "Não foi possível criar a barbearia.");
       }
     });
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-      <FormError message={serverError} />
+    <form className="account-form" method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <AccountError message={serverError} />
 
-      <div className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nome da barbearia</Label>
-          <Input
-            id="name"
-            autoComplete="organization"
-            placeholder="Ex.: Barbearia Aurora"
-            className="h-11 rounded-xl px-3"
-            aria-invalid={Boolean(form.formState.errors.name)}
+      <AccountField id="name" label="Nome da barbearia" error={errors.name?.message}>
+        <Input
+          {...accountFieldAttributes("name", errors.name?.message)}
+          autoComplete="organization"
+          placeholder="Ex.: Barbearia Aurora"
+          disabled={isPending}
+          {...form.register("name")}
+        />
+      </AccountField>
+
+      <AccountField
+        id="slug"
+        label="Identificador"
+        error={errors.slug?.message}
+        help="Use letras minúsculas, números e hífens no link de agendamento."
+        action={
+          <button
+            type="button"
+            className="account-link"
             disabled={isPending}
-            {...form.register("name")}
+            onClick={() => {
+              slugEdited.current = false;
+              form.setValue("slug", slugify(form.getValues("name")), { shouldValidate: true });
+            }}
+          >
+            Recriar a partir do nome
+          </button>
+        }
+      >
+        <div className="account-url" data-invalid={errors.slug ? "" : undefined}>
+          <span aria-hidden>/agendar/</span>
+          <Input
+            {...accountFieldAttributes("slug", errors.slug?.message)}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="barbearia-aurora"
+            disabled={isPending}
+            {...slugRegistration}
+            onChange={event => {
+              slugEdited.current = true;
+              slugRegistration.onChange(event);
+            }}
           />
-          {form.formState.errors.name ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.name.message}
-            </p>
-          ) : null}
         </div>
+      </AccountField>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <Label htmlFor="slug">Identificador</Label>
-            <button
-              type="button"
-              onClick={() => {
-                slugEdited.current = false;
-                form.setValue("slug", slugify(form.getValues("name")), {
-                  shouldValidate: true,
-                });
-              }}
-              className="text-[11px] font-medium text-muted-foreground underline-offset-4 hover:text-gold hover:underline"
-            >
-              Recriar a partir do nome
-            </button>
-          </div>
-          <div className="flex items-center overflow-hidden rounded-xl border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
-            <span className="shrink-0 border-r border-border/80 bg-muted/35 px-3 py-3 font-mono text-[11px] text-muted-foreground">
-              /barbearia/
-            </span>
-            <Input
-              id="slug"
-              autoComplete="off"
-              spellCheck={false}
-              placeholder="barbearia-aurora"
-              className="h-11 rounded-none border-0 bg-transparent px-3 focus-visible:ring-0"
-              aria-invalid={Boolean(form.formState.errors.slug)}
-              disabled={isPending}
-              {...slugRegistration}
-              onChange={(event) => {
-                slugEdited.current = true;
-                slugRegistration.onChange(event);
-              }}
-            />
-          </div>
-          {form.formState.errors.slug ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.slug.message}
-            </p>
-          ) : (
-            <p className="text-[11px] text-muted-foreground">
-              Use letras minúsculas, números e hífens no link de agendamento.
-            </p>
-          )}
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="phone">
-              Telefone <span className="font-normal text-muted-foreground">(opcional)</span>
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="(11) 99999-9999"
-              className="h-11 rounded-xl px-3"
-              aria-invalid={Boolean(form.formState.errors.phone)}
-              disabled={isPending}
-              {...form.register("phone")}
-            />
-            {form.formState.errors.phone ? (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.phone.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="timezone">Fuso horário</Label>
-            <Controller
-              control={form.control}
-              name="timezone"
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={isPending}
+      <div className="account-field-pair">
+        <AccountField
+          id="phone"
+          label={<>Telefone <span className="account-help">(opcional)</span></>}
+          error={errors.phone?.message}
+        >
+          <Input
+            {...accountFieldAttributes("phone", errors.phone?.message)}
+            type="tel"
+            autoComplete="tel"
+            placeholder="(11) 99999-9999"
+            disabled={isPending}
+            {...form.register("phone")}
+          />
+        </AccountField>
+        <AccountField id="timezone" label="Fuso horário" error={errors.timezone?.message}>
+          <Controller
+            control={form.control}
+            name="timezone"
+            render={({ field }) => (
+              <Select name={field.name} value={field.value} onValueChange={field.onChange} disabled={isPending}>
+                <SelectTrigger
+                  {...accountFieldAttributes("timezone", errors.timezone?.message)}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
                 >
-                  <SelectTrigger
-                    id="timezone"
-                    className="h-11 w-full rounded-xl px-3"
-                    aria-invalid={Boolean(form.formState.errors.timezone)}
-                  >
-                    <SelectValue placeholder="Selecione o fuso" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timezones.map((timezone) => (
-                      <SelectItem key={timezone.value} value={timezone.value}>
-                        {timezone.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {form.formState.errors.timezone ? (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.timezone.message}
-              </p>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="flex items-start gap-2.5 rounded-xl border border-gold/25 bg-gold-soft/35 px-3.5 py-3">
-          <LockKeyhole className="mt-0.5 size-4 shrink-0 text-gold" />
-          <div>
-            <p className="text-xs font-medium">Você será o proprietário</p>
-            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-              Você poderá editar os dados da barbearia e gerenciar a equipe.
-            </p>
-          </div>
-        </div>
+                  <SelectValue placeholder="Selecione o fuso" />
+                </SelectTrigger>
+                <SelectContent className="account-select-menu">
+                  {timezones.map(timezone => (
+                    <SelectItem key={timezone.value} value={timezone.value}>{timezone.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </AccountField>
       </div>
 
-      <Button
-        type="submit"
-        size="xl"
-        variant="gold"
-        className="mt-7 w-full"
-        disabled={isPending}
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            Criando barbearia...
-          </>
-        ) : (
-          <>
-            Criar barbearia e continuar
-            <ArrowRight className="size-4" />
-          </>
-        )}
-      </Button>
-
-      <p className="mt-3 text-center text-[11px] text-muted-foreground">
-        Ao continuar, você concorda com os{" "}
-        <Link
-          href="/termos"
-          className="underline decoration-gold/50 underline-offset-4 hover:text-gold"
-        >
-          Termos de uso
-        </Link>
-        .
+      <p className="account-help">Você terá acesso ao painel como proprietário da barbearia.</p>
+      <AccountSubmit label="Criar barbearia e continuar" pendingLabel="Criando barbearia..." pending={isPending} />
+      <p className="account-help">
+        Ao continuar, você concorda com os <Link href="/termos" className="account-link">Termos de uso</Link>.
       </p>
     </form>
   );

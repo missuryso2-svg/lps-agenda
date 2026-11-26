@@ -1,0 +1,16 @@
+PASS 375 light · five routes, strict CSP and synthetic data
+PASS 375 dark · five routes, strict CSP and synthetic data
+PASS 768 light · five routes, strict CSP and synthetic data
+PASS 768 dark · five routes, strict CSP and synthetic data
+PASS 1280 light · five routes, strict CSP and synthetic data
+PASS 1280 dark · five routes, strict CSP and synthetic data
+PASS 1920 light · five routes, strict CSP and synthetic data
+PASS 1920 dark · five routes, strict CSP and synthetic data
+PASS 375 light · five routes, strict CSP and synthetic data
+PASS 375 dark · five routes, strict CSP and synthetic data
+PASS 768 light · five routes, strict CSP and synthetic data
+PASS 768 dark · five routes, strict CSP and synthetic data
+PASS 1280 light · five routes, strict CSP and synthetic data
+PASS 1280 dark · five routes, strict CSP and synthetic data
+PASS 1920 light · five routes, strict CSP and synthetic data
+PASS 1920 dark · five routes, strict CSP and synthetic data

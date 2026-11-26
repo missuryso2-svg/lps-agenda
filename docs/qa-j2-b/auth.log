@@ -1,0 +1,6 @@
+PASS native submit without JavaScript keeps credentials out of the URL
+PASS Chromium autofill filled name and email with a synthetic address profile
+PASS registration, inline validation, keyboard password reveal and confirmation link
+PASS onboarding creates owner and barbershop only; timezone keyboard and edited slug preserved
+PASS indistinguishable recovery copy, announced pending status, real reset link and matching-password validation
+PASS old password rejected, new password accepted, CSP enforced and external requests blocked

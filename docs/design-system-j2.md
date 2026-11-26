@@ -99,3 +99,14 @@ A J2-A cobre a landing e a base reutilizável. J2-B, J2-C, J2-D e J2-E aguardam 
 Permanecem em aberto a homologação do Images Binding real, a investigação dos quatro timeouts, a integridade das transições diretas de atendimentos, a reconciliação de fotos privadas órfãs, os controles de abuso e autenticação, a confiança nos headers do proxy e a revisão das permissões da Data API no ambiente hospedado. [Auditoria I4](security-audit-i4.md), [desempenho I4](database-performance-i4.md), [calibração dos timeouts](qa-j1-1/timeout-calibration.log).
 
 **Parecer J2-A local. GO para revisão visual. Publicação e lançamento comercial em NO-GO.**
+
+## Extensão J2-B — conta e primeiro acesso
+
+- A estrutura de conta usa cabeçalho com a marca, seletor de tema, salto ao conteúdo e um painel de formulário. No desktop, uma fotografia já usada na landing acompanha as telas de autenticação. Nas telas estreitas, o formulário ocupa o espaço principal.
+- Rótulos ficam acima dos controles. Campos mantêm o atributo de preenchimento automático adequado à tarefa. Ajuda e erros usam o mesmo destino de aria-describedby, com aria-invalid no campo associado e foco visível de 2 px.
+- O botão de senha permanece na sequência do teclado. O nome acessível é estável e aria-pressed indica se a senha está visível. A confirmação tem seu próprio nome e controla seu próprio campo.
+- O envio usa um botão dourado, bloqueio durante a ação e anúncio textual de processamento. Erros gerais aparecem em alerta local. Confirmações por e-mail recebem foco no título e permanecem disponíveis junto à ação para voltar ao login.
+- O onboarding mantém os campos e o envio em uma só etapa editável. A lista acessível marca conta concluída, barbearia como etapa atual e painel como destino. O identificador mostra o prefixo real de agendamento sem mudar o formato persistido.
+- Movimento fica limitado ao feedback da ação principal por ponteiro fino e ao indicador de envio via CSS. Foco, visibilidade da senha, mensagens e seletor de fuso respondem imediatamente. O movimento reduzido mantém os estados legíveis e o indicador estático.
+
+[Relatório e evidências da J2-B](redesign-j2-b.md).

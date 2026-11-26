@@ -1,36 +1,23 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
-import { FormError } from "@/components/forms/form-message";
 import { PasswordInput } from "@/components/forms/password-input";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { signInAction } from "@/features/auth/actions";
 import { applyServerFieldErrors } from "@/lib/form-errors";
 import { loginSchema, type LoginInput } from "@/lib/validation/auth";
+import { AccountError, AccountField, AccountSubmit, accountFieldAttributes } from "./account-form";
 
-export function LoginForm({
-  nextPath,
-  disabled = false,
-}: {
-  nextPath?: string;
-  disabled?: boolean;
-}) {
+export function LoginForm({ nextPath, disabled = false }: { nextPath?: string; disabled?: boolean }) {
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
-
+  const { errors } = form.formState;
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -39,93 +26,37 @@ export function LoginForm({
 
     startTransition(async () => {
       const result = await signInAction(values, nextPath);
-
       if (result?.status === "error") {
         setServerError(result.message ?? "Não foi possível entrar.");
         applyServerFieldErrors(form, result.fieldErrors);
-        toast.error(result.message ?? "Não foi possível entrar.");
       }
     });
   };
 
-  const busy = disabled || isPending;
-
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-      <FormError message={serverError} />
-
-      <div className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="voce@barbearia.com.br"
-            className="h-11 rounded-xl px-3"
-            aria-invalid={Boolean(form.formState.errors.email)}
-            disabled={disabled}
-            {...form.register("email")}
-          />
-          {form.formState.errors.email ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.email.message}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Senha</Label>
-            <Link
-              href="/recuperar-senha"
-              className="text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-gold hover:underline"
-            >
-              Esqueci minha senha
-            </Link>
-          </div>
-          <PasswordInput
-            id="password"
-            autoComplete="current-password"
-            placeholder="Sua senha"
-            className="h-11 rounded-xl px-3"
-            aria-invalid={Boolean(form.formState.errors.password)}
-            disabled={disabled}
-            {...form.register("password")}
-          />
-          {form.formState.errors.password ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.password.message}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <Button
-        type="submit"
-        size="xl"
-        variant="gold"
-        className="mt-7 w-full"
-        disabled={busy}
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            Entrando...
-          </>
-        ) : (
-          <>
-            Entrar
-            <ArrowRight className="size-4" />
-          </>
-        )}
-      </Button>
-
-      {disabled ? (
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">
-          O formulário será habilitado quando o Supabase estiver configurado.
-        </p>
-      ) : null}
+    <form className="account-form" method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <AccountError message={serverError} />
+      <AccountField id="email" label="E-mail" error={errors.email?.message}>
+        <Input
+          {...accountFieldAttributes("email", errors.email?.message)}
+          type="email"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          disabled={disabled}
+          {...form.register("email")}
+        />
+      </AccountField>
+      <AccountField id="password" label="Senha" error={errors.password?.message}>
+        <PasswordInput
+          {...accountFieldAttributes("password", errors.password?.message)}
+          autoComplete="current-password"
+          disabled={disabled}
+          {...form.register("password")}
+        />
+      </AccountField>
+      <Link href="/recuperar-senha" className="account-link account-recovery-link">Esqueci minha senha</Link>
+      <AccountSubmit label="Entrar" pendingLabel="Entrando..." pending={isPending} disabled={disabled} />
     </form>
   );
 }

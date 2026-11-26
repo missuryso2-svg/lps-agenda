@@ -1,0 +1,722 @@
+[
+  {
+    "path": "/login",
+    "width": 375,
+    "theme": "light",
+    "lcp": 304,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 304,
+    "ttfb": 23.599999994039536,
+    "jsBytes": 227898,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/cadastro",
+    "width": 375,
+    "theme": "light",
+    "lcp": 112,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 112,
+    "ttfb": 33.20000001788139,
+    "jsBytes": 232872,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/recuperar-senha",
+    "width": 375,
+    "theme": "light",
+    "lcp": 96,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 96,
+    "ttfb": 21.099999994039536,
+    "jsBytes": 227480,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/redefinir-senha",
+    "width": 375,
+    "theme": "light",
+    "lcp": 136,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 136,
+    "ttfb": 52.900000005960464,
+    "jsBytes": 227828,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/onboarding",
+    "width": 375,
+    "theme": "light",
+    "lcp": 428,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 180,
+    "ttfb": 37.400000005960464,
+    "jsBytes": 276973,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/login",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 84,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 84,
+    "ttfb": 12.199999988079071,
+    "jsBytes": 227898,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/cadastro",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 92,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 92,
+    "ttfb": 16.5,
+    "jsBytes": 232872,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/recuperar-senha",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 80,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 80,
+    "ttfb": 12.599999994039536,
+    "jsBytes": 227480,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/redefinir-senha",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 100,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 100,
+    "ttfb": 17.799999982118607,
+    "jsBytes": 227828,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/onboarding",
+    "width": 375,
+    "theme": "dark",
+    "lcp": 104,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 104,
+    "ttfb": 16.5,
+    "jsBytes": 276973,
+    "imageBytes": 11068,
+    "viewport": 375,
+    "scroll": 375,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/login",
+    "width": 768,
+    "theme": "light",
+    "lcp": 96,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 96,
+    "ttfb": 11.5,
+    "jsBytes": 227898,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/cadastro",
+    "width": 768,
+    "theme": "light",
+    "lcp": 104,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 104,
+    "ttfb": 17.599999994039536,
+    "jsBytes": 232872,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/recuperar-senha",
+    "width": 768,
+    "theme": "light",
+    "lcp": 72,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 72,
+    "ttfb": 11.300000011920929,
+    "jsBytes": 227480,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/redefinir-senha",
+    "width": 768,
+    "theme": "light",
+    "lcp": 220,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 220,
+    "ttfb": 17.69999998807907,
+    "jsBytes": 227828,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/onboarding",
+    "width": 768,
+    "theme": "light",
+    "lcp": 140,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 140,
+    "ttfb": 30.30000001192093,
+    "jsBytes": 276973,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/login",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 96,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 96,
+    "ttfb": 17.30000001192093,
+    "jsBytes": 227898,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/cadastro",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 80,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 80,
+    "ttfb": 9.799999982118607,
+    "jsBytes": 232872,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/recuperar-senha",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 84,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 84,
+    "ttfb": 10.199999988079071,
+    "jsBytes": 227480,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/redefinir-senha",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 88,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 88,
+    "ttfb": 16.599999994039536,
+    "jsBytes": 227828,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/onboarding",
+    "width": 768,
+    "theme": "dark",
+    "lcp": 104,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 104,
+    "ttfb": 15.900000005960464,
+    "jsBytes": 276973,
+    "imageBytes": 11068,
+    "viewport": 768,
+    "scroll": 768,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/login",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 84,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 84,
+    "ttfb": 10.899999976158142,
+    "jsBytes": 227898,
+    "imageBytes": 32422,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/cadastro",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 120,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 84,
+    "ttfb": 10.099999994039536,
+    "jsBytes": 232872,
+    "imageBytes": 32422,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/recuperar-senha",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 116,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 80,
+    "ttfb": 9.799999982118607,
+    "jsBytes": 227480,
+    "imageBytes": 32422,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/redefinir-senha",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 132,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 96,
+    "ttfb": 18.80000001192093,
+    "jsBytes": 227828,
+    "imageBytes": 32422,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/onboarding",
+    "width": 1280,
+    "theme": "light",
+    "lcp": 112,
+    "cls": 0.0015456805129845936,
+    "longTasks": 0,
+    "fcp": 112,
+    "ttfb": 15.699999988079071,
+    "jsBytes": 276973,
+    "imageBytes": 19896,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/login",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 120,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 84,
+    "ttfb": 11.400000005960464,
+    "jsBytes": 227898,
+    "imageBytes": 32422,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/cadastro",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 116,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 88,
+    "ttfb": 9.599999994039536,
+    "jsBytes": 232872,
+    "imageBytes": 32422,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/recuperar-senha",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 160,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 112,
+    "ttfb": 12.899999976158142,
+    "jsBytes": 227480,
+    "imageBytes": 32422,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/redefinir-senha",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 144,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 108,
+    "ttfb": 26.19999998807907,
+    "jsBytes": 227828,
+    "imageBytes": 32422,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/onboarding",
+    "width": 1280,
+    "theme": "dark",
+    "lcp": 112,
+    "cls": 0.0015456805129845936,
+    "longTasks": 0,
+    "fcp": 112,
+    "ttfb": 17.900000005960464,
+    "jsBytes": 276973,
+    "imageBytes": 19896,
+    "viewport": 1280,
+    "scroll": 1280,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/login",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 128,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 92,
+    "ttfb": 12.700000017881393,
+    "jsBytes": 227898,
+    "imageBytes": 32422,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/cadastro",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 132,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 92,
+    "ttfb": 9.5,
+    "jsBytes": 232872,
+    "imageBytes": 32422,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/recuperar-senha",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 84,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 84,
+    "ttfb": 11.300000011920929,
+    "jsBytes": 227480,
+    "imageBytes": 32422,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/redefinir-senha",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 128,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 100,
+    "ttfb": 19.599999994039536,
+    "jsBytes": 227828,
+    "imageBytes": 32422,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/onboarding",
+    "width": 1920,
+    "theme": "light",
+    "lcp": 164,
+    "cls": 0.0006729340774041634,
+    "longTasks": 1,
+    "fcp": 164,
+    "ttfb": 28.19999998807907,
+    "jsBytes": 276973,
+    "imageBytes": 19896,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 5.84,
+      "controls": 3.89
+    }
+  },
+  {
+    "path": "/login",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 196,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 132,
+    "ttfb": 15.799999982118607,
+    "jsBytes": 227898,
+    "imageBytes": 32422,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/cadastro",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 148,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 100,
+    "ttfb": 14.200000017881393,
+    "jsBytes": 232872,
+    "imageBytes": 32422,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/recuperar-senha",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 132,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 92,
+    "ttfb": 14.5,
+    "jsBytes": 227480,
+    "imageBytes": 32422,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/redefinir-senha",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 120,
+    "cls": 0,
+    "longTasks": 0,
+    "fcp": 88,
+    "ttfb": 17,
+    "jsBytes": 227828,
+    "imageBytes": 32422,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  },
+  {
+    "path": "/onboarding",
+    "width": 1920,
+    "theme": "dark",
+    "lcp": 164,
+    "cls": 0.0006729340774041634,
+    "longTasks": 1,
+    "fcp": 164,
+    "ttfb": 25.400000005960464,
+    "jsBytes": 276973,
+    "imageBytes": 19896,
+    "viewport": 1920,
+    "scroll": 1920,
+    "contrast": {
+      "text": 7.4,
+      "controls": 4.61
+    }
+  }
+]

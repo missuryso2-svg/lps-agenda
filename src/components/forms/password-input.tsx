@@ -8,25 +8,24 @@ import { cn } from "@/lib/utils";
 
 export function PasswordInput({
   className,
+  toggleLabel = "Mostrar senha",
   ...props
-}: React.ComponentProps<typeof Input>) {
+}: React.ComponentProps<typeof Input> & { toggleLabel?: string }) {
   const [visible, setVisible] = React.useState(false);
 
   return (
-    <div className="relative">
-      <Input
-        {...props}
-        type={visible ? "text" : "password"}
-        className={cn("pr-10", className)}
-      />
+    <div className="account-password">
+      <Input {...props} type={visible ? "text" : "password"} className={cn("pr-12", className)} />
       <button
         type="button"
-        onClick={() => setVisible((current) => !current)}
-        className="absolute inset-y-0 right-0 grid w-10 place-items-center text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
-        aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
-        tabIndex={-1}
+        className="account-password-toggle"
+        aria-label={toggleLabel}
+        aria-pressed={visible}
+        aria-controls={props.id}
+        disabled={props.disabled}
+        onClick={() => setVisible(current => !current)}
       >
-        {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        {visible ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
       </button>
     </div>
   );

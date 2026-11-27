@@ -1,0 +1,47 @@
+K1-B functional verification revisions. Evidence committed separately.
+Base: 3514310580763bc7fa38ec31b584cedd638349fd
+Final tested application commit: 35070a23d982589e22e64d69c82bf7eeb07e97be
+Source tree: 03cf1ed68f32bed622addf6b80d850b5eb0ee51f
+Migrations tree: df1cf0424e23c1168ed4920caa67f2aa29a5ad90
+Tests tree: b993d6f52b31d288d481bd5d7074a6ebd09ef6f5
+Dependency lockfile: e232ed00cb90600a5a87a19b9409ff974b651c84
+Local main preserved: e013b4a8be6aceb43b73ca6fe4fb4ab674ec6bb1
+Worktree: [permanent worktree]/lps-agenda-j1
+
+Functional commits in order:
+c493efb3a2fa038d4a38f2b58812fcb48879b166 fix(k1-b): enforce the appointment lifecycle in PostgreSQL
+15e83b1e56c65bd13e72cde9293722279bd3c625 fix(k1-b): reserve and reconcile private barber photos
+a5769b4fcbcc5a8b58322b414915233039e47b78 feat(k1-b): filter authorized financial trials before pagination
+35070a23d982589e22e64d69c82bf7eeb07e97be fix(k1-b): harden auth responses and booking rate scopes
+
+Only additive migration changes:
+A	supabase/migrations/20261127093958_k1b_appointment_lifecycle.sql
+A	supabase/migrations/20261127094648_k1b_private_photo_reconciliation.sql
+A	supabase/migrations/20261127094922_k1b_financial_trial_directory.sql
+
+PASS git diff --check on the functional revision and the working tree.
+
+Functional file inventory:
+M	src/app/admin/assinaturas/barbearias/page.tsx
+M	src/features/admin-billing/data.ts
+M	src/features/auth/actions.ts
+M	src/features/auth/messages.ts
+M	src/features/public-booking/actions.ts
+M	src/features/public-booking/service.ts
+M	src/features/scheduling/actions.ts
+M	src/lib/validation/auth.ts
+M	src/types/database.ts
+A	supabase/migrations/20261127093958_k1b_appointment_lifecycle.sql
+A	supabase/migrations/20261127094648_k1b_private_photo_reconciliation.sql
+A	supabase/migrations/20261127094922_k1b_financial_trial_directory.sql
+M	tests/integration/j2d-booking.mjs
+A	tests/integration/k1b-appointments.mjs
+A	tests/integration/k1b-auth-csp.mjs
+A	tests/integration/k1b-financial-trials.mjs
+A	tests/integration/k1b-photo-reconciliation.mjs
+M	tests/integration/local-next-qa.mjs
+A	tests/k1b-auth.test.ts
+M	tests/postgres/i4-security.sql
+A	tests/postgres/k1b-appointment-concurrency.sql
+M	tests/public-booking.test.ts
+M	tests/security-and-schema.test.ts

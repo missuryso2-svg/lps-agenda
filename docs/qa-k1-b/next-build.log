@@ -1,0 +1,62 @@
+
+> lps-agenda@0.1.0 build
+> next build
+
+▲ Next.js 16.4.5 (Turbopack)
+✓ Running next.config.ts took 52ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.0s
+  Running TypeScript ...
+  Finished TypeScript in 13.6s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/8) ...
+  Generating static pages using 11 workers (2/8)
+  Generating static pages using 11 workers (4/8)
+  Generating static pages using 11 workers (6/8)
+✓ Generating static pages using 11 workers (8/8) in 776ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /admin/acesso-negado
+├ ƒ /admin/assinaturas
+├ ƒ /admin/assinaturas/barbearias
+├ ƒ /admin/assinaturas/barbearias/[id]
+├ ƒ /admin/assinaturas/historico
+├ ƒ /admin/assinaturas/mensalidades
+├ ƒ /admin/assinaturas/operadores
+├ ƒ /admin/assinaturas/saude
+├ ƒ /agendar/[slug]
+├ ƒ /agendar/[slug]/reserva/[token]
+├ ƒ /agendar/[slug]/sobre
+├ ƒ /api/barbershop/logo
+├ ƒ /api/cron/billing-compensation
+├ ƒ /api/cron/trial-finalization
+├ ƒ /api/equipe/foto/[id]
+├ ƒ /api/webhooks/asaas
+├ ƒ /auth/callback
+├ ƒ /barbearia/[slug]
+├ ƒ /cadastro
+├ ƒ /dashboard
+├ ƒ /dashboard/agenda
+├ ƒ /dashboard/clientes
+├ ƒ /dashboard/configuracoes
+├ ƒ /dashboard/equipe
+├ ƒ /dashboard/financeiro
+├ ƒ /dashboard/horarios
+├ ƒ /dashboard/plano
+├ ƒ /dashboard/qr
+├ ƒ /dashboard/servicos
+├ ƒ /login
+├ ƒ /onboarding
+├ ƒ /privacidade
+├ ƒ /recuperar-senha
+├ ƒ /redefinir-senha
+└ ƒ /termos
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand

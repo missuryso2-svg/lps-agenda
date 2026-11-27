@@ -1,0 +1,6 @@
+PASS login and role split, ordinary owner denied app and aggregate RPCs, cross-tenant direct payment read blocked
+PASS totals from paid ledger only, focus and theme, global name/origin filter, active/expired days, cursor pagination
+PASS required warning and confirmation, focus return and draft, capacity rollback, single early conversion, no invoice or receipt from agreement
+PASS manual issuance, wrong amount rejected with focus, manual Pix, duplicate rejected, coverage released and revenue correct
+PASS suspension, resume and cancellation, paid amount retained, journal displays actor and reason read-only
+PASS concurrent authorized agreement, one commit, zero CSP violations and page errors

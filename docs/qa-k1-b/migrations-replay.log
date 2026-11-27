@@ -1,0 +1,1 @@
+PASS 36 exact migration versions on new disposable Supabase. PostgreSQL 17.11.

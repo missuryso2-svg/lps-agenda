@@ -1,0 +1,6 @@
+
+> lps-agenda@0.1.0 lint
+> eslint .
+
+
+PASS command exited 0.

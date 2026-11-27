@@ -1,0 +1,6 @@
+Expected negative case: production Next rejected a Server Action sent from a foreign Origin.
+PASS logo, legacy and private photos, catalog, closed/full days, review, validation, focus and CSP
+PASS public action rejects a foreign origin without writing a booking
+PASS concurrent booking, conflict refresh and contact draft preserved
+PASS node public booking, repeat click, historical price, private token isolation and confirmation
+PASS trial running, last day, expired, pending, paid, suspended and canceled with neutral public copy

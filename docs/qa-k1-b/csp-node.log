@@ -1,0 +1,3 @@
+PASS real sign-in via Server Action, no CSP violations in production login
+Local session cookie attributes {"sameSite":"Lax","httpOnly":false,"secure":false}
+PASS private authenticated response and invalid Origin rejected despite forwarded headers

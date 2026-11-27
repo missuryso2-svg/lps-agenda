@@ -1,0 +1,6 @@
+production advisories {"info":0,"low":0,"moderate":0,"high":0,"critical":0,"total":0}
+all advisories {"info":0,"low":0,"moderate":4,"high":0,"critical":0,"total":4}
+@ts-morph/common | moderate | minimatch
+minimatch | moderate | https://github.com/advisories/GHSA-g3hv-75wg-m249
+shadcn | moderate | ts-morph
+ts-morph | moderate | @ts-morph/common

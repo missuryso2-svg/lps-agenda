@@ -1,0 +1,266 @@
+RELATION | kind | rls | security_invoker | anon_s/i/u/d | authenticated_s/i/u/d | service_s/i/u/d
+private.automatic_premium_trial_activation|r|f|-|ffff|ffff|ffff
+private.automatic_premium_trials|r|f|-|ffff|ffff|ffff
+private.automatic_trial_followup_shops|r|f|-|ffff|ffff|ffff
+private.barber_photo_reconciliation|r|f|-|ffff|ffff|ffff
+private.barber_photo_reconciliation_fence|r|f|-|ffff|ffff|ffff
+private.barbershop_logo_cleanup|r|t|-|ffff|ffff|ffff
+private.booking_access_locks|r|f|-|ffff|ffff|ffff
+private.eligible_overdue|v|f|-|ffff|ffff|ffff
+private.finance_health_summary|v|f|-|ffff|ffff|ffff
+private.finance_shop_directory|v|f|security_invoker=true|ffff|ffff|ffff
+private.financial_holds|r|f|-|ffff|ffff|ffff
+private.financial_journal|r|f|-|ffff|ffff|ffff
+private.financial_operators|r|f|-|ffff|ffff|ffff
+private.logo_reconciliation_log|r|f|-|ffff|ffff|ffff
+private.manual_operation_receipts|r|f|-|ffff|ffff|ffff
+private.manual_overdue_retry|r|f|-|ffff|ffff|ffff
+private.manual_trial_activation|r|f|-|ffff|ffff|ffff
+private.manual_trial_intents|r|f|-|ffff|ffff|ffff
+private.manual_trial_permits|r|f|-|ffff|ffff|ffff
+private.overdue_runs|r|f|-|ffff|ffff|ffff
+private.overdue_schedule|r|f|-|ffff|ffff|ffff
+private.schedule_revisions|r|f|-|ffff|ffff|ffff
+private.trial_participation|r|f|-|ffff|ffff|ffff
+public.appointment_ratings|r|t|-|ffff|tfff|ffff
+public.appointments|r|t|-|ffff|tttt|tttt
+public.audit_logs|r|t|-|ffff|tfff|tttt
+public.barber_breaks|r|t|-|ffff|tttf|tfff
+public.barber_services|r|t|-|ffff|tttt|tttt
+public.barber_working_hours|r|t|-|ffff|tttt|tttt
+public.barbers|r|t|-|ffff|tttt|tttt
+public.barbershop_members|r|t|-|ffff|ttft|tttt
+public.barbershops|r|t|-|ffff|tfff|tttt
+public.billing_customers|r|t|-|ffff|tfff|tttt
+public.billing_remote_cleanup_jobs|r|t|-|ffff|ffff|tttt
+public.blocked_slots|r|t|-|ffff|tttt|tttt
+public.booking_rate_limits|r|t|-|ffff|ffff|tttt
+public.business_hours|r|t|-|ffff|tttt|tttt
+public.customers|r|t|-|ffff|tttt|tttt
+public.notifications|r|t|-|ffff|tftt|tttt
+public.payments|r|t|-|ffff|tttt|tttt
+public.plans|r|t|-|ffff|tttt|tttt
+public.profiles|r|t|-|ffff|tfff|tttt
+public.services|r|t|-|ffff|tttt|tttt
+public.subscriptions|r|t|-|ffff|tttt|tttt
+public.webhook_events|r|t|-|ffff|tfff|tttt
+POLICY | namespace | relation | policy | cmd | roles | using | check
+private|barbershop_logo_cleanup|barbershop_logo_cleanup_api|ALL|{lps_barbershop_logo_api}|true|true
+public|appointment_ratings|ratings_owner_read|SELECT|{authenticated}|private.has_barbershop_role(barbershop_id, '{owner}'::barbershop_member_role[])|
+public|appointments|appointments_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(appointments.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|appointments|appointments_insert_member_or_admin|INSERT|{authenticated}||(( SELECT private.is_barbershop_member(appointments.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|appointments|appointments_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(appointments.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|appointments|appointments_update_member_or_admin|UPDATE|{authenticated}|(( SELECT private.is_barbershop_member(appointments.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.is_barbershop_member(appointments.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|audit_logs|audit_logs_manual_quarantine|ALL|{public}|((action !~~ like_escape('manual!_billing.%'::text, '!'::text)) OR (CURRENT_USER = 'lps_financial_api'::name))|((action !~~ like_escape('manual!_billing.%'::text, '!'::text)) OR (CURRENT_USER = 'lps_financial_api'::name))
+public|audit_logs|audit_logs_select_owner_or_admin|SELECT|{authenticated}|(( SELECT private.is_platform_admin() AS is_platform_admin) OR ((barbershop_id IS NOT NULL) AND ( SELECT private.has_barbershop_role(audit_logs.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role)))|
+public|audit_logs|finance_audit_insert|INSERT|{lps_financial_api}||(action ~~ like_escape('manual!_billing.%'::text, '!'::text))
+public|audit_logs|finance_audit_read|SELECT|{lps_financial_api}|(action ~~ like_escape('manual!_billing.%'::text, '!'::text))|
+public|barber_breaks|breaks_member_read|SELECT|{authenticated}|private.is_barbershop_member(barbershop_id)|
+public|barber_breaks|breaks_owner_insert|INSERT|{authenticated}||private.has_barbershop_role(barbershop_id, '{owner}'::barbershop_member_role[])
+public|barber_breaks|breaks_owner_update|UPDATE|{authenticated}|private.has_barbershop_role(barbershop_id, '{owner}'::barbershop_member_role[])|private.has_barbershop_role(barbershop_id, '{owner}'::barbershop_member_role[])
+public|barber_services|barber_services_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(barber_services.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barber_services|barber_services_insert_owner_or_admin|INSERT|{authenticated}||(( SELECT private.has_barbershop_role(barber_services.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|barber_services|barber_services_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(barber_services.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barber_services|barber_services_update_owner_or_admin|UPDATE|{authenticated}|(( SELECT private.has_barbershop_role(barber_services.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.has_barbershop_role(barber_services.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|barber_working_hours|barber_working_hours_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(barber_working_hours.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barber_working_hours|barber_working_hours_insert_owner_or_admin|INSERT|{authenticated}||(( SELECT private.has_barbershop_role(barber_working_hours.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|barber_working_hours|barber_working_hours_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(barber_working_hours.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barber_working_hours|barber_working_hours_update_owner_or_admin|UPDATE|{authenticated}|(( SELECT private.has_barbershop_role(barber_working_hours.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.has_barbershop_role(barber_working_hours.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|barbers|barbers_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(barbers.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barbers|barbers_insert_owner_or_admin|INSERT|{authenticated}||(( SELECT private.has_barbershop_role(barbers.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|barbers|barbers_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(barbers.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barbers|barbers_update_owner_or_admin|UPDATE|{authenticated}|(( SELECT private.has_barbershop_role(barbers.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.has_barbershop_role(barbers.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|barbershop_members|barbershop_logo_api_member_lock|UPDATE|{lps_barbershop_logo_api}|((user_id = private.trial_onboarding_actor()) AND (role = 'owner'::barbershop_member_role) AND is_active)|false
+public|barbershop_members|barbershop_logo_api_member_read|SELECT|{lps_barbershop_logo_api}|((user_id = private.trial_onboarding_actor()) AND (role = 'owner'::barbershop_member_role) AND is_active)|
+public|barbershop_members|barbershop_members_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(barbershop_members.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barbershop_members|barbershop_members_insert_owner_or_admin|INSERT|{authenticated}||(( SELECT private.is_platform_admin() AS is_platform_admin) OR (( SELECT private.has_barbershop_role(barbershop_members.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) AND (role = 'staff'::barbershop_member_role)))
+public|barbershop_members|barbershop_members_select_team_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(barbershop_members.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barbershop_members|barbershop_members_update_owner_or_admin|UPDATE|{authenticated}|(( SELECT private.has_barbershop_role(barbershop_members.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.has_barbershop_role(barbershop_members.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|barbershop_members|finance_member_read|SELECT|{lps_financial_api}|((role = 'owner'::barbershop_member_role) AND is_active)|
+public|barbershops|barbershop_logo_api_shop_read|SELECT|{lps_barbershop_logo_api}|true|
+public|barbershops|barbershop_logo_api_shop_update|UPDATE|{lps_barbershop_logo_api}|true|true
+public|barbershops|barbershops_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(barbershops.id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|barbershops|barbershops_update_owner_or_admin|UPDATE|{authenticated}|(( SELECT private.has_barbershop_role(barbershops.id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.has_barbershop_role(barbershops.id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|barbershops|finance_shop_lock|UPDATE|{lps_financial_api}|true|false
+public|barbershops|finance_shop_read|SELECT|{lps_financial_api}|true|
+public|billing_customers|billing_customers_delete_admin|DELETE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|
+public|billing_customers|billing_customers_insert_admin|INSERT|{authenticated}||( SELECT private.is_platform_admin() AS is_platform_admin)
+public|billing_customers|billing_customers_select_owner_or_admin|SELECT|{authenticated}|(( SELECT private.has_barbershop_role(billing_customers.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|billing_customers|billing_customers_update_admin|UPDATE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|( SELECT private.is_platform_admin() AS is_platform_admin)
+public|blocked_slots|blocked_slots_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(blocked_slots.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|blocked_slots|blocked_slots_insert_owner_or_admin|INSERT|{authenticated}||(( SELECT private.has_barbershop_role(blocked_slots.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|blocked_slots|blocked_slots_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(blocked_slots.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|blocked_slots|blocked_slots_update_owner_or_admin|UPDATE|{authenticated}|(( SELECT private.has_barbershop_role(blocked_slots.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.has_barbershop_role(blocked_slots.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|business_hours|business_hours_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(business_hours.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|business_hours|business_hours_insert_owner_or_admin|INSERT|{authenticated}||(( SELECT private.has_barbershop_role(business_hours.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|business_hours|business_hours_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(business_hours.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|business_hours|business_hours_update_owner_or_admin|UPDATE|{authenticated}|(( SELECT private.has_barbershop_role(business_hours.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.has_barbershop_role(business_hours.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|customers|customers_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(customers.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|customers|customers_insert_member_or_admin|INSERT|{authenticated}||(( SELECT private.is_barbershop_member(customers.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|customers|customers_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(customers.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|customers|customers_update_member_or_admin|UPDATE|{authenticated}|(( SELECT private.is_barbershop_member(customers.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.is_barbershop_member(customers.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|notifications|booking_recipient_access|ALL|{authenticated}|((appointment_id IS NULL) OR ((user_id = uid()) AND private.is_barbershop_member(barbershop_id)))|((appointment_id IS NULL) OR ((user_id = uid()) AND private.is_barbershop_member(barbershop_id)))
+public|notifications|notifications_delete_own_or_admin|DELETE|{authenticated}|((user_id = ( SELECT uid() AS uid)) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|notifications|notifications_select_own_or_admin|SELECT|{authenticated}|((user_id = ( SELECT uid() AS uid)) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|notifications|notifications_update_own_or_admin|UPDATE|{authenticated}|((user_id = ( SELECT uid() AS uid)) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|((user_id = ( SELECT uid() AS uid)) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|payments|finance_pay_insert|INSERT|{lps_financial_api}||((gateway = 'manual_pix'::text) AND (status = 'pending'::payment_status))
+public|payments|finance_pay_read|SELECT|{lps_financial_api}|((gateway = 'manual_pix'::text) AND (scope = 'platform_subscription'::payment_scope))|
+public|payments|finance_pay_update|UPDATE|{lps_financial_api}|(gateway = 'manual_pix'::text)|(gateway = 'manual_pix'::text)
+public|payments|payments_delete_admin|DELETE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|
+public|payments|payments_insert_admin|INSERT|{authenticated}||( SELECT private.is_platform_admin() AS is_platform_admin)
+public|payments|payments_manual_quarantine|ALL|{public}|((gateway <> 'manual_pix'::text) OR (CURRENT_USER = 'lps_financial_api'::name))|((gateway <> 'manual_pix'::text) OR (CURRENT_USER = 'lps_financial_api'::name))
+public|payments|payments_select_owner_or_admin|SELECT|{authenticated}|(( SELECT private.has_barbershop_role(payments.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|payments|payments_update_admin|UPDATE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|( SELECT private.is_platform_admin() AS is_platform_admin)
+public|plans|finance_plan_lock|UPDATE|{lps_financial_api}|true|false
+public|plans|finance_plan_read|SELECT|{lps_financial_api}|true|
+public|plans|plans_delete_admin|DELETE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|
+public|plans|plans_insert_admin|INSERT|{authenticated}||( SELECT private.is_platform_admin() AS is_platform_admin)
+public|plans|plans_read_trial_catalog|SELECT|{lps_trial_onboarding}|((code = 'basico'::text) AND is_active)|
+public|plans|plans_select_authenticated|SELECT|{authenticated}|true|
+public|plans|plans_update_admin|UPDATE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|( SELECT private.is_platform_admin() AS is_platform_admin)
+public|profiles|finance_profile_read|SELECT|{lps_financial_api}|(EXISTS ( SELECT
+   FROM barbershop_members m
+  WHERE ((m.user_id = profiles.id) AND (m.role = 'owner'::barbershop_member_role) AND m.is_active)))|
+public|profiles|profiles_delete_admin|DELETE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|
+public|profiles|profiles_select_self_shared_or_admin|SELECT|{authenticated}|((id = ( SELECT uid() AS uid)) OR ( SELECT private.is_platform_admin() AS is_platform_admin) OR ( SELECT private.shares_barbershop(profiles.id) AS shares_barbershop))|
+public|profiles|profiles_update_self_or_admin|UPDATE|{authenticated}|((id = ( SELECT uid() AS uid)) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|((id = ( SELECT uid() AS uid)) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|services|services_delete_owner_or_admin|DELETE|{authenticated}|(( SELECT private.has_barbershop_role(services.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|services|services_insert_owner_or_admin|INSERT|{authenticated}||(( SELECT private.has_barbershop_role(services.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|services|services_select_member_or_admin|SELECT|{authenticated}|(( SELECT private.is_barbershop_member(services.barbershop_id) AS is_barbershop_member) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|services|services_update_owner_or_admin|UPDATE|{authenticated}|(( SELECT private.has_barbershop_role(services.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|(( SELECT private.has_barbershop_role(services.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))
+public|subscriptions|finance_sub_insert|INSERT|{lps_financial_api}||((gateway = 'manual_pix'::text) AND (status = 'pending'::subscription_status))
+public|subscriptions|finance_sub_read|SELECT|{lps_financial_api}|true|
+public|subscriptions|finance_sub_update|UPDATE|{lps_financial_api}|(gateway = 'manual_pix'::text)|(gateway = 'manual_pix'::text)
+public|subscriptions|subscriptions_delete_admin|DELETE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|
+public|subscriptions|subscriptions_insert_admin|INSERT|{authenticated}||( SELECT private.is_platform_admin() AS is_platform_admin)
+public|subscriptions|subscriptions_insert_automatic_trial|INSERT|{lps_automatic_trial}||((gateway = 'manual_pix'::text) AND (gateway_status = 'inactive'::text) AND (status = 'trialing'::subscription_status) AND (invoice_link_key = 'uncontracted'::text) AND (EXISTS ( SELECT
+   FROM private.automatic_premium_trials t
+  WHERE ((t.subscription_id = subscriptions.id) AND (t.shop_id = subscriptions.barbershop_id) AND (t.plan_id = subscriptions.plan_id) AND (t.started_at = subscriptions.trial_started_at) AND (t.ends_at = subscriptions.trial_ends_at)))))
+public|subscriptions|subscriptions_insert_onboarding_trial|INSERT|{lps_trial_onboarding}||((gateway = 'manual_pix'::text) AND (status = 'trialing'::subscription_status) AND (invoice_link_key = 'uncontracted'::text))
+public|subscriptions|subscriptions_manual_quarantine|ALL|{public}|((gateway <> 'manual_pix'::text) OR (CURRENT_USER = 'lps_financial_api'::name))|((gateway <> 'manual_pix'::text) OR (CURRENT_USER = ANY (ARRAY['lps_trial_onboarding'::name, 'lps_financial_api'::name, 'lps_automatic_trial'::name])))
+public|subscriptions|subscriptions_select_owner_or_admin|SELECT|{authenticated}|(( SELECT private.has_barbershop_role(subscriptions.barbershop_id, ARRAY['owner'::barbershop_member_role]) AS has_barbershop_role) OR ( SELECT private.is_platform_admin() AS is_platform_admin))|
+public|subscriptions|subscriptions_update_admin|UPDATE|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|( SELECT private.is_platform_admin() AS is_platform_admin)
+public|webhook_events|webhook_events_select_admin|SELECT|{authenticated}|( SELECT private.is_platform_admin() AS is_platform_admin)|
+storage|objects|barber_photo_member_read|SELECT|{authenticated}|((bucket_id = 'barber-photos'::text) AND (EXISTS ( SELECT
+   FROM (barbers b
+     JOIN barbershop_members m ON ((m.barbershop_id = b.barbershop_id)))
+  WHERE ((m.user_id = ( SELECT uid() AS uid)) AND m.is_active AND (b.avatar_url = objects.name) AND (split_part(objects.name, '/'::text, 1) = (b.barbershop_id)::text) AND (split_part(objects.name, '/'::text, 2) = (b.id)::text)))))|
+storage|objects|barbershop_logo_api_storage_read|SELECT|{lps_barbershop_logo_api}|(bucket_id = 'barbershop-logos'::text)|
+storage|objects|barbershop_logos_block_client_delete|DELETE|{anon,authenticated}|(bucket_id <> 'barbershop-logos'::text)|
+storage|objects|barbershop_logos_block_client_insert|INSERT|{anon,authenticated}||(bucket_id <> 'barbershop-logos'::text)
+storage|objects|barbershop_logos_block_client_update|UPDATE|{anon,authenticated}|(bucket_id <> 'barbershop-logos'::text)|(bucket_id <> 'barbershop-logos'::text)
+FUNCTION | signature | definer | owner | settings | anon | authenticated | service
+graphql_public.graphql("operationName" text, query text, variables jsonb, extensions jsonb)|f|supabase_admin||t|t|t
+private.audit_manual_invoice()|f|postgres|search_path=""|f|f|f
+private.audit_mutation()|t|postgres|search_path=""|f|f|f
+private.barber_photo_storage_key(reference text)|f|supabase_admin|search_path=""|f|f|f
+private.booking_access_at(shop uuid, at_time timestamp with time zone)|t|postgres|search_path=""|f|f|f
+private.booking_access_before_holds(shop uuid, at_time timestamp with time zone)|t|postgres|search_path=""|f|f|f
+private.bootstrap_financial_manager(target uuid, reason text)|f|postgres|search_path=""|f|f|f
+private.check_agreement_capacity()|t|postgres|search_path=""|f|f|f
+private.check_barber_break()|t|postgres|search_path=""|f|f|f
+private.check_booking_schedule()|t|postgres|search_path=""|f|f|f
+private.check_manual_contract_timezone()|f|postgres|search_path=""|f|f|f
+private.check_manual_invoice_schedule()|f|postgres|search_path=""|f|f|f
+private.check_new_shop_trial()|t|postgres|search_path=""|f|f|f
+private.claim_retired_barber_photo(shop uuid, barber uuid, photo text)|f|supabase_admin|search_path=""|f|f|f
+private.claim_retired_logo(shop uuid, object_key text)|f|postgres|search_path=""|f|f|f
+private.consume_manual_trial_permit()|t|postgres|search_path=""|f|f|f
+private.create_barbershop(p_name text, p_slug text, p_phone text, p_timezone text)|t|postgres|search_path=""|f|f|f
+private.create_legacy_barbershop(p_name text, p_slug text, p_phone text, p_timezone text)|t|postgres|search_path=""|f|t|f
+private.enforce_appointment_booking_grace()|t|postgres|search_path=""|f|f|f
+private.enforce_barber_plan_limit()|t|postgres|search_path=""|t|t|t
+private.ensure_barbershop_has_owner()|t|postgres|search_path=""|f|f|f
+private.finance_page_size(n integer)|f|postgres|search_path=""|f|f|f
+private.finance_replay(key uuid, who uuid, kind text, tenant uuid, args jsonb)|f|postgres|search_path=""|f|f|f
+private.financial_actor(manager_only boolean)|f|postgres|search_path=""|f|f|f
+private.finish_retired_barber_photo(shop uuid, photo text)|f|supabase_admin|search_path=""|f|f|f
+private.finish_retired_logo(tenant uuid, object_key text)|f|postgres|search_path=""|f|f|f
+private.guard_appointment_lifecycle()|f|supabase_admin|search_path=""|f|f|f
+private.guard_appointment_price_identity()|f|postgres|search_path=""|f|f|f
+private.guard_barber_photo()|f|postgres|search_path=""|f|f|f
+private.guard_barbershop_logo_reference()|f|postgres|search_path=""|f|f|f
+private.guard_booking_notice()|f|postgres|search_path=""|f|f|f
+private.guard_cutover_subscription()|f|postgres|search_path=""|f|f|f
+private.guard_financial_audit_origin()|f|postgres|search_path=""|f|f|f
+private.guard_hours_breaks()|t|postgres|search_path=""|f|f|f
+private.guard_manual_invoice_history()|f|postgres|search_path=""|f|f|f
+private.guard_manual_issue()|t|postgres|search_path=""|f|f|f
+private.guard_membership_changes()|t|postgres|search_path=""|f|f|f
+private.handle_new_user()|t|postgres|search_path=""|f|f|f
+private.has_barbershop_role(target_barbershop_id uuid, allowed_roles barbershop_member_role[])|t|postgres|search_path=""|f|t|t
+private.insert_automatic_trial(p_subscription uuid)|t|lps_automatic_trial|search_path=""|f|f|f
+private.inspect_retired_barber_photos(shop uuid, page_size integer)|f|supabase_admin|search_path=""|f|f|f
+private.is_automatic_trial(p_subscription uuid)|t|postgres|search_path=""|f|f|f
+private.is_barbershop_logo_object(shop uuid, object_name text)|f|postgres|search_path=""|f|f|f
+private.is_barbershop_member(target_barbershop_id uuid)|t|postgres|search_path=""|f|t|t
+private.is_deleted_automatic_trial(p_subscription uuid, p_shop uuid)|t|postgres|search_path=""|f|f|t
+private.is_platform_admin()|t|postgres|search_path=""|f|t|t
+private.is_subscription_booking_blocked(p_status subscription_status, p_grace_period_ends_at timestamp with time zone, p_now timestamp with time zone)|f|postgres|search_path=""|f|f|f
+private.issue_manual_invoice(op uuid, shop uuid, contract uuid, bill_month date)|f|postgres|search_path="",DateStyle=ISO, YMD|f|f|f
+private.keep_manual_agreement_terms()|f|postgres|search_path=""|f|f|f
+private.lock_barber_photo_reconciliation(shop uuid)|f|supabase_admin|search_path=""|f|f|f
+private.lock_billing_tenant()|t|postgres|search_path=""|f|f|f
+private.lock_booking_access(tenant uuid, writing boolean)|t|postgres|search_path=""|f|f|f
+private.lock_hours_edit()|t|postgres|search_path=""|f|f|f
+private.lock_shop_schedule(shop uuid)|f|postgres|search_path=""|f|f|f
+private.manual_anchor(month_start date, anchor integer)|f|postgres|search_path=""|f|f|f
+private.manual_operation_result(op uuid, payload jsonb)|f|postgres|search_path=""|f|f|f
+private.notify_new_booking()|t|postgres|search_path=""|f|f|f
+private.process_manual_overdue(batch_size integer)|t|postgres|search_path="",lock_timeout=500ms|f|f|f
+private.protect_claimed_barber_photo()|t|supabase_admin|search_path=""|f|f|f
+private.quarantine_manual_write()|f|postgres|search_path=""|f|f|f
+private.reconcile_manual_coverage(s subscriptions, observed timestamp with time zone)|f|postgres|search_path=""|f|f|f
+private.record_trial_participation()|t|postgres|search_path=""|f|f|f
+private.register_manual_agreement(op uuid, shop uuid, agreement private.manual_agreement_terms)|f|postgres|search_path="",TimeZone=UTC,DateStyle=ISO, YMD|f|f|f
+private.retain_manual_audit()|f|postgres|search_path=""|f|f|f
+private.run_overdue(batch_size integer)|t|postgres|search_path="",lock_timeout=1s|f|f|f
+private.schedule_edit_lock()|t|postgres|search_path=""|f|f|f
+private.set_subscription_past_due_grace()|f|postgres|search_path=""|f|f|f
+private.set_updated_at()|f|postgres|search_path=""|f|f|f
+private.shares_barbershop(other_user_id uuid)|t|postgres|search_path=""|f|t|t
+private.shop_professional_limit(shop uuid)|t|postgres|search_path=""|f|f|f
+private.trial_onboarding_actor()|f|postgres|search_path=""|f|f|f
+private.within_workday(shop uuid, professional uuid, dow integer, starts time without time zone, ends time without time zone, slot_grid boolean)|f|postgres|search_path=""|f|f|f
+public.apply_asaas_payment_transition(p_barbershop_id uuid, p_subscription_id uuid, p_gateway_payment_id text, p_amount_cents integer, p_status payment_status, p_method payment_method, p_due_date date, p_paid_at timestamp with time zone, p_invoice_url text, p_metadata jsonb, p_expected_status payment_status, p_expected_updated_at timestamp with time zone, p_expected_metadata jsonb, p_sync_subscription boolean)|f|postgres|search_path=""|f|f|t
+public.authorize_manual_trial_intent(p_actor uuid, p_intent_id uuid, p_name text, p_slug text, p_phone text, p_timezone text)|t|postgres|search_path=""|f|f|t
+public.automatic_premium_trial_available()|t|postgres|search_path=""|t|t|f
+public.barbershop_logo_cleanup_list(p_barbershop_id uuid)|t|lps_barbershop_logo_api|search_path=""|f|t|f
+public.barbershop_logo_cleanup_result(p_barbershop_id uuid, p_object_name text, p_removed boolean)|t|lps_barbershop_logo_api|search_path=""|f|t|f
+public.book_new_walk_in(shop uuid, professional uuid, service uuid, customer_name text, starts timestamp with time zone, note text)|f|postgres|search_path=""|f|t|f
+public.booking_notices(shop uuid, page_size integer)|f|postgres|search_path=""|f|t|f
+public.cancel_subscription_with_cleanup(p_subscription_id uuid, p_barbershop_id uuid, p_cancel_reason text)|t|postgres|search_path=""|f|f|t
+public.claim_automatic_trial_welcome(p_shop uuid)|t|postgres|search_path=""|f|t|f
+public.complete_rated_appointment(shop uuid, booking uuid, barber_score integer, shop_score integer)|t|postgres|search_path=""|f|t|f
+public.consume_booking_rate_limit(p_bucket text, p_window_seconds integer, p_limit integer)|t|postgres|search_path=""|f|f|t
+public.create_barbershop(p_name text, p_slug text, p_phone text, p_timezone text)|f|postgres|search_path=""|f|t|f
+public.create_barbershop_with_manual_trial(p_intent_id uuid, p_name text, p_slug text, p_phone text, p_timezone text)|t|lps_trial_onboarding|search_path=""|f|t|f
+public.finance_activity(source_name text, tenant uuid, kind text, who uuid, since_at timestamp with time zone, until_at timestamp with time zone, before_at timestamp with time zone, before_id uuid, page_size integer)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_agreement(op uuid, shop uuid, terms jsonb, reference text, reason text)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_capability()|t|lps_financial_api|search_path=""|f|t|f
+public.finance_confirm_pix(op uuid, shop uuid, contract uuid, invoice uuid, received_cents integer, credited_at timestamp with time zone, checked boolean, reference text)|t|lps_financial_api|search_path="",TimeZone=UTC,DateStyle=ISO, YMD|f|t|f
+public.finance_contract_action(op uuid, shop uuid, contract uuid, command text, reason text)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_directory(shop_id uuid, name_prefix text, origin_filter text, after_id uuid, page_size integer)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_events(shop uuid, after_id uuid, page_size integer)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_health()|t|lps_financial_api|search_path=""|f|t|f
+public.finance_history(shop uuid, after_id uuid, page_size integer)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_invoice(op uuid, shop uuid, contract uuid, competence date)|t|lps_financial_api|search_path="",DateStyle=ISO, YMD|f|t|f
+public.finance_invoices(shop uuid, bill_month date, state payment_status, after_id uuid, page_size integer)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_operator(target uuid, permission text, reason text)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_operator_list(after_id uuid, page_size integer)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_overview(bill_month date)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_shops(after_id uuid, page_size integer)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_totals(bill_month date, shop uuid)|t|lps_financial_api|search_path=""|f|t|f
+public.finance_trial_directory(trial_filter text, name_prefix text, after_id uuid, page_size integer)|t|lps_financial_api|search_path=""|f|t|f
+public.find_or_create_public_customer(p_barbershop_id uuid, p_full_name text, p_phone text, p_email text)|t|postgres|search_path=""|f|f|t
+public.get_barbershop_booking_access(p_barbershop_id uuid)|t|postgres|search_path=""|f|f|t
+public.get_owner_automatic_trial(p_shop uuid)|t|postgres|search_path=""|f|t|f
+public.get_owner_manual_trial(p_shop uuid)|t|postgres|search_path=""|f|t|f
+public.get_shop_professional_limit(p_shop uuid)|t|postgres|search_path=""|f|t|f
+public.rating_summary(shop uuid)|f|postgres|search_path=""|f|t|f
+public.replace_barber_photo(actor uuid, shop uuid, professional uuid, previous text, replacement text)|f|postgres|search_path=""|f|f|t
+public.replace_barbershop_logo(p_barbershop_id uuid, p_expected_object text, p_replacement_object text)|t|lps_barbershop_logo_api|search_path=""|f|t|f
+public.sync_subscription_from_asaas_payment(p_payment_id uuid)|f|postgres|search_path=""|f|f|t
+BUCKET | public | size
+barber-photos|f|524288
+barbershop-logos|t|2097152

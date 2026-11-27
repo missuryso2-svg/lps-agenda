@@ -1,0 +1,2 @@
+{"route":"/login","kind":"eval","directive":"script-src","source":"/_next/static/chunks/3imioile0t49m.js","column":4475}
+PASS reproduced blocked eval in production login, authentication succeeds

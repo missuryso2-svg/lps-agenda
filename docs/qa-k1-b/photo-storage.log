@@ -1,0 +1,4 @@
+Expected negative case: claim of an exact key with a different tenant was rejected.
+PASS real private bucket, tenant isolation, read-only inspection, retained reference and fresh upload
+PASS committed claim waits against actual service-role replacement, no reattachment, resumable external delete, one audit record
+PASS professional/tenant deletion does not erase work or audit, Storage removes exact keys, other tenant preserved

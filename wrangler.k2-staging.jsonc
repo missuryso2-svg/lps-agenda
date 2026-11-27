@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "lps-agenda-staging-k2",
+  "name": "lps-agenda-staging",
   "main": "worker.j1.mjs",
   "compatibility_date": "2026-11-25",
   "compatibility_flags": ["nodejs_compat"],
@@ -11,7 +11,7 @@
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "images": { "binding": "UPLOAD_IMAGES", "remote": false },
   "services": [
-    { "binding": "WORKER_SELF_REFERENCE", "service": "lps-agenda-staging-k2" }
+    { "binding": "WORKER_SELF_REFERENCE", "service": "lps-agenda-staging" }
   ],
   "dev": { "ip": "127.0.0.1", "port": 59339 },
   "observability": {
@@ -19,6 +19,7 @@
     "logs": { "enabled": true, "invocation_logs": false, "head_sampling_rate": 1 }
   },
   "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://kffhoimijhsddodqxezs.supabase.co",
     "CSP_ENFORCE": "true",
     "MANUAL_TRIAL_ONBOARDING_ENABLED": "false",
     "ADSENSE_ENABLED": "false",

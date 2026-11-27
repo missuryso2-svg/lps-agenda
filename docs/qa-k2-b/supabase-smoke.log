@@ -1,0 +1,4 @@
+PASS hosted staging signup disabled and two synthetic password sessions created without mail
+PASS hosted Data API allows owner, isolates unrelated session, denies anonymous appointments and private schema
+PASS hosted private bucket returned exact WebP to the owner; unrelated and anonymous reads denied
+PASS synthetic sessions, shop and object removed through staging APIs

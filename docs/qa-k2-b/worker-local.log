@@ -1,0 +1,14 @@
+PASS OpenNext candidate built locally from 22ce48f with staging config and reserved hostname.
+Source tree: b36eb33673ea55bdfe0d82d54a2d2b1f67ca25e7
+Candidate config blob: 3b8f5bbc1c81d16a766879db52b103344d6c8bab
+No hosted Worker created. Config has workers_dev=false, preview_urls=false and no routes.
+✨ Read 84 files from the assets directory /tmp/lps-k2b-candidate/.open-next/assets
+Total Upload: 13403.53 KiB / gzip: 2912.38 KiB
+--dry-run: exiting now.
+│ Local startup profile:
+│   Profile window: 210.2 ms
+│   Sampled time: 202.8 ms
+│   Active: 197.5 ms (including 1.1 ms garbage collection)
+│   Idle: 5.2 ms
+│   Samples: 160
+PASS exact legacy service key, default staging secret key and production Supabase ref absent from 1722 generated files.

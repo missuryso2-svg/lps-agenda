@@ -1,0 +1,12 @@
+K2-B sanitized provider and catalog inventory, 27/11/2026.
+PASS organization lps-agenda on Free; provider quoted USD 0 monthly for an additional project.
+PASS staging lps-agenda-staging (kffhoimijhsddodqxezs) ACTIVE_HEALTHY, us-east-1, PostgreSQL 17.12.
+PASS initial catalog empty for application tables, app migrations, users and buckets.
+PASS postgres privilege checks: CREATE ROLE, CREATE in public, read Auth, insert and update Storage buckets, supautils managed Storage policy grant.
+PASS post-migration catalog: 36 versions, 22 public tables with RLS out of 22, six non-login app roles, five Storage policies.
+PASS anon table SELECT on appointments denied. Private schema denied through PostgREST in separate smoke.
+PASS barber-photos private, WebP, 524288 bytes; barbershop-logos intentional public read, WebP, 2097152 bytes.
+PASS automatic and manual trial gates false.
+PASS only applied Auth configuration diff was public signup disabled, anonymous login was already disabled. Verified scoped diff converged and live Auth settings reflected signup disabled.
+Cloudflare Wrangler 4.168.0: unauthenticated. Worker, URLs, Access and Images Binding in the hosted service were not created.
+PASS catalog after fixture cleanup: 0 Auth users, 0 shops, 0 Storage objects, both trial gates disabled.

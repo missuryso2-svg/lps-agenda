@@ -93,7 +93,7 @@ export const operation = z.discriminatedUnion("kind", [
 ]);
 export type Operation = z.output<typeof operation>;
 export type Kind = Operation["kind"];
-export const adminPath = "/admin/assinaturas";
+export { adminPath } from "./routes";
 export const originLabels: Record<string, string> = {
   manual: "Contrato manual",
   trial: "Trial manual",

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requireFinancialAdmin } from "@/lib/auth/financial-admin";
 import { manualTrialOnboardingEnabled } from "@/lib/env/server";
+import { FinanceHeading } from "@/features/admin-billing/presentation";
 
 const count = z.number().int().nonnegative();
 const healthSchema = z.object({
@@ -46,11 +47,8 @@ export default async function Health() {
   if (error || !parsed.success) {
     return (
       <>
-        <h1>Saúde financeira</h1>
-        <p>
-          Indicadores indisponíveis. Confira a migration da Fase E e o acesso
-          financeiro.
-        </p>
+        <FinanceHeading title="Saúde financeira" />
+        <p className="fa-guidance" role="status">Não foi possível consultar os indicadores da carteira.</p>
       </>
     );
   }
@@ -86,19 +84,18 @@ export default async function Health() {
   ] as const;
   return (
     <>
-      <h1>Saúde financeira</h1>
-      <p>
-        Posição da carteira completa. Os indicadores de execução usam as últimas
-        24 horas.
-      </p>
-      <dl className="fa-metrics">
+      <FinanceHeading title="Saúde financeira" description="Acompanhe a carteira, a fila de inadimplência e o processamento financeiro." />
+      <section className="fa-panel" aria-labelledby="health-heading">
+        <header className="fa-section-head"><div><h2 id="health-heading">Monitoramento</h2><p>Indicadores operacionais e últimas execuções registradas.</p></div></header>
+        <dl className="fa-metrics fa-health">
         {metrics.map(([label, value]) => (
           <div className="fa-metric" key={label}>
             <dt>{label}</dt>
             <dd>{value}</dd>
           </div>
         ))}
-      </dl>
+        </dl>
+      </section>
     </>
   );
 }

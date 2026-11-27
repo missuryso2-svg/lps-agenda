@@ -1,0 +1,53 @@
+{
+  "before": {
+    "all": {
+      "ttfb": 16.5,
+      "fcp": 72,
+      "lcp": 100,
+      "cls": 0,
+      "js": 224281
+    },
+    "mobile": {
+      "ttfb": 17.05,
+      "fcp": 76,
+      "lcp": 98,
+      "cls": 0,
+      "js": 224281
+    },
+    "overview": {
+      "ttfb": 19,
+      "fcp": 104,
+      "lcp": 104,
+      "cls": 0,
+      "js": 222198
+    },
+    "csp": 56,
+    "outerOverflow": 0
+  },
+  "after": {
+    "all": {
+      "ttfb": 15.2,
+      "fcp": 72,
+      "lcp": 100,
+      "cls": 0,
+      "js": 216212
+    },
+    "mobile": {
+      "ttfb": 16.6,
+      "fcp": 72,
+      "lcp": 104,
+      "cls": 0,
+      "js": 216212
+    },
+    "overview": {
+      "ttfb": 19.8,
+      "fcp": 118,
+      "lcp": 118,
+      "cls": 0,
+      "js": 180957
+    },
+    "csp": 0,
+    "outerOverflow": 0,
+    "minContrast": 5.84
+  }
+}

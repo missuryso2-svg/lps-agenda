@@ -9,7 +9,7 @@ import {
   UsersRound,
   Activity,
 } from "lucide-react";
-import { adminPath } from "./validation";
+import { adminPath } from "./routes";
 
 const items = [
   { route: "", label: "Visão geral", Icon: LayoutDashboard },

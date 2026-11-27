@@ -1,3 +1,8 @@
 export default function Loading() {
-  return <p role="status">Carregando dados financeiros…</p>;
+  return (
+    <section className="fa-panel" aria-busy="true">
+      <p role="status">Carregando dados financeiros…</p>
+      <div className="fa-skeleton" aria-hidden />
+    </section>
+  );
 }

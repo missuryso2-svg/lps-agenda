@@ -1,0 +1,722 @@
+[
+  {
+    "width": 375,
+    "theme": "light",
+    "pages": [
+      {
+        "route": "visao",
+        "ttfb": 30.80000001192093,
+        "fcp": 532,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 532,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "barbearias",
+        "ttfb": 23,
+        "fcp": 120,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 120,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "trial",
+        "ttfb": 23.400000035762787,
+        "fcp": 72,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 72,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "mensalidades",
+        "ttfb": 14.800000011920929,
+        "fcp": 76,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 76,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "historico",
+        "ttfb": 14.5,
+        "fcp": 64,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 376,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "operadores",
+        "ttfb": 18.19999998807907,
+        "fcp": 80,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 80,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "saude",
+        "ttfb": 21.80000001192093,
+        "fcp": 76,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 76,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "pages": [
+      {
+        "route": "visao",
+        "ttfb": 21.30000001192093,
+        "fcp": 108,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 108,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "barbearias",
+        "ttfb": 15.899999976158142,
+        "fcp": 72,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 376,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "trial",
+        "ttfb": 13.800000011920929,
+        "fcp": 60,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 388,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "mensalidades",
+        "ttfb": 18.19999998807907,
+        "fcp": 88,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 88,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "historico",
+        "ttfb": 15.100000023841858,
+        "fcp": 80,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 80,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "operadores",
+        "ttfb": 14.300000011920929,
+        "fcp": 64,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 64,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "saude",
+        "ttfb": 12.899999976158142,
+        "fcp": 60,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 372,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "pages": [
+      {
+        "route": "visao",
+        "ttfb": 18.799999952316284,
+        "fcp": 100,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 100,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "barbearias",
+        "ttfb": 18.599999964237213,
+        "fcp": 64,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 388,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "trial",
+        "ttfb": 36,
+        "fcp": 108,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 108,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "mensalidades",
+        "ttfb": 13.899999976158142,
+        "fcp": 68,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 68,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "historico",
+        "ttfb": 14.100000023841858,
+        "fcp": 76,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 76,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "operadores",
+        "ttfb": 17.399999976158142,
+        "fcp": 60,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 60,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "saude",
+        "ttfb": 14,
+        "fcp": 60,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 60,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "pages": [
+      {
+        "route": "visao",
+        "ttfb": 18.899999976158142,
+        "fcp": 88,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 88,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "barbearias",
+        "ttfb": 13.299999952316284,
+        "fcp": 60,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 388,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "trial",
+        "ttfb": 17,
+        "fcp": 56,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 388,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "mensalidades",
+        "ttfb": 17.100000023841858,
+        "fcp": 72,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 72,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "historico",
+        "ttfb": 15.200000047683716,
+        "fcp": 76,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 76,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "operadores",
+        "ttfb": 16.900000035762787,
+        "fcp": 64,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 64,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "saude",
+        "ttfb": 13.900000035762787,
+        "fcp": 60,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 60,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "pages": [
+      {
+        "route": "visao",
+        "ttfb": 19.099999964237213,
+        "fcp": 100,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 100,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "barbearias",
+        "ttfb": 23.200000047683716,
+        "fcp": 132,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 132,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "trial",
+        "ttfb": 30.19999998807907,
+        "fcp": 112,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 112,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "mensalidades",
+        "ttfb": 14.699999988079071,
+        "fcp": 76,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 76,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "historico",
+        "ttfb": 13.899999976158142,
+        "fcp": 60,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 60,
+        "cls": 0.0014926472488714724,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "operadores",
+        "ttfb": 16.19999998807907,
+        "fcp": 72,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 72,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "saude",
+        "ttfb": 15.600000023841858,
+        "fcp": 60,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 60,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "pages": [
+      {
+        "route": "visao",
+        "ttfb": 19.5,
+        "fcp": 116,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 116,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "barbearias",
+        "ttfb": 21.5,
+        "fcp": 68,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 388,
+        "cls": 0.0007229383429702448,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "trial",
+        "ttfb": 22.600000023841858,
+        "fcp": 88,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 404,
+        "cls": 0.011357961518423897,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "mensalidades",
+        "ttfb": 24.80000001192093,
+        "fcp": 100,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 100,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "historico",
+        "ttfb": 17.600000023841858,
+        "fcp": 72,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 388,
+        "cls": 0.0014926472488714724,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "operadores",
+        "ttfb": 14.5,
+        "fcp": 60,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 60,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "saude",
+        "ttfb": 14.800000011920929,
+        "fcp": 64,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 64,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "theme": "light",
+    "pages": [
+      {
+        "route": "visao",
+        "ttfb": 16.30000001192093,
+        "fcp": 100,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 100,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "barbearias",
+        "ttfb": 19.900000035762787,
+        "fcp": 68,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 384,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "trial",
+        "ttfb": 49.69999998807907,
+        "fcp": 124,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 124,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "mensalidades",
+        "ttfb": 19.899999976158142,
+        "fcp": 72,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 380,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "historico",
+        "ttfb": 15.699999988079071,
+        "fcp": 68,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 384,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "operadores",
+        "ttfb": 16.399999976158142,
+        "fcp": 52,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 360,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "saude",
+        "ttfb": 16.600000023841858,
+        "fcp": 68,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 68,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "theme": "dark",
+    "pages": [
+      {
+        "route": "visao",
+        "ttfb": 18.30000001192093,
+        "fcp": 120,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 120,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "barbearias",
+        "ttfb": 16.100000023841858,
+        "fcp": 60,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 372,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "trial",
+        "ttfb": 12.699999988079071,
+        "fcp": 56,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 388,
+        "cls": 0.003370584647942022,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "mensalidades",
+        "ttfb": 14.100000023841858,
+        "fcp": 68,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 68,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "historico",
+        "ttfb": 13.199999988079071,
+        "fcp": 72,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 72,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "operadores",
+        "ttfb": 15.300000011920929,
+        "fcp": 68,
+        "js": 224281,
+        "overflow": 0,
+        "lcp": 68,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      },
+      {
+        "route": "saude",
+        "ttfb": 15.399999976158142,
+        "fcp": 60,
+        "js": 222198,
+        "overflow": 0,
+        "lcp": 60,
+        "cls": 0,
+        "csp": [
+          "script-src"
+        ]
+      }
+    ]
+  }
+]

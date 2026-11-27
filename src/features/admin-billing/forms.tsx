@@ -41,8 +41,8 @@ export function AgreementForm({
       title="Aplicar assinatura manual"
       context={{ Barbearia: shop.name, Identificador: shop.shop }}
       note={shop.automatic_trial_state === "running"
-        ? "A confirmação encerra o período grátis imediatamente. O contrato ficará pendente e novos agendamentos poderão ser bloqueados até a conferência do Pix. Para contratar um plano menor, adeque a equipe ativa antes de confirmar."
-        : "O contrato será registrado como pendente. O início da nova cobertura será validado contra testes e contratos anteriores. Depois, emita a mensalidade e confira o Pix no extrato oficial."}
+        ? "A confirmação encerra o período grátis imediatamente e registra o contrato como pendente. Isso pode bloquear novos agendamentos até a conferência do Pix. O plano escolhido precisa comportar a equipe ativa."
+        : "O contrato ficará pendente e poderá bloquear imediatamente novos agendamentos, mesmo com cobertura futura. O início da cobertura respeita o histórico. Emita a mensalidade e confira o Pix no extrato em operações separadas."}
       featured
       sectionId="aplicar-assinatura"
       openInitially
@@ -142,7 +142,7 @@ export function ContractForms({ shop, actor }: { shop: Shop; actor: string }) {
           title="Emitir mensalidade"
           ids={ids}
           context={context}
-          note="A emissão registra uma mensalidade no LPS Agenda. Não gera cobrança bancária automática."
+          note="A mensalidade é registrada no LPS Agenda. O crédito deve ser conferido em uma operação separada."
           fields={[
             { name: "month", label: "Competência a emitir", type: "month" },
           ]}

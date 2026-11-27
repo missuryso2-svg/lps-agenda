@@ -1,0 +1,3 @@
+PASS signed-in manager and operator HTTP 200, enforced nonce CSP, both trial flags disabled after QA.
+PASS listener 127.0.0.1:59334
+PASS listener 127.0.0.1:59881

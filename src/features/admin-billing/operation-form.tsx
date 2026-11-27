@@ -1,5 +1,7 @@
 "use client";
 
+import "@/lib/validation/browser-safe-zod";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { submitFinancialOperation, type Outcome } from "./actions";
@@ -56,6 +58,7 @@ export function OperationForm({
   );
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [pending, setPending] = useState(false);
+  const [invalidField, setInvalidField] = useState<string | null>(null);
   const busy = useRef(false),
     key = useRef(""),
     heading = useRef<HTMLHeadingElement>(null);
@@ -82,7 +85,9 @@ export function OperationForm({
   }
   function prepare(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget),
+    const submitted = e.currentTarget;
+    setInvalidField(null);
+    const form = new FormData(submitted),
       values: Record<string, string | boolean> = {};
     for (const f of fields)
       values[f.name] =
@@ -109,13 +114,18 @@ export function OperationForm({
       const field = fields.find(
         (f) => f.name === parsed.error.issues[0]?.path[0],
       );
-      setOutcome({
-        ok: false,
-        message: "Revise " + (field?.label ?? "os dados informados") + ".",
-      });
+      setOutcome({ ok: false, message: "Revise " + (field?.label ?? "os dados informados") + "." });
+      if (field) {
+        setInvalidField(field.name);
+        const control = submitted.elements.namedItem(field.name);
+        if (control instanceof HTMLElement) control.focus();
+      }
       return;
     }
     if (parsed.data.kind === "pix" && parsed.data.amount !== expectedCents) {
+      setInvalidField("amount");
+      const control = submitted.elements.namedItem("amount");
+      if (control instanceof HTMLElement) control.focus();
       setOutcome({
         ok: false,
         message: "O valor recebido deve ser igual ao valor integral exigível.",
@@ -168,9 +178,9 @@ export function OperationForm({
       data-featured={featured}
       open={openInitially || undefined}
     >
-      <summary ref={disclosure}>{title}</summary>
+      <summary ref={disclosure}>{title}<ChevronDown size={17} aria-hidden /></summary>
       <div className="fa-inset">
-        {note && <p>{note}</p>}
+        {note && <p className="fa-operation-note">{note}</p>}
         <dl className="fa-facts">
           {Object.entries(context).map(([k, v]) => (
             <div key={k}>
@@ -179,7 +189,7 @@ export function OperationForm({
             </div>
           ))}
         </dl>
-        <form onSubmit={prepare} hidden={!!review || !!outcome?.ok}>
+        <form method="post" onSubmit={prepare} hidden={!!review || !!outcome?.ok}>
           <div className="fa-fields">
             {fields.map((f) => (
               <label
@@ -188,7 +198,7 @@ export function OperationForm({
               >
                 {f.type === "checkbox" ? (
                   <>
-                    <input type="checkbox" name={f.name} required />
+                    <input type="checkbox" name={f.name} required aria-invalid={invalidField === f.name || undefined} aria-describedby={invalidField === f.name ? reviewId + "-feedback" : undefined} />
                     {f.label}
                   </>
                 ) : (
@@ -197,6 +207,8 @@ export function OperationForm({
                     {f.type === "select" ? (
                       <select
                         name={f.name}
+                        aria-invalid={invalidField === f.name || undefined}
+                        aria-describedby={invalidField === f.name ? reviewId + "-feedback" : undefined}
                         required
                         defaultValue={f.initial ?? ""}
                       >
@@ -212,6 +224,8 @@ export function OperationForm({
                     ) : f.type === "textarea" ? (
                       <textarea
                         name={f.name}
+                        aria-invalid={invalidField === f.name || undefined}
+                        aria-describedby={invalidField === f.name ? reviewId + "-feedback" : undefined}
                         defaultValue={f.initial}
                         required={!f.optional}
                         maxLength={f.maxLength}
@@ -220,6 +234,8 @@ export function OperationForm({
                       <input
                         type={f.type ?? "text"}
                         name={f.name}
+                        aria-invalid={invalidField === f.name || undefined}
+                        aria-describedby={invalidField === f.name ? reviewId + "-feedback" : undefined}
                         defaultValue={f.initial}
                         required={!f.optional}
                         min={f.min}
@@ -252,6 +268,7 @@ export function OperationForm({
             <h3 id={reviewId} tabIndex={-1} ref={heading}>
               Conferir antes de confirmar
             </h3>
+            {note && <p className="fa-operation-note">{note}</p>}
             <dl className="fa-facts">
               {Object.entries(context).map(([label, value]) => (
                 <div key={label}>
@@ -272,7 +289,7 @@ export function OperationForm({
                 </div>
               ))}
             </dl>
-            {outcome && !outcome.ok && <p role="alert">{outcome.message}</p>}
+            {outcome && !outcome.ok && <p className="fa-feedback" role="alert">{outcome.message}</p>}
             <div className="fa-review-actions">
               <button
                 className={destructive ? "fa-danger" : "fa-primary"}
@@ -289,10 +306,10 @@ export function OperationForm({
           </dialog>
         )}
         {!review && outcome && (
-          <p role={outcome.ok ? "status" : "alert"}>{outcome.message}</p>
+          <p id={reviewId + "-feedback"} className="fa-feedback" role={outcome.ok ? "status" : "alert"}>{outcome.message}</p>
         )}
         {outcome?.ok && kind !== "pix" && (
-          <button onClick={() => setOutcome(null)}>Nova operação</button>
+          <button type="button" onClick={() => setOutcome(null)}>Nova operação</button>
         )}
       </div>
     </details>

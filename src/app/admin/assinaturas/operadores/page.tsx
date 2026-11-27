@@ -1,58 +1,47 @@
 import { requireFinancialAdmin } from "@/lib/auth/financial-admin";
-import {
-  operators,
-  pageURL,
-  size,
-  type PageProps,
-} from "@/features/admin-billing/data";
+import { operators, pageURL, size, type PageProps } from "@/features/admin-billing/data";
 import { OperatorForm } from "@/features/admin-billing/forms";
-import { Paging } from "@/features/admin-billing/lists";
-import {
-  adminPath,
-  instant,
-  labels,
-} from "@/features/admin-billing/validation";
+import { Badge, Facts, Paging } from "@/features/admin-billing/lists";
+import { FinanceHeading } from "@/features/admin-billing/presentation";
+import { adminPath, instant, labels } from "@/features/admin-billing/validation";
+
 export default async function Operators({ searchParams }: PageProps) {
-  const { user } = await requireFinancialAdmin(true),
-    q = await searchParams,
-    rows = await operators(q),
-    path = adminPath + "/operadores";
+  const { user } = await requireFinancialAdmin(true);
+  const q = await searchParams;
+  const rows = await operators(q);
+  const path = adminPath + "/operadores";
   return (
     <>
-      <h1>Operadores financeiros</h1>
-      <OperatorForm actor={user.id} />
-      <h2>Concessões</h2>
-      <div className="fa-records">
-        {rows.slice(0, size).map((r) => (
-          <article key={r.id} className="fa-record">
-            <header>
-              <h3>
-                {labels[r.level]}
-                {r.user_id === user.id ? " · Sua conta" : ""}
-              </h3>
-              <span>{r.revoked_at ? "Revogado" : "Ativo"}</span>
-            </header>
-            <p>{r.user_id}</p>
-            <small>Concessão em {instant(r.granted_at)}</small>
-            {r.revoked_at ? (
-              <small>Revogação em {instant(r.revoked_at)}</small>
-            ) : (
-              <OperatorForm actor={user.id} target={r.user_id} />
-            )}
-          </article>
-        ))}
-      </div>
-      {!rows.length && (
-        <p className="fa-empty">Nenhuma concessão nesta página.</p>
-      )}
-      <Paging
-        first={q.apos ? path : null}
-        next={
-          rows.length > size
-            ? pageURL(path, q, { apos: rows[size - 1].id })
-            : null
-        }
-      />
+      <FinanceHeading title="Operadores financeiros" description="Gerencie o acesso de operadores e gestores ao painel financeiro." />
+      <section className="fa-panel" aria-labelledby="access-heading">
+        <h2 id="access-heading">Permissões</h2>
+        <p className="fa-muted">Operadores executam rotinas financeiras. Gestores também administram as concessões de acesso.</p>
+        <OperatorForm actor={user.id} />
+      </section>
+      <section className="fa-panel" aria-labelledby="grants-heading">
+        <h2 id="grants-heading">Concessões</h2>
+        <div className="fa-records">
+          {rows.slice(0, size).map(row => (
+            <article key={row.id} className="fa-record">
+              <header>
+                <h3>{labels[row.level]}{row.user_id === user.id ? " · Sua conta" : ""}</h3>
+                <Badge value={row.revoked_at ? "revoked" : "active"} label={row.revoked_at ? "Revogado" : "Ativo"} />
+              </header>
+              <Facts values={{
+                "Usuário Auth": row.user_id,
+                Concessão: instant(row.granted_at),
+                ...(row.revoked_at && { Revogação: instant(row.revoked_at) }),
+              }} />
+              {!row.revoked_at && <OperatorForm actor={user.id} target={row.user_id} />}
+            </article>
+          ))}
+        </div>
+        {!rows.length && <p className="fa-empty">Nenhuma concessão nesta página.</p>}
+        <Paging
+          first={q.apos ? path : null}
+          next={rows.length > size ? pageURL(path, q, { apos: rows[size - 1].id }) : null}
+        />
+      </section>
     </>
   );
 }

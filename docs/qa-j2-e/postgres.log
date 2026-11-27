@@ -1,0 +1,112 @@
+17.11
+33
+SUITE c1-finance
+psql:/tmp/j2e-postgres/c1-finance.sql:9: NOTICE:  PASS no grants at install
+psql:/tmp/j2e-postgres/c1-finance.sql:11: NOTICE:  PASS bootstrap once
+psql:/tmp/j2e-postgres/c1-finance.sql:24: NOTICE:  PASS privileged API cannot fabricate manual audit
+psql:/tmp/j2e-postgres/c1-finance.sql:26: NOTICE:  PASS anon denied
+psql:/tmp/j2e-postgres/c1-finance.sql:29: NOTICE:  PASS owner staff and legacy admin denied global read
+psql:/tmp/j2e-postgres/c1-finance.sql:30: NOTICE:  PASS unregistered cannot confirm
+psql:/tmp/j2e-postgres/c1-finance.sql:31: NOTICE:  PASS no direct operator grant
+psql:/tmp/j2e-postgres/c1-finance.sql:35: NOTICE:  PASS operator cannot grant or promote
+psql:/tmp/j2e-postgres/c1-finance.sql:36: NOTICE:  PASS operator directory contains shop
+psql:/tmp/j2e-postgres/c1-finance.sql:38: NOTICE:  PASS agreement replay
+psql:/tmp/j2e-postgres/c1-finance.sql:40: NOTICE:  PASS receipt binds commercial reference
+psql:/tmp/j2e-postgres/c1-finance.sql:41: NOTICE:  PASS invoice tenant mismatch
+psql:/tmp/j2e-postgres/c1-finance.sql:45: NOTICE:  PASS invoice amount equals negotiated
+psql:/tmp/j2e-postgres/c1-finance.sql:46: NOTICE:  PASS requires bank credit check
+psql:/tmp/j2e-postgres/c1-finance.sql:47: NOTICE:  PASS partial and excess refused
+psql:/tmp/j2e-postgres/c1-finance.sql:47: NOTICE:  PASS partial and excess refused
+psql:/tmp/j2e-postgres/c1-finance.sql:48: NOTICE:  PASS cannot settle across tenants
+psql:/tmp/j2e-postgres/c1-finance.sql:50: NOTICE:  PASS older invoice does not activate while current month is due
+psql:/tmp/j2e-postgres/c1-finance.sql:51: NOTICE:  PASS reference cannot be reused
+psql:/tmp/j2e-postgres/c1-finance.sql:57: NOTICE:  PASS posting fails atomically
+psql:/tmp/j2e-postgres/c1-finance.sql:59: NOTICE:  PASS rollback preserves unpaid invoice
+psql:/tmp/j2e-postgres/c1-finance.sql:64: NOTICE:  PASS current payment activates
+psql:/tmp/j2e-postgres/c1-finance.sql:65: NOTICE:  PASS exact replay
+psql:/tmp/j2e-postgres/c1-finance.sql:66: NOTICE:  PASS different payload after settlement
+psql:/tmp/j2e-postgres/c1-finance.sql:67: NOTICE:  PASS global financial totals
+psql:/tmp/j2e-postgres/c1-finance.sql:70: NOTICE:  PASS hold blocks booking despite paid coverage
+psql:/tmp/j2e-postgres/c1-finance.sql:77: NOTICE:  PASS resume refuses another overdue obligation
+psql:/tmp/j2e-postgres/c1-finance.sql:79: NOTICE:  PASS credit cannot clear administrative hold
+psql:/tmp/j2e-postgres/c1-finance.sql:82: NOTICE:  PASS adjustment unavailable even with reason
+psql:/tmp/j2e-postgres/c1-finance.sql:84: NOTICE:  PASS extra days cannot create payment
+psql:/tmp/j2e-postgres/c1-finance.sql:86: NOTICE:  PASS journal visible to operator
+psql:/tmp/j2e-postgres/c1-finance.sql:90: NOTICE:  PASS revocation denies same JWT read
+psql:/tmp/j2e-postgres/c1-finance.sql:91: NOTICE:  PASS revocation denies mutation and replay
+psql:/tmp/j2e-postgres/c1-finance.sql:93: NOTICE:  PASS cancellation retains all payments
+PASS c1-finance exit 0
+SUITE c1-concurrency
+psql:/tmp/j2e-postgres/c1-concurrency.sql:39: NOTICE:  PASS real waiter behind c1_a
+psql:/tmp/j2e-postgres/c1-concurrency.sql:45: NOTICE:  PASS parallel first agreements replay one pending contract
+psql:/tmp/j2e-postgres/c1-concurrency.sql:55: NOTICE:  PASS real waiter behind c1_a
+psql:/tmp/j2e-postgres/c1-concurrency.sql:60: NOTICE:  PASS different operation IDs cannot create duplicate first agreements
+psql:/tmp/j2e-postgres/c1-concurrency.sql:66: NOTICE:  PASS real waiter behind c1_a
+psql:/tmp/j2e-postgres/c1-concurrency.sql:69: NOTICE:  PASS parallel human issuance returns one invoice
+psql:/tmp/j2e-postgres/c1-concurrency.sql:75: NOTICE:  PASS real waiter behind c1_a
+psql:/tmp/j2e-postgres/c1-concurrency.sql:77: NOTICE:  PASS parallel Pix returns identical receipt
+psql:/tmp/j2e-postgres/c1-concurrency.sql:79: NOTICE:  PASS one settlement audit
+psql:/tmp/j2e-postgres/c1-concurrency.sql:96: NOTICE:  PASS real waiter behind c1_a
+psql:/tmp/j2e-postgres/c1-concurrency.sql:98: NOTICE:  PASS late credit keeps cancellation
+psql:/tmp/j2e-postgres/c1-concurrency.sql:101: NOTICE:  PASS late payment retained and access closed
+psql:/tmp/j2e-postgres/c1-concurrency.sql:107: NOTICE:  PASS worker claims due invoice
+psql:/tmp/j2e-postgres/c1-concurrency.sql:109: NOTICE:  PASS real waiter behind c1_worker
+psql:/tmp/j2e-postgres/c1-concurrency.sql:112: NOTICE:  PASS credit reconciles committed delinquency
+psql:/tmp/j2e-postgres/c1-concurrency.sql:114: NOTICE:  PASS one paid invoice with consistent coverage
+PASS c1-concurrency exit 0
+SUITE i31-capacity-cleanup
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:10: NOTICE:  PASS unenrolled booking is initially allowed
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:13: NOTICE:  PASS future pending agreement below cap blocks booking immediately
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:40: NOTICE:  PASS agreement above cap rejected after concurrent activation
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:44: NOTICE:  PASS team preserved and agreement rolled back
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:55: NOTICE:  PASS activation waits for contract and cannot exceed cap
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:59: NOTICE:  PASS agreement at exact cap and one active professional
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:67: NOTICE:  PASS administrative claim rejects another tenant key
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:75: NOTICE:  PASS claim racing a replacement preserves the referenced logo
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:80: NOTICE:  PASS retirement survives tenant deletion
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:81: NOTICE:  PASS deleted tenant can be reconciled
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:82: NOTICE:  PASS claim is repeatable
+psql:/tmp/j2e-postgres/i31-capacity-cleanup.sql:85: NOTICE:  PASS single audit entry and no premature acknowledgement
+PASS i31-capacity-cleanup exit 0
+SUITE automatic-premium-trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:14: NOTICE:  PASS automatic switch starts disabled
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:22: NOTICE:  PASS dedicated insertion role has no payment or update grants
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:26: NOTICE:  PASS public announcement follows local switch
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:28: NOTICE:  PASS anon cannot create or claim
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:32: NOTICE:  PASS unconfirmed owner cannot start a trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:36: NOTICE:  PASS same owner and identifier is an idempotent retry
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:38: NOTICE:  PASS owner sees unclaimed trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:39: NOTICE:  PASS owner can claim welcome once
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:40: NOTICE:  PASS reload cannot claim welcome again
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:41: NOTICE:  PASS owner cannot turn on offer
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:43: NOTICE:  PASS owner cannot write grant
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:45: NOTICE:  PASS owner cannot register a financial agreement
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:48: NOTICE:  PASS owner of another tenant cannot read trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:50: NOTICE:  PASS owner of another tenant cannot claim welcome
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:58: NOTICE:  PASS staff cannot read the owner trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:62: NOTICE:  PASS historical owner and invited staff do not get grants
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:64: NOTICE:  PASS original pending contract remains
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:71: NOTICE:  PASS real Premium catalog and exact 604800 seconds with no billing terms
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:74: NOTICE:  PASS active at start and immediately before exact expiry
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:77: NOTICE:  PASS at exact expiry and immediately after, bookings stop
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:79: NOTICE:  PASS expiry evaluation creates no payment
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:84: NOTICE:  PASS Data API service role cannot alter the trial plan or time
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:86: NOTICE:  PASS Data API service role cannot delete the subscription directly
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:91: NOTICE:  PASS Premium rejects the eleventh active professional
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:102: NOTICE:  PASS operator sees automatic Premium in existing directory
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:105: NOTICE:  PASS early conversion requires explicit booking impact consent through Data API
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:107: NOTICE:  PASS downgrade above the agreed cap is rejected
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:112: NOTICE:  PASS failed downgrade preserves ten professionals, full trial and no payment
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:121: NOTICE:  PASS early conversion is pending and operation is idempotent
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:126: NOTICE:  PASS pending conversion ends free booking without writing a payment
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:134: NOTICE:  PASS directory classifies only verified Pix as conversion
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:139: NOTICE:  PASS verified manual Pix restores coverage; original trial history is intact
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:152: NOTICE:  PASS tenant deletion preserves history and recreation never grants again
+PASS automatic-premium-trial exit 0
+SUITE automatic-premium-trial-concurrency
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:8: NOTICE:  PASS concurrency starts with release disabled
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:47: NOTICE:  PASS parallel distinct requests grant one Premium period
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:54: NOTICE:  PASS first concurrent window claims welcome
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:61: NOTICE:  PASS concurrent second window cannot claim again
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:75: NOTICE:  PASS invitation committed first disqualifies the competing onboarding
+PASS automatic-premium-trial-concurrency exit 0

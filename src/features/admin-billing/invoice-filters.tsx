@@ -8,7 +8,7 @@ export function InvoiceFilters({
   optionalMonth?: boolean;
 }) {
   return (
-    <form className="fa-filters">
+    <form method="get" className="fa-filters">
       <label>
         Competência
         <input
@@ -28,7 +28,7 @@ export function InvoiceFilters({
           <option value="cancelled">Canceladas</option>
         </select>
       </label>
-      <button>Filtrar</button>
+      <button className="fa-primary">Filtrar</button>
     </form>
   );
 }

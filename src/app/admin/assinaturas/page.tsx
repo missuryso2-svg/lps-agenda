@@ -1,66 +1,76 @@
 import Link from "next/link";
-import { CircleDollarSign, Clock3 } from "lucide-react";
-import {
-  overview,
-  selectedMonth,
-  type PageProps,
-} from "@/features/admin-billing/data";
+import { ArrowRight, Banknote, Clock3, Store } from "lucide-react";
+
+import { overview, selectedMonth, type PageProps } from "@/features/admin-billing/data";
+import { FinanceHeading } from "@/features/admin-billing/presentation";
 import { adminPath, money, period } from "@/features/admin-billing/validation";
 
 export default async function Overview({ searchParams }: PageProps) {
-  const m = selectedMonth(await searchParams),
-    data = await overview(m);
+  const m = selectedMonth(await searchParams);
+  const data = await overview(m);
   const counts = [
     ["Barbearias cadastradas", data.shops],
     ["Contratos manuais ativos", data.active],
     ["Contratos manuais pendentes", data.pending],
     ["Contratos manuais em atraso", data.past_due],
   ] as const;
+  const bills = adminPath + "/mensalidades?mes=" + m + "&situacao=";
+
   return (
     <>
-      <h1>Visão financeira</h1>
-      <form className="fa-filters">
-        <label>
-          Competência
-          <input type="month" name="mes" defaultValue={m} required />
-        </label>
-        <button>Aplicar</button>
-      </form>
-      <h2>Mensalidades de {period(m)}</h2>
-      <div className="fa-metrics fa-money">
-        <div className="fa-metric">
-          <span><CircleDollarSign size={17} /> Recebido</span>
-          <strong>{money(data.received_cents)}</strong>
-        </div>
-        <div className="fa-metric">
-          <span><Clock3 size={17} /> Em aberto</span>
-          <strong>{money(data.open_cents)}</strong>
-        </div>
-      </div>
-      <div className="fa-paging">
-        <Link href={adminPath + "/mensalidades?mes=" + m + "&situacao=pending"}>
-          {data.pending_invoices} pendentes
+      <FinanceHeading title="Visão financeira" description="Acompanhe recebimentos, mensalidades e a carteira de barbearias.">
+        <Link className="fa-button" href={adminPath + "/barbearias"}>
+          <Store size={17} aria-hidden /> Consultar barbearias
         </Link>
-        <Link href={adminPath + "/mensalidades?mes=" + m + "&situacao=overdue"}>
-          {data.overdue_invoices} vencidas
-        </Link>
-      </div>
-      <small>
-        As contagens de pendentes e vencidas seguem a situação registrada de
-        cada mensalidade.
-      </small>
-      <h2>Carteira atual</h2>
-      <div className="fa-metrics">
-        {counts.map(([label, n]) => (
-          <div className="fa-metric" key={label}>
-            <span>{label}</span>
-            <strong>{n}</strong>
+      </FinanceHeading>
+
+      <section className="fa-panel fa-panel-main" aria-labelledby="monthly-heading">
+        <header className="fa-section-head">
+          <div>
+            <h2 id="monthly-heading">Mensalidades de {period(m)}</h2>
+            <p>Por competência das assinaturas manuais. Em aberto inclui parcelas pendentes e vencidas.</p>
           </div>
-        ))}
-      </div>
-      <p className="fa-paging">
-        <Link href={adminPath + "/barbearias"}>Consultar barbearias →</Link>
-      </p>
+          <form method="get" className="fa-filters fa-filters-inline">
+            <label>
+              Competência
+              <input type="month" name="mes" defaultValue={m} required />
+            </label>
+            <button>Aplicar</button>
+          </form>
+        </header>
+        <dl className="fa-metrics fa-money">
+          <div className="fa-metric fa-received">
+            <dt><Banknote size={19} aria-hidden /> Recebido</dt>
+            <dd>{money(data.received_cents)}</dd>
+          </div>
+          <div className="fa-metric">
+            <dt><Clock3 size={18} aria-hidden /> Em aberto</dt>
+            <dd>{money(data.open_cents)}</dd>
+          </div>
+        </dl>
+        <ul className="fa-shortcuts">
+          <li><Link href={bills + "pending"}>{data.pending_invoices} {data.pending_invoices === 1 ? "pendente" : "pendentes"} <ArrowRight size={16} aria-hidden /></Link></li>
+          <li><Link href={bills + "overdue"}>{data.overdue_invoices} {data.overdue_invoices === 1 ? "vencida" : "vencidas"} <ArrowRight size={16} aria-hidden /></Link></li>
+        </ul>
+      </section>
+
+      <section className="fa-panel" aria-labelledby="portfolio-heading">
+        <header className="fa-section-head">
+          <div>
+            <h2 id="portfolio-heading">Carteira atual</h2>
+            <p>Situação registrada dos contratos manuais.</p>
+          </div>
+          <Link href={adminPath + "/barbearias?origem=trial"}>Consultar trials <ArrowRight size={16} aria-hidden /></Link>
+        </header>
+        <dl className="fa-metrics fa-portfolio">
+          {counts.map(([label, n]) => (
+            <div className="fa-metric" key={label}>
+              <dt>{label}</dt>
+              <dd>{n}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
     </>
   );
 }

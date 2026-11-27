@@ -1,0 +1,9 @@
+PASS git fsck --full --no-dangling --no-progress
+PASS git diff --check on approved range
+PASS 8 linear commits, ancestry verified, tree clean before/after integration
+PASS git merge --ff-only
+main previous 1ce461f139b09280a779c0e0662a706bb4723405
+main integrated e013b4a8be6aceb43b73ca6fe4fb4ab674ec6bb1
+codex/redesign-j2 e013b4a8be6aceb43b73ca6fe4fb4ab674ec6bb1
+origin/main local tracking ref 8d1e18bdb1c515d2f29cfbd7f29b976a0092b9e0
+codex/pre-launch-k1 created at e013b4a8be6aceb43b73ca6fe4fb4ab674ec6bb1 in permanent worktree

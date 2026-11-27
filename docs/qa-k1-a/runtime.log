@@ -1,0 +1,6 @@
+PASS Node HTTP 200 and enforced nonce CSP /
+PASS Node HTTP 200 and enforced nonce CSP /login
+PASS Node HTTP 200 and enforced nonce CSP /cadastro
+PASS anonymous financial page redirects to login
+PASS no QA service-role value in 62 public Next static assets
+PASS SQL test inputs in local container match e013b4a

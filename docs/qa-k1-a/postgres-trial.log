@@ -1,0 +1,48 @@
+Base URL 127.0.0.1:59881 · QA Docker
+17.11
+PASS local Git/QA migration count 33
+PASS both gates disabled before tests
+SUITE automatic-premium-trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:14: NOTICE:  PASS automatic switch starts disabled
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:22: NOTICE:  PASS dedicated insertion role has no payment or update grants
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:26: NOTICE:  PASS public announcement follows local switch
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:28: NOTICE:  PASS anon cannot create or claim
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:32: NOTICE:  PASS unconfirmed owner cannot start a trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:36: NOTICE:  PASS same owner and identifier is an idempotent retry
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:38: NOTICE:  PASS owner sees unclaimed trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:39: NOTICE:  PASS owner can claim welcome once
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:40: NOTICE:  PASS reload cannot claim welcome again
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:41: NOTICE:  PASS owner cannot turn on offer
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:43: NOTICE:  PASS owner cannot write grant
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:45: NOTICE:  PASS owner cannot register a financial agreement
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:48: NOTICE:  PASS owner of another tenant cannot read trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:50: NOTICE:  PASS owner of another tenant cannot claim welcome
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:58: NOTICE:  PASS staff cannot read the owner trial
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:62: NOTICE:  PASS historical owner and invited staff do not get grants
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:64: NOTICE:  PASS original pending contract remains
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:71: NOTICE:  PASS real Premium catalog and exact 604800 seconds with no billing terms
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:74: NOTICE:  PASS active at start and immediately before exact expiry
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:77: NOTICE:  PASS at exact expiry and immediately after, bookings stop
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:79: NOTICE:  PASS expiry evaluation creates no payment
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:84: NOTICE:  PASS Data API service role cannot alter the trial plan or time
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:86: NOTICE:  PASS Data API service role cannot delete the subscription directly
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:91: NOTICE:  PASS Premium rejects the eleventh active professional
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:102: NOTICE:  PASS operator sees automatic Premium in existing directory
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:105: NOTICE:  PASS early conversion requires explicit booking impact consent through Data API
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:107: NOTICE:  PASS downgrade above the agreed cap is rejected
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:112: NOTICE:  PASS failed downgrade preserves ten professionals, full trial and no payment
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:121: NOTICE:  PASS early conversion is pending and operation is idempotent
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:126: NOTICE:  PASS pending conversion ends free booking without writing a payment
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:134: NOTICE:  PASS directory classifies only verified Pix as conversion
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:139: NOTICE:  PASS verified manual Pix restores coverage; original trial history is intact
+psql:/tmp/j2e-postgres/automatic-premium-trial.sql:152: NOTICE:  PASS tenant deletion preserves history and recreation never grants again
+PASS suite exit 0 automatic-premium-trial
+SUITE automatic-premium-trial-concurrency
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:8: NOTICE:  PASS concurrency starts with release disabled
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:47: NOTICE:  PASS parallel distinct requests grant one Premium period
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:54: NOTICE:  PASS first concurrent window claims welcome
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:61: NOTICE:  PASS concurrent second window cannot claim again
+psql:/tmp/j2e-postgres/automatic-premium-trial-concurrency.sql:75: NOTICE:  PASS invitation committed first disqualifies the competing onboarding
+PASS suite exit 0 automatic-premium-trial-concurrency
+PASS both gates disabled after tests
+PASS exact set of 33 migration version IDs in Git and QA

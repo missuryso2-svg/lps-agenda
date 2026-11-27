@@ -1,0 +1,2 @@
+PASS workerd HTTP 200 and enforced nonce CSP /
+PASS workerd HTTP 200 and enforced nonce CSP /login

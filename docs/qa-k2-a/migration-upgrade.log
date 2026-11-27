@@ -1,0 +1,10 @@
+PASS isolated fresh baseline has 29 CLI-tracked migrations
+PASS SQL replay 20261123120000_phase_i3_manual_agreements_and_logos.sql
+PASS SQL replay 20261125005128_phase_i31_contract_capacity_logo_reconciliation.sql
+PASS SQL replay 20261125085435_phase_i4_appointment_price_integrity.sql
+PASS SQL replay 20261126095208_automatic_premium_trial.sql
+PASS SQL replay 20261127093958_k1b_appointment_lifecycle.sql
+PASS SQL replay 20261127094648_k1b_private_photo_reconciliation.sql
+PASS SQL replay 20261127094922_k1b_financial_trial_directory.sql
+PASS existing synthetic tenant retained, both gates off, photo privacy and public logo correct, lifecycle trigger installed
+Scope: psql exercised exact SQL 30–36. CLI ledger bookkeeping is covered by prior fresh 36 replay.

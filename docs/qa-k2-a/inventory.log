@@ -1,0 +1,41 @@
+K2-A sanitized read-only inventory, 27/11/2026.
+PASS Git history connectivity, ancestry, linear history, clean checkout and diff check.
+PASS main advanced e013b4a -> a160096 by --ff-only; staging branch created at same base.
+PASS git ls-remote origin: HEAD -> refs/heads/main at 8d1e18bdb1c515d2f29cfbd7f29b976a0092b9e0.
+Vercel connector: project lps-agenda, Node 26.x, latest production deployment READY, meta Git main/8d1e18b, SSO all.
+Vercel connector: apex project domain marked verified; www also listed. DNS observed NS a.auto.dns.br / b.auto.dns.br, apex no A/AAAA/CNAME, www NXDOMAIN.
+Supabase connector: lps-agenda healthy, us-east-1, organization plan free, Postgres 17.11, max_connections 60.
+Supabase read-only catalog: barber-photos private, 524288 bytes, image/webp. Manual gate false; automatic gate relation absent.
+Extensions: btree_gist, pg_stat_statements, pgcrypto, plpgsql, supabase_vault, uuid-ossp.
+PASS hosted migration list is exactly the first 29 local versions and names.
+20261108090000 extensions_and_enums
+20261108090100 core_tables
+20261108090200 scheduling_tables
+20261108090300 billing_and_operations
+20261108090400 functions_and_triggers
+20261108090500 rls_policies
+20261108090600 grants_and_hardening
+20261113120000 public_booking
+20261114100000 billing_asaas_enums
+20261114100100 billing_asaas
+20261114100200 plan_catalog
+20261114100300 barber_plan_limit
+20261114100400 trial_operation
+20261115120000 subscription_cancel_reason
+20261115130000 subscription_checkout_concurrency
+20261115140000 billing_checkout_fencing_and_cleanup
+20261116100000 billing_concurrency_hardening
+20261116120000 subscription_booking_grace_period
+20261117120000 asaas_payment_transition_guard
+20261118120000 manual_billing_foundation
+20261118130000 manual_trial_onboarding
+20261118140000 manual_trial_access
+20261119120000 manual_billing_operations
+20261119160000 financial_operators
+20261119200000 financial_dashboard
+20261120142304 owner_manual_plan_details
+20261120160000 financial_cutover_health
+20261120170000 private_barber_photos
+20261120180000 scheduling_operations
+Cloudflare Wrangler 4.168.0 whoami: unauthenticated. Account plan and zones unverified.
+Supabase hosted Auth management settings unverified. No credentials or customer records included.

@@ -1,13 +1,26 @@
 # Homologação protegida K2
 
+A K2-A foi concluída como preparação local. O inventário de conta, a comparação de custos verificada e a decisão por recurso estão no [parecer K2-A](staging-k2-a.md). O único template local é o [Wrangler K2](../wrangler.k2-staging.jsonc). Sem autorização da K2-B ficam fechados ingressos, criação de recursos e alterações externas.
+
 ## Sequência autorizável
 
 1. Aprovar orçamento, responsáveis, critérios de aborto e identificadores de recursos. Separar Workers, Supabase, buckets, domínio, e-mail, Turnstile e secrets do ambiente comercial. Abastecer exclusivamente com fixtures sintéticas. Registrar permissões e plano atual em leitura antes de provisionar. Nenhum recurso foi contratado nesta preparação.
 2. Usar a versão de Next e OpenNext do lockfile, o Wrangler e o compatibility_date aprovados na J1.1. Usar config explícita por ambiente, binding IMAGES e runtime Node compatível. Definir URL canônica HTTPS, Supabase URL e chave pública, guardar chave administrativa, SMTP e Turnstile em secrets do ambiente, impedir herança da produção. A Vercel fica disponível para rollback com versão e ambiente compatíveis. Data API via SDK HTTPS e RPC. [J1](cloudflare-migration-j1.md) · [J1.1](cloudflare-images-j1-1.md).
-3. Proteger host de staging com Cloudflare Access e política deny-by-default para pessoas convidadas e credencial de serviço de CI rotacionável. Proteger inclusive previews, desativar URL alternativa ou exigir equivalente, testar acesso anônimo, expirado e direto. Readiness pode expor apenas status sem detalhes, sob política definida. Encenar o fluxo de link de e-mail em browser autorizado pelo Access. [Access](https://developers.cloudflare.com/cloudflare-one/access-controls/).
+3. Aplicar Cloudflare Access em nível do Worker com escopo All traffic antes de ligar o host de staging. Usar política deny-by-default para pessoas convidadas e credencial Service Auth de CI rotacionável. Proteger inclusive previews, desativar URL alternativa ou exigir equivalente, testar acesso anônimo, expirado e direto. Readiness pode expor apenas status sem detalhes, sob política definida. Encenar o fluxo de link de e-mail em browser autorizado pelo Access. [Access](https://developers.cloudflare.com/cloudflare-one/access-controls/).
 4. Reproduzir versão, extensão, grants e ledger antes de qualquer apply aprovado. Preparar backup e rollback por compatibilidade, testar 30–36 em ordem, gates fechados. Repetir RLS por perfil, prova de Data API fora do domínio, concorrência, Pix idempotente e reconciliação por Storage real. Autorizar separadamente qualquer adição de permissão no banco. [Inventário](supabase-migration-inventory-k1-c.md) · [Backup](backup-and-restore.md).
 5. Validar CSP estrita com nonce e sem unsafe-eval, cookies Secure em HTTPS, SameSite e revogação, HSTS e headers de proteção. Cookies, admin, callback, dashboards, reservas com token e conteúdo nonce não passam por cache compartilhado. Assets versionados podem ter cache longo. Ensaiar bypass de cookie, sessão trocada e par de tenants. Conferir binding de imagens com fixtures de formatos, corrupção, animação, bytes/pixels, remoção de metadados, erro do serviço e orçamento.
 6. Começar com observação e limites baixos de dados, executar sondas sintéticas de leitura/escrita e carga progressiva, comparar CPU, memória, latência, logs e custo. Definir teto de gastos com alertas anteriores à parada. Avaliar falso positivo e comportamento fail-closed em escrita sensível. A aprovação da K2 exige aceitar resultados medidos, incluindo operação sustentada e plano de restauração completo.
+
+## Parâmetros mínimos antes do primeiro build hospedado
+
+| Entrega | Responsável e validação |
+| --- | --- |
+| Conta e hostname | Operações confirma conta, zona exclusiva de QA, hostname HTTPS, Worker e projeto Supabase distintos. O hostname autorizado será inserido só após Access. Validar no build que nenhum ref, domínio ou URL comercial foi selecionado. |
+| Configuração pública | Operações fornece NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY do Supabase de staging por ambiente de build. A aplicação monta callbacks e QR Code com essa origem. Verificar callback /auth/callback, redefinição, QR, cookies e Origin em HTTPS. |
+| Segredos de runtime | Configurar SUPABASE_SERVICE_ROLE_KEY exclusivamente no Worker de staging. Manter no cofre administrativo os segredos SMTP, Turnstile e Service Auth. Separar credencial de PostgreSQL do DBA e restringir à janela de migration. O código e o bundle público são verificados sem incluir valores. |
+| Políticas | Fixar CSP_ENFORCE e LPS_WORKERS_CSP_FINALIZE em true. Manter ADM de financeiro com papéis separados. Deixar trial, cobrança automática, Asaas, cron e AdSense desativados antes da homologação controlada. A borda permite apenas identidades de QA autorizadas. |
+
+Escolher dois ensaios de schema. Primeiro, criar do zero e comprovar as 36 versões. Segundo, inicializar as 29 em um destino isolado, inserir fixture e aplicar 30–36 pela CLI nesse destino. Se um segundo projeto for necessário para o ensaio simultâneo, aprovar seu custo antes de criar. O ensaio local incremental já verificou os mesmos arquivos SQL com psql. [Inventário e evidências](staging-k2-a.md#migrations-recuperação-e-execução-da-k2-c).
 
 ## Segurança de borda e Supabase
 

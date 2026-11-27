@@ -1,0 +1,15 @@
+ ⛅️ wrangler 4.168.0 (update available 4.169.0)
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+✨ Read 84 files from the assets directory /work/.open-next/assets
+Total Upload: 13401.52 KiB / gzip: 2910.77 KiB
+Your Worker has access to the following bindings:
+Binding                                                          Resource
+env.WORKER_SELF_REFERENCE (lps-agenda-staging-k2)                Worker
+env.UPLOAD_IMAGES                                                Images
+env.ASSETS                                                       Assets
+env.CSP_ENFORCE ("true")                                         Environment Variable
+env.MANUAL_TRIAL_ONBOARDING_ENABLED ("false")                    Environment Variable
+env.ADSENSE_ENABLED ("false")                                    Environment Variable
+env.LPS_WORKERS_CSP_FINALIZE ("true")                            Environment Variable
+env.LPS_IMAGE_PROCESSOR ("cloudflare")                           Environment Variable
+--dry-run: exiting now.

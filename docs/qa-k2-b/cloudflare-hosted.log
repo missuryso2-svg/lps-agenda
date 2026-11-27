@@ -1,0 +1,31 @@
+K2-B hosted staging evidence | 2026-11-27 | sanitized operator record
+Source revision: 4714cb0
+Org subscription inventory: Teams Free Base, USD 0. No paid subscription provisioned.
+Images dashboard before smoke: 0 of 5000 transformations. No Cloudflare-managed zone.
+Wrangler OAuth Access app create: HTTP 403 / 1010. Individual app and policy reads: HTTP 403.
+Panel used for Access. No new API token or payment instrument created.
+
+PASS deny-only bootstrap 23399ebe-c715-481e-a29a-0f508f9ef5ae, workers_dev=false, preview_urls=false, routes=[]
+PASS dashboard Worker Access scope All traffic; exactly one Allow with one exact email; no Bypass
+Access application ID b1e715df-fcfd-478b-be07-856744edb97a
+Access policy ID c353610d-d823-46a2-a273-ddea5aae9fbb
+PASS before app deployment, anonymous GET /, /login, /api/barbershop/logo, /_next/static/chunks/k2b-probe.js -> HTTP 302 to Access
+PASS after protected deployment, anonymous GET /, /login, /api/barbershop/logo, /brand/lps.webp -> HTTP 302 to Access
+PASS authenticated browser owner session received LPS Agenda landing and login
+PASS Policy Tester accepted owner and denied a synthetic unlisted email; no second live identity exercised
+PASS Workers API enabled=true, previews_enabled=false; custom Worker domains empty
+PASS version prefix 06626ad5 preview HTTP 404
+PASS active version 06626ad5-b1a6-422e-bfa9-3b806cf1361b at 100%
+Binding: env.UPLOAD_IMAGES Images
+Staging source and observed write destination: kffhoimijhsddodqxezs.supabase.co
+PASS synthetic app owner password sign-in, dashboard, daily schedule, settings
+PASS QR rendered and PDF downloaded; valid PDF signature, 84168 bytes
+PASS hosted PNG upload -> exactly one WebP, 320x240, image/webp, 292 bytes, decodable
+PASS fixture cleanup; read-only staging counts auth_users=0 barbershops=0 media_objects=0
+
+Workers GraphQL workersInvocationsAdaptive, lps-agenda-staging, datetime_geq=2026-11-27T23:11:30Z
+requests=50 errors=0 cpu_p50_us=15636 cpu_p99_us=496844 wall_p50_us=171448 wall_p99_us=2318879
+Workers dashboard in smoke window: cpu_p90_ms=229.887
+Isolate V8 memory bytes: p50=23650304 p90=29718688 p99=31288844
+Dashboard resource errors for selected interval: exceeded_cpu=0 exceeded_memory=0
+Median CPU above documented Free nominal limit; no sustained load inference.

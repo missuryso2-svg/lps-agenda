@@ -1253,6 +1253,22 @@ describe("actions públicas e rate limiting", () => {
     expect(db.getRows("appointments")).toHaveLength(1);
   });
 
+  it("separa o limite de telefone por barbearia sem alterar o sinal de IP", async () => {
+    const db = setupDb(baseSeed({ appointments: [] }));
+    const calls: string[] = [];
+    db.setRpcHandler("consume_booking_rate_limit", (args) => {
+      calls.push(String(args.p_bucket));
+      return true;
+    });
+
+    await createPublicBookingAction(actionBookingInput());
+    await createPublicBookingAction(actionBookingInput({ slug: SLUG_B }));
+
+    expect(calls).toHaveLength(4);
+    expect(calls[0]).toBe(calls[2]);
+    expect(calls[1]).not.toBe(calls[3]);
+  });
+
   it("não persiste telefone nem IP no bucket de rate limit", async () => {
     const db = setupDb(baseSeed({ appointments: [] }));
     const calls: FakeRow[] = [];

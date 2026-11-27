@@ -123,7 +123,7 @@ export async function createPublicBookingAction(
   try {
     const supabase = createAdminClient();
     const ipHash = hashRateLimitKey(await getClientIp());
-    const phoneHash = hashRateLimitKey(parsed.data.phone);
+    const phoneHash = hashRateLimitKey(parsed.data.slug + ":" + parsed.data.phone);
 
     const ipLimit = await checkRateLimit(
       supabase,

@@ -82,7 +82,7 @@ try {
       assert.ok(qr?.startsWith("data:image/png;base64,"));
       const { data, info } = await sharp(Buffer.from(qr.split(",")[1], "base64")).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
       const decoded = jsQR(new Uint8ClampedArray(data), info.width, info.height)?.data;
-      assert.equal(decoded, "https://agenda.example.org" + path);
+      assert.equal(decoded, new URL(path, process.env.NEXT_PUBLIC_APP_URL).href);
       path = new URL(decoded).pathname;
       console.log("PASS decoded Worker QR points to the shop subsequently booked");
     } finally {

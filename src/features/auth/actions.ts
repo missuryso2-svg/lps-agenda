@@ -81,7 +81,7 @@ export async function signUpAction(values: unknown): Promise<ActionState> {
     },
   });
 
-  if (error) {
+  if (error && error.code !== "email_exists" && error.code !== "user_already_exists") {
     return actionError(authErrorMessage(error));
   }
 
@@ -90,7 +90,7 @@ export async function signUpAction(values: unknown): Promise<ActionState> {
   }
 
   return actionSuccess(
-    "Cadastro recebido. Enviamos um link de confirmação para o seu e-mail. Confira também a caixa de spam.",
+    "Cadastro recebido. Se o pedido puder ser confirmado, você receberá um link por e-mail. Confira também a caixa de spam.",
   );
 }
 

@@ -3,8 +3,6 @@ import type { AuthError } from "@supabase/supabase-js";
 const messages: Record<string, string> = {
   invalid_credentials: "E-mail ou senha inválidos.",
   email_not_confirmed: "Confirme seu e-mail antes de entrar.",
-  email_exists: "Já existe uma conta com este e-mail.",
-  user_already_exists: "Já existe uma conta com este e-mail.",
   weak_password: "A senha não atende aos requisitos mínimos de segurança.",
   over_email_send_rate_limit:
     "Muitos e-mails enviados em pouco tempo. Aguarde alguns minutos e tente novamente.",

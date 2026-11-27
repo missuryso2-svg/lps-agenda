@@ -249,7 +249,7 @@ export async function rescheduleAppointmentAction(
 
   const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
-    .select("id, barber_id, service_id, status")
+    .select("id, barber_id, service_id, status, starts_at, ends_at")
     .eq("id", parsedId.data)
     .eq("barbershop_id", barbershopId)
     .maybeSingle();
@@ -306,6 +306,8 @@ export async function rescheduleAppointmentAction(
     .eq("id", appointment.id)
     .eq("barbershop_id", barbershopId)
     .eq("status", appointment.status)
+    .eq("starts_at", appointment.starts_at)
+    .eq("ends_at", appointment.ends_at)
     .select("id")
     .maybeSingle();
 

@@ -369,6 +369,8 @@ export async function cancelPublicReservation({
     })
     .eq("id", appointment.id)
     .eq("barbershop_id", shop.id)
+    .eq("public_token", token)
+    .gt("starts_at", now.toISOString())
     .in("status", ["scheduled", "confirmed"])
     .select("id")
     .maybeSingle();

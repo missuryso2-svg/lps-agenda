@@ -1,3 +1,4 @@
+import "./browser-safe-zod";
 import { z } from "zod";
 
 export const CUSTOMER_NAME_MAX = 120;

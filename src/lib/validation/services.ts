@@ -1,3 +1,4 @@
+import "./browser-safe-zod";
 import { z } from "zod";
 
 export const MAX_SERVICE_PRICE_CENTS = 100_000_000;

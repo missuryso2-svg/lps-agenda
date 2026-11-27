@@ -1,0 +1,5 @@
+{"database_backup_ms":569,"database_restore_ms":1747,"media_bytes":3662}
+PASS restored SQL schema and data, exact source ledger (33 versions), Auth row, ownership scoping, RLS, price and three K1-B routines
+PASS restored Storage metadata and separate byte copy verified against the original API download
+PASS destination Storage API re-import and byte-for-byte redownload in the restored database
+Scope: separate local database in a QA cluster with shared roles. Hosted Auth settings and managed backup recovery remain unverified.

@@ -1,0 +1,560 @@
+PASS fresh 36-migration local replay
+SUITE i4-security
+psql:i4-security.sql:6: NOTICE:  PASS every public table has RLS
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:i4-security.sql:9: NOTICE:  PASS public SECURITY DEFINER functions pin search_path
+ verify
+--------
+
+(1 row)
+
+psql:i4-security.sql:14: NOTICE:  PASS no public SECURITY DEFINER executable by anon
+psql:i4-security.sql:15: NOTICE:  PASS private schema not available to anon
+ verify
+--------
+
+(1 row)
+
+psql:i4-security.sql:35: NOTICE:  PASS staff cannot read another tenant customers
+                                                        set_config
+---------------------------------------------------------------------------------------------------------------------------
+ {"sub": "[synthetic-id]", "role": "authenticated", "user_metadata": {"lps_role": "platform_admin"}}
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:i4-security.sql:36: NOTICE:  PASS user_metadata cannot grant platform authority
+psql:i4-security.sql:38: NOTICE:  PASS staff cannot update another tenant customers
+ verify
+--------
+
+(1 row)
+
+psql:i4-security.sql:39: NOTICE:  PASS cannot insert in another tenant
+ rejected
+----------
+
+(1 row)
+
+psql:i4-security.sql:40: NOTICE:  PASS staff cannot grant own owner role
+ rejected
+----------
+
+(1 row)
+
+psql:i4-security.sql:41: NOTICE:  PASS membership remains staff
+ verify
+--------
+
+(1 row)
+
+psql:i4-security.sql:42: NOTICE:  PASS staff cannot rewrite completed price
+ rejected
+----------
+
+(1 row)
+
+ rejected
+----------
+
+(1 row)
+
+psql:i4-security.sql:43: NOTICE:  PASS staff cannot forge author
+psql:i4-security.sql:48: NOTICE:  PASS insertion derives canonical price and actual author
+ verify
+--------
+
+(1 row)
+
+ complete_rated_appointment
+----------------------------
+
+(1 row)
+
+ set_config
+------------
+ {}
+(1 row)
+
+                                set_config
+--------------------------------------------------------------------------
+ {"sub": "[synthetic-id]", "role": "authenticated"}
+(1 row)
+
+psql:i4-security.sql:55: NOTICE:  PASS owner cannot rewrite completed price
+ rejected
+----------
+
+(1 row)
+
+ verify
+psql:i4-security.sql:58: NOTICE:  PASS catalog update preserves historical price
+--------
+
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:i4-security.sql:59: NOTICE:  PASS human insertion audited
+psql:i4-security.sql:63: NOTICE:  PASS trusted service correction remains audited
+ verify
+--------
+
+(1 row)
+
+PASS suite exit 0 i4-security
+SUITE i4-rate-concurrency
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+psql:i4-rate-concurrency.sql:7: NOTICE:  PASS first rate claim allowed
+ verify
+--------
+
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:i4-rate-concurrency.sql:18: NOTICE:  PASS concurrent claim cannot exceed limit
+ allowed
+---------
+(0 rows)
+
+ dblink_disconnect
+-------------------
+ OK
+(1 row)
+
+PASS suite exit 0 i4-rate-concurrency
+SUITE k1b-appointment-concurrency
+psql:k1b-appointment-concurrency.sql:4: NOTICE:  extension "dblink" already exists, skipping
+ dblink_connect
+----------------
+ OK
+ OK
+(2 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ completed
+-----------
+
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:k1b-appointment-concurrency.sql:53: NOTICE:  PASS cancel waits behind in-flight rated completion
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ id
+----
+(0 rows)
+
+psql:k1b-appointment-concurrency.sql:62: NOTICE:  PASS the waiting update revalidated the committed state
+ verify
+--------
+
+(1 row)
+
+psql:k1b-appointment-concurrency.sql:68: NOTICE:  PASS one committed completion, preserved price and rating
+ dblink_disconnect | dblink_disconnect
+-------------------+-------------------
+ OK                | OK
+(1 row)
+
+PASS suite exit 0 k1b-appointment-concurrency
+SUITE c1-concurrency
+psql:c1-concurrency.sql:5: NOTICE:  extension "dblink" already exists, skipping
+     bootstrap_financial_manager
+--------------------------------------
+ [synthetic-id]
+(1 row)
+
+ dblink_connect
+----------------
+ OK
+ OK
+ OK
+(3 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ SET
+ SET
+(2 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:c1-concurrency.sql:39: NOTICE:  PASS real waiter behind c1_a
+ wait_blocked
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ verify
+--------
+
+psql:c1-concurrency.sql:45: NOTICE:  PASS parallel first agreements replay one pending contract
+(1 row)
+
+ result
+--------
+(0 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+                                  result
+--------------------------------------------------------------------------
+ {"state": "pending", "contract": "[synthetic-id]"}
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:c1-concurrency.sql:55: NOTICE:  PASS real waiter behind c1_a
+ wait_blocked
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+psql:c1-concurrency.sql:57: NOTICE:  Coverage overlaps an existing trial or agreement
+ result
+--------
+(0 rows)
+
+psql:c1-concurrency.sql:60: NOTICE:  PASS different operation IDs cannot create duplicate first agreements
+ verify
+--------
+
+(1 row)
+
+ result
+--------
+(0 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ wait_blocked
+psql:c1-concurrency.sql:66: NOTICE:  PASS real waiter behind c1_a
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+psql:c1-concurrency.sql:69: NOTICE:  PASS parallel human issuance returns one invoice
+ verify
+--------
+
+(1 row)
+
+ result
+--------
+(0 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:c1-concurrency.sql:75: NOTICE:  PASS real waiter behind c1_a
+ wait_blocked
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ verify
+--------
+
+(1 row)
+
+psql:c1-concurrency.sql:77: NOTICE:  PASS parallel Pix returns identical receipt
+ result
+--------
+(0 rows)
+
+psql:c1-concurrency.sql:79: NOTICE:  PASS one settlement audit
+ verify
+--------
+
+(1 row)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+                                                                             result
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"after": "canceled", "action": "cancel", "before": "pending", "contract": "[synthetic-id]", "suspended": false, "was_suspended": false}
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:c1-concurrency.sql:96: NOTICE:  PASS real waiter behind c1_a
+ wait_blocked
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ verify
+psql:c1-concurrency.sql:98: NOTICE:  PASS late credit keeps cancellation
+--------
+
+(1 row)
+
+ result
+--------
+(0 rows)
+
+ verify
+psql:c1-concurrency.sql:101: NOTICE:  PASS late payment retained and access closed
+--------
+
+(1 row)
+
+ dblink_exec
+-------------
+ SET
+(1 row)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ verify
+psql:c1-concurrency.sql:107: NOTICE:  PASS worker claims due invoice
+--------
+
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+psql:c1-concurrency.sql:109: NOTICE:  PASS real waiter behind c1_worker
+ wait_blocked
+--------------
+
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ verify
+psql:c1-concurrency.sql:112: NOTICE:  PASS credit reconciles committed delinquency
+--------
+
+(1 row)
+
+psql:c1-concurrency.sql:114: NOTICE:  PASS one paid invoice with consistent coverage
+ verify
+--------
+
+(1 row)
+
+ dblink_disconnect
+-------------------
+ OK
+ OK
+ OK
+(3 rows)
+
+PASS suite exit 0 c1-concurrency
+SUITE operations-f3-concurrency
+psql:operations-f3-concurrency.sql:3: NOTICE:  extension "dblink" already exists, skipping
+ dblink_connect
+----------------
+ OK
+ OK
+(2 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ dblink_exec
+-------------
+ INSERT 0 1
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ dblink_exec
+-------------
+ COMMIT
+(1 row)
+
+ id
+----
+(0 rows)
+
+ dblink_exec
+-------------
+ BEGIN
+(1 row)
+
+ active
+--------
+ t
+(1 row)
+
+ dblink_exec
+-------------
+ UPDATE 1
+(1 row)
+
+ dblink_send_query
+-------------------
+                 1
+(1 row)
+
+ id
+----
+(0 rows)
+
+ dblink_exec
+-------------
+ ROLLBACK
+(1 row)
+
+ dblink_disconnect | dblink_disconnect
+-------------------+-------------------
+ OK                | OK
+(1 row)
+
+ no_partial_booking
+--------------------
+                  1
+(1 row)
+
+PASS suite exit 0 operations-f3-concurrency

@@ -1,0 +1,13 @@
+K1-C metrics and reproducibility
+Load runtime base: 13c7361f34a599c35d2236b167a2dd4544822a16
+Final functional verification: 19b7ba687cc2e235f49e36d55ea6683a00bf6095
+Source tree: b36eb33673ea55bdfe0d82d54a2d2b1f67ca25e7
+Migrations tree: df1cf0424e23c1168ed4920caa67f2aa29a5ad90
+Test tree: fee060d3bd549680b391304c7ae112df12e183af
+Next build status: exit 0. OpenNext build status: exit 0.
+Native accessibility: 36 screen/theme checks. Workers accessibility: 8 screen/theme checks.
+CSP authentication: validated both runtimes with real local sessions.
+Load: two calibrations, burst VU 10/25/50/100 and short sustained VU 10/25/50/100, fixed 20000 ms.
+SQL: full 36-version local replay, 5 executed regression suites, 2 preflight variants and EXPLAIN.
+Backup test uses a separate database and Storage API in the same synthetic local cluster.
+Git main: e013b4a8be6aceb43b73ca6fe4fb4ab674ec6bb1

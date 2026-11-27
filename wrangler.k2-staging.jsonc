@@ -1,10 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "lps-agenda-staging",
+  "account_id": "c9fd2ea0bea382bc44b053b61c7070fd",
   "main": "worker.j1.mjs",
   "compatibility_date": "2026-11-25",
   "compatibility_flags": ["nodejs_compat"],
-  // K2-A has no public ingress. Add exactly one approved, Access-protected host in K2-B.
+  // Enable workers.dev only after verifying the individual Access policy for this Worker.
   "workers_dev": false,
   "preview_urls": false,
   "routes": [],
@@ -19,6 +20,7 @@
     "logs": { "enabled": true, "invocation_logs": false, "head_sampling_rate": 1 }
   },
   "vars": {
+    "NEXT_PUBLIC_APP_URL": "https://lps-agenda-staging.lpsagenda-qa.workers.dev",
     "NEXT_PUBLIC_SUPABASE_URL": "https://kffhoimijhsddodqxezs.supabase.co",
     "CSP_ENFORCE": "true",
     "MANUAL_TRIAL_ONBOARDING_ENABLED": "false",

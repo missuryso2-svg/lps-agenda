@@ -1,0 +1,11 @@
+2026-11-27 K2-B approved workers.dev ingress.
+PASS authenticated Wrangler account. Read-only inventories returned no zones, no Workers and no listed subscriptions.
+PASS Cloudflare account API registered and independently returned lpsagenda-qa.workers.dev.
+PASS account Worker inventory remained empty after registration.
+Workers account settings returned standard usage model. This setting does not establish Zero Trust or Images plan availability.
+Cloudflare OAuth API responses after registration: Access apps HTTP 403 code 9999, Zero Trust organization HTTP 403 code 10000, Images stats HTTP 403 code 10000.
+PASS OpenNext build and Wrangler packaging only, ingress disabled and preview URLs disabled.
+Candidate origin: https://lps-agenda-staging.lpsagenda-qa.workers.dev
+Dry-run package: 13403.68 KiB uncompressed, 2912.44 KiB gzip.
+PASS 1722 generated files: staging origin and ref present, no staging server keys or commercial Supabase ref
+No Worker, Access policy or hosted runtime verification.

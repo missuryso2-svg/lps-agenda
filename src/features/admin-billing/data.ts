@@ -99,16 +99,20 @@ export async function directory(q: Params, id?: string) {
     z.enum(["manual", "trial", "asaas", "none", "reconcile"]).nullable(),
     param(q, "origem"),
   );
-  const rows = read(
-    await db.rpc("finance_directory", {
-      shop_id: id ? validated(uuid, id) : null,
-      name_prefix: query,
-      origin_filter: origin,
-      after_id: optionalId(q, "apos"),
-      page_size: id ? 1 : size + 1,
-    }),
-    z.array(shopRow),
+  const trial = id ? null : validated(
+    z.enum(["active", "expired", "ending_soon", "last_day"]).nullable(),
+    param(q, "teste"),
   );
+  const args = {
+    name_prefix: query,
+    after_id: optionalId(q, "apos"),
+    page_size: id ? 1 : size + 1,
+  };
+  if (trial && origin && origin !== "trial") return [];
+  const response = trial
+    ? await db.rpc("finance_trial_directory", { ...args, trial_filter: trial })
+    : await db.rpc("finance_directory", { ...args, shop_id: id ? validated(uuid, id) : null, origin_filter: origin });
+  const rows = read(response, z.array(shopRow));
   const observed = Date.now();
   return rows.map((row) => ({
     ...row,

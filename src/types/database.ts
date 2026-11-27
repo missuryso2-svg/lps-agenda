@@ -1044,6 +1044,12 @@ export type Database = {
         }[];
       };
       finance_capability: { Args: Record<never, never>; Returns: "operator" | "manager" };
+      finance_trial_directory: { Args: {
+        trial_filter: string;
+        name_prefix?: string | null;
+        after_id?: string | null;
+        page_size?: number;
+      }; Returns: Json[] };
       finance_directory: { Args: { shop_id?: string | null; name_prefix?: string | null; origin_filter?: string | null;
         after_id?: string | null; page_size?: number }; Returns: Json[] };
       finance_overview: { Args: { bill_month: string }; Returns: Json };

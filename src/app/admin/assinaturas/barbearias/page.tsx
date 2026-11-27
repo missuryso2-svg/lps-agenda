@@ -12,6 +12,7 @@ export default async function Directory({ searchParams }: PageProps) {
   const path = adminPath + "/barbearias";
   const name = param(q, "nome");
   const origin = param(q, "origem");
+  const trial = param(q, "teste");
 
   return (
     <>
@@ -31,8 +32,18 @@ export default async function Directory({ searchParams }: PageProps) {
               ))}
             </select>
           </label>
+          <label>
+            Situação do trial
+            <select name="teste" defaultValue={trial ?? ""}>
+              <option value="">Todas</option>
+              <option value="active">Vigentes</option>
+              <option value="expired">Expirados</option>
+              <option value="ending_soon">Vencem em até três dias</option>
+              <option value="last_day">Último dia</option>
+            </select>
+          </label>
           <button className="fa-primary"><Search size={16} aria-hidden /> Filtrar</button>
-          {(name || origin) && <Link className="fa-button fa-clear" href={path}>Limpar filtros</Link>}
+          {(name || origin || trial) && <Link className="fa-button fa-clear" href={path}>Limpar filtros</Link>}
         </form>
         <p className="fa-result-count">{Math.min(rows.length, size)} {rows.length === 1 ? "barbearia nesta página" : "barbearias nesta página"}</p>
         <Shops rows={rows} />

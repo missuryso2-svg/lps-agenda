@@ -47,7 +47,8 @@ const actions = Object.fromEntries(
 );
 const ids = () => randomUUID();
 const slug = () => "qa-" + ids();
-function sql(command) {
+function sql(command, role = "postgres") {
+  assert.ok(["postgres", "supabase_admin"].includes(role));
   return docker(
     [
       "exec",
@@ -58,7 +59,7 @@ function sql(command) {
       "-v",
       "ON_ERROR_STOP=1",
       "-U",
-      "postgres",
+      role,
       "-d",
       "postgres",
     ],

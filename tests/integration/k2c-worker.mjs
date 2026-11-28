@@ -168,6 +168,16 @@ try {
     expectStatus(response, [302, 303, 307]);
     assert.equal(new URL(response.headers.get("location"), origin).pathname, "/login");
     log("PASS private HTML, nonce CSP and separated Access/application sessions");
+    if (process.argv.includes("--qr-sample")) {
+      for (const label of ["qr_sample_2", "qr_sample_3"]) {
+        const qr = await request(label, "/dashboard/qr", { actor: owner });
+        expectStatus(qr, 200);
+        const encoded = /data:image\/png;base64,([A-Za-z0-9+/=]+)/.exec(await qr.text())?.[1];
+        assert.ok(encoded, "Rendered QR PNG");
+        assert.equal(Buffer.from(encoded, "base64")[25], 0, "Grayscale PNG");
+      }
+      log("PASS hosted grayscale QR PNG header");
+    }
     const loginAction = process.env.K2C_LOGIN_ACTION_ID;
     if (loginAction) {
       assert.match(loginAction, /^[a-f0-9]{42}$/);
@@ -206,6 +216,17 @@ try {
       });
       const list = async () => ok(await admin.storage.from(route.bucket).list(route.prefix));
       const logo = route.name === "logo";
+      if (process.argv.includes("--media-smoke")) {
+        if (!logo) continue;
+        expectStatus(await change("smoke_png", null, png, "image/png"), 200);
+        const key = await route.read();
+        assert.ok(key.startsWith(route.prefix + "/") && key.endsWith(".webp"));
+        await verifyOutput(route.bucket, key, 1200, 600, true, false);
+        expectStatus(await change("smoke_delete", key), 200);
+        assert.equal(await route.read(), null);
+        assert.equal((await list()).length, 0);
+        continue;
+      }
       expectStatus(await change("staff", null, png, "image/png", staff), 403);
       expectStatus(await change("other_tenant", null, png, "image/png", other), logo ? 409 : 403);
       expectStatus(await request(route.name + "_foreign_origin", route.path, { actor: owner, method: "POST", body: png,
@@ -250,7 +271,7 @@ try {
       assert.equal(await route.read(), null);
       assert.equal((await list()).length, 0);
     }
-    log("PASS hosted media matrix");
+    log(process.argv.includes("--media-smoke") ? "PASS hosted Images Binding smoke" : "PASS hosted media matrix");
   }
 } catch (error) {
   log("FAIL", { phase, message: error.code === "ERR_ASSERTION" && error.message.includes("Unexpected status") ? error.message : error.cause?.code ?? error.name, suspended: !!suspended });

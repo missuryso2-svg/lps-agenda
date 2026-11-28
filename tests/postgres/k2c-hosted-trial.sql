@@ -9,6 +9,11 @@ declare
   manager_id uuid := gen_random_uuid();
   slug text := 'k2c-trial-' || gen_random_uuid();
   shop uuid;
+  mfa_installed boolean := to_regprocedure('private.has_live_financial_totp(uuid)') is not null;
+  operator_session uuid := gen_random_uuid();
+  manager_session uuid := gen_random_uuid();
+  operator_factor uuid := gen_random_uuid();
+  manager_factor uuid := gen_random_uuid();
   rate_bucket text := 'k2c-' || gen_random_uuid();
   trial private.automatic_premium_trials%rowtype;
   terms jsonb;
@@ -37,6 +42,14 @@ begin
     raise exception 'distributed limiter threshold or scope';
   end if;
   insert into k2c_trial_result values ('rate_threshold_and_bucket_isolation_without_load');
+  if mfa_installed then
+    insert into auth.mfa_factors(id,user_id,created_at,updated_at,factor_type,status)
+    values (operator_factor,operator_id,now(),now(),'totp','verified'),
+           (manager_factor,manager_id,now(),now(),'totp','verified');
+    insert into auth.sessions(id,user_id,aal,factor_id)
+    values (operator_session,operator_id,'aal2',operator_factor),
+           (manager_session,manager_id,'aal2',manager_factor);
+  end if;
   update private.automatic_premium_trial_activation set enabled=true where singleton;
   if not public.automatic_premium_trial_available() then raise exception 'automatic gate did not open'; end if;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', owner_id, 'role', 'authenticated')::text, true);
@@ -69,6 +82,15 @@ begin
     'due_month_offset',1,'due_time','10:30','zone','UTC','booking_impact_accepted',true)
   into strict terms from public.plans where code='basico';
   perform set_config('request.jwt.claims', jsonb_build_object('sub', operator_id, 'role', 'authenticated', 'aal', 'aal1')::text, true);
+  if mfa_installed then
+    begin
+      perform public.finance_capability();
+      raise exception 'financial RPC unexpectedly accepts AAL1';
+    exception when sqlstate 'LP037' then null;
+    end;
+    perform set_config('request.jwt.claims',
+      jsonb_build_object('sub',operator_id,'role','authenticated','aal','aal2','session_id',operator_session)::text,true);
+  end if;
   if public.finance_capability() is distinct from 'operator' then raise exception 'incorrect operator role'; end if;
   begin
     perform public.finance_operator(manager_id,'revoke','QA');
@@ -122,10 +144,11 @@ begin
     raise exception 'cancel did not block bookings or discarded payment';
   end if;
   insert into k2c_trial_result values ('suspend_resume_cancel_with_payment_history');
-  perform set_config('request.jwt.claims', jsonb_build_object('sub', manager_id, 'role', 'authenticated', 'aal', 'aal1')::text, true);
+  perform set_config('request.jwt.claims', jsonb_build_object('sub', manager_id, 'role', 'authenticated',
+    'aal', case when mfa_installed then 'aal2' else 'aal1' end, 'session_id', manager_session)::text, true);
   if public.finance_capability() is distinct from 'manager' then raise exception 'incorrect manager role'; end if;
   insert into k2c_trial_result values ('trial_cap_downgrade_consent_invoice_pix_idempotency_audit'),
-    ('pre_fix_operator_and_manager_capability_accept_aal1');
+    (case when mfa_installed then 'financial_replay_and_payment_require_aal2_post_fix' else 'pre_fix_operator_and_manager_capability_accept_aal1' end);
 end $$;
 select phase from k2c_trial_result order by phase;
 rollback;

@@ -1,0 +1,1 @@
+{"since_utc":"2026-11-28T08:23:57Z","captured_utc":"2026-11-28T08:38:50Z","groups":[{"quantiles":{"cpuTimeP50":19409,"cpuTimeP99":251117,"memoryUsageBytesP50":27555508,"memoryUsageBytesP90":31228024,"memoryUsageBytesP99":43424148,"wallTimeP50":862794,"wallTimeP99":2721507},"sum":{"errors":0,"requests":63}}],"errors":[null]}

@@ -1,0 +1,66 @@
+K2-C local verification | 2026-11-28
+PASS Vitest 43 files, 838 tests
+PASS npm run typecheck
+PASS npm run lint
+PASS isolated Linux Next.js build at 78fb988
+PASS isolated Linux OpenNext build at 78fb988
+PASS Wrangler dry-run 13429.42 KiB / gzip 2913.74 KiB; no hosted deployment
+Wrangler check startup candidate: profile 223.3 ms, 209.9 ms active and 6.8 ms idle
+Prior published commit local workerd sample: 197.5 ms active, startup frame 178.5 ms
+Benchmark Node qrcode same pixels at 720x720, 30 warmed iterations: old 28.63 ms CPU and 5363 bytes, candidate 21.87 ms CPU and 2878 bytes
+PASS focused Vitest simulates decoder quota error 9422; no Storage write and old reference retained
+PASS isolated PostgreSQL QA restored from synthetic database before applying migration 37
+PASS PostgreSQL migration 37 installed as postgres in isolated restored QA database
+SUITE postgres-trial-local.log
+PASS automatic switch starts disabled
+PASS dedicated insertion role has no payment or update grants
+PASS public announcement follows local switch
+PASS anon cannot create or claim
+PASS unconfirmed owner cannot start a trial
+PASS same owner and identifier is an idempotent retry
+PASS owner sees unclaimed trial
+PASS owner can claim welcome once
+PASS reload cannot claim welcome again
+PASS owner cannot turn on offer
+PASS owner cannot write grant
+PASS owner cannot register a financial agreement
+PASS owner of another tenant cannot read trial
+PASS owner of another tenant cannot claim welcome
+PASS staff cannot read the owner trial
+PASS historical owner and invited staff do not get grants
+PASS original pending contract remains
+PASS real Premium catalog and exact 604800 seconds with no billing terms
+PASS active at start and immediately before exact expiry
+PASS at exact expiry and immediately after, bookings stop
+PASS expiry evaluation creates no payment
+PASS Data API service role cannot alter the trial plan or time
+PASS Data API service role cannot delete the subscription directly
+PASS Premium rejects the eleventh active professional
+PASS operator sees automatic Premium in existing directory
+PASS early conversion requires explicit booking impact consent through Data API
+PASS downgrade above the agreed cap is rejected
+PASS failed downgrade preserves ten professionals, full trial and no payment
+PASS early conversion is pending and operation is idempotent
+PASS pending conversion ends free booking without writing a payment
+PASS directory classifies only verified Pix as conversion
+PASS verified manual Pix restores coverage; original trial history is intact
+PASS tenant deletion preserves history and recreation never grants again
+SUITE postgres-concurrency.log
+PASS concurrency starts with release disabled
+PASS parallel distinct requests grant one Premium period
+PASS first concurrent window claims welcome
+PASS concurrent second window cannot claim again
+PASS invitation committed first disqualifies the competing onboarding
+SUITE postgres-mfa.log
+PASS AAL1 operator cannot read private financial data
+PASS AAL1 operator cannot confirm Pix directly
+PASS AAL2 ordinary user still lacks a grant
+PASS malformed session identifier denied
+PASS foreign AAL2 session denied
+PASS live AAL2 TOTP grants operator capability
+PASS operator cannot manage grants even at AAL2
+PASS live AAL2 TOTP grants manager capability and registry read
+PASS expired server session denied
+PASS removed verification denied despite old JWT
+PASS revoked manager session denied despite old JWT
+PASS no direct grants on Auth tables for REST roles

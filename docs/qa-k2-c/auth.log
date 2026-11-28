@@ -1,0 +1,10 @@
+PASS anonymous Data API appointment denial and hosted signup disabled
+PASS hosted signup/recovery tokens accepted only once, callback targets internal and staging Auth cookie set
+INFO staging Auth cookie attributes secure=false httpOnly=false
+INFO signup and recovery links used Auth Admin generateLink; SMTP delivery was not exercised
+PASS application password reset invalidates the old password and accepts the replacement
+PASS hosted Supabase TOTP enrollment and AAL1 to AAL2 promotion
+PASS new password session remains AAL1 and neither AAL2 alone nor REST private schema grants financial access
+PASS refresh tokens rejected after global sign-out; old access token accepted by getUser=false
+PASS Auth fixture cleanup
+PASS Auth fixture cleanup

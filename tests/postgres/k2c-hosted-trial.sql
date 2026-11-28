@@ -9,6 +9,7 @@ declare
   manager_id uuid := gen_random_uuid();
   slug text := 'k2c-trial-' || gen_random_uuid();
   shop uuid;
+  rate_bucket text := 'k2c-' || gen_random_uuid();
   trial private.automatic_premium_trials%rowtype;
   terms jsonb;
   operation uuid := gen_random_uuid();
@@ -30,6 +31,12 @@ begin
   insert into private.financial_operators(user_id, level, infrastructure_identity, grant_reason)
   values (operator_id, 'operator', session_user, 'Synthetic QA'),
          (manager_id, 'manager', session_user, 'Synthetic QA');
+  if not public.consume_booking_rate_limit(rate_bucket,86400,1)
+     or public.consume_booking_rate_limit(rate_bucket,86400,1)
+     or not public.consume_booking_rate_limit(rate_bucket||'-independent',86400,1) then
+    raise exception 'distributed limiter threshold or scope';
+  end if;
+  insert into k2c_trial_result values ('rate_threshold_and_bucket_isolation_without_load');
   update private.automatic_premium_trial_activation set enabled=true where singleton;
   if not public.automatic_premium_trial_available() then raise exception 'automatic gate did not open'; end if;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', owner_id, 'role', 'authenticated')::text, true);
@@ -101,6 +108,20 @@ begin
      or not exists(select from private.automatic_premium_trials t where t.shop_id=shop and t.ends_at=trial.ends_at) then
     raise exception 'history changed or audit missing';
   end if;
+  perform public.finance_contract_action(gen_random_uuid(),shop,contract,'suspend','QA pause');
+  if private.booking_access_at(shop,clock_timestamp())->>'reason' is distinct from 'suspended' then
+    raise exception 'suspension did not block bookings';
+  end if;
+  perform public.finance_contract_action(gen_random_uuid(),shop,contract,'resume','QA resume');
+  if private.booking_access_at(shop,clock_timestamp())->>'allowed' is distinct from 'true' then
+    raise exception 'paid resume did not restore coverage';
+  end if;
+  perform public.finance_contract_action(gen_random_uuid(),shop,contract,'cancel','QA cancel');
+  if private.booking_access_at(shop,clock_timestamp())->>'allowed' is distinct from 'false'
+     or (select count(*) from public.payments p where p.barbershop_id=shop and p.status='paid')<>1 then
+    raise exception 'cancel did not block bookings or discarded payment';
+  end if;
+  insert into k2c_trial_result values ('suspend_resume_cancel_with_payment_history');
   perform set_config('request.jwt.claims', jsonb_build_object('sub', manager_id, 'role', 'authenticated', 'aal', 'aal1')::text, true);
   if public.finance_capability() is distinct from 'manager' then raise exception 'incorrect manager role'; end if;
   insert into k2c_trial_result values ('trial_cap_downgrade_consent_invoice_pix_idempotency_audit'),

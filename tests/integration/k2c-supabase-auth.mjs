@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { setTimeout as pause } from "node:timers/promises";
 
 const url = "https://kffhoimijhsddodqxezs.supabase.co";
 const origin = "https://lps-agenda-staging.lpsagenda-qa.workers.dev";
@@ -77,6 +78,26 @@ try {
   console.log("PASS hosted signup/recovery tokens accepted only once, callback targets internal and staging Auth cookie set");
   console.log("INFO staging Auth cookie attributes secure=" + /; Secure\b/i.test(cookie) + " httpOnly=" + /; HttpOnly\b/i.test(cookie));
   console.log("INFO signup and recovery links used Auth Admin generateLink; SMTP delivery was not exercised");
+  const resetAction = process.env.K2C_RESET_ACTION_ID;
+  if (resetAction) {
+    assert.match(resetAction, /^[a-f0-9]{42}$/);
+    const recoveredCookies = reset.headers.getSetCookie()
+      .filter((line) => line.startsWith("sb-kffhoimijhsddodqxezs-auth-token") && !/; Max-Age=0/i.test(line))
+      .map((line) => line.split(";")[0]).join("; ");
+    assert.ok(recoveredCookies);
+    const password = randomUUID() + "Qa!9";
+    const changed = await fetch(origin + "/redefinir-senha", {
+      method: "POST", redirect: "manual", signal: AbortSignal.timeout(15000),
+      headers: { "cf-access-token": K2C_ACCESS, origin, cookie: recoveredCookies,
+        "content-type": "text/plain;charset=UTF-8", "next-action": resetAction, accept: "text/x-component" },
+      body: JSON.stringify([{ password, confirmPassword: password }]),
+    });
+    assert.ok([200, 303].includes(changed.status));
+    assert.match(changed.headers.get("x-action-redirect") ?? changed.headers.get("location") ?? "", /^\/dashboard(?:;|$)/);
+    assert.ok((await make(K2C_PUBLIC_KEY).auth.signInWithPassword(mailFixture)).error);
+    ok(await make(K2C_PUBLIC_KEY).auth.signInWithPassword({ ...mailFixture, password }));
+    console.log("PASS application password reset invalidates the old password and accepts the replacement");
+  }
 
   phase = "totp";
   const credentials = { email: "k2c-mfa-" + randomUUID() + "@example.test", password: randomUUID() + "Qa!7" };
@@ -91,6 +112,7 @@ try {
   assert.equal(verified.length, 1);
   assert.equal(verified[0].status, "verified");
   console.log("PASS hosted Supabase TOTP enrollment and AAL1 to AAL2 promotion");
+  if (process.argv.includes("--observe-totp")) await pause(20_000);
 
   phase = "authorization";
   assert.equal((await actor.rpc("finance_capability")).error?.code, "42501");

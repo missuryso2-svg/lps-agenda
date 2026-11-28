@@ -25,7 +25,7 @@ const shops = [];
 let phase = "preflight";
 let suspended;
 function ok(result) {
-  if (result.error) throw new Error("Supabase returned an error");
+  if (result.error) throw new Error("Supabase returned an error", { cause: result.error });
   return result.data;
 }
 async function account(role) {
@@ -41,7 +41,7 @@ async function account(role) {
     },
   });
   ok(await db.auth.signInWithPassword({ email, password }));
-  return { id: user.id, db, role, cookie: () => Array.from(cookies.values()).map(({ name, value }) => name + "=" + value).join("; ") };
+  return { id: user.id, db, role, credentials: { email, password }, cookie: () => Array.from(cookies.values()).map(({ name, value }) => name + "=" + value).join("; ") };
 }
 async function shopFor(actor) {
   const id = randomUUID();
@@ -116,7 +116,40 @@ try {
   const barber = randomUUID();
   ok(await admin.from("barbers").insert({ id: barber, barbershop_id: shop, name: "Profissional K2-C QA" }));
 
-  if (process.argv.includes("--profile")) {
+  if (process.argv.includes("--data-api")) {
+    phase = "data_api";
+    const visitor = createClient(dbUrl, K2C_PUBLIC_KEY, { auth: { persistSession: false } });
+    const customer = ok(await admin.from("customers").insert({ barbershop_id: shop, full_name: "Cliente K2-C", phone: "11999990000" }).select("id").single()).id;
+    const service = ok(await admin.from("services").insert({ barbershop_id: shop, name: "Corte QA", duration_minutes: 30, price_cents: 6500 }).select("id").single()).id;
+    ok(await admin.from("barber_services").insert({ barbershop_id: shop, barber_id: barber, service_id: service }));
+    const start = new Date(Date.now() + 86_400_000);
+    start.setUTCHours(13, 0, 0, 0);
+    const weekday = start.getUTCDay();
+    ok(await admin.from("business_hours").insert({ barbershop_id: shop, weekday, opens_at: "08:00", closes_at: "18:00" }));
+    ok(await admin.from("barber_working_hours").insert({ barbershop_id: shop, barber_id: barber, weekday, starts_at: "08:00", ends_at: "18:00" }));
+    phase = "data_api_appointment";
+    const payload = { barbershop_id: shop, barber_id: barber, customer_id: customer, service_id: service,
+      starts_at: start.toISOString(), ends_at: new Date(+start + 1_800_000).toISOString(), price_cents: 1, created_by: other.id };
+    const row = ok(await staff.db.from("appointments").insert(payload).select("id,price_cents,created_by,status").single());
+    assert.equal(row.price_cents, 6500);
+    assert.equal(row.created_by, staff.id);
+    assert.equal(row.status, "scheduled");
+    for (const client of [staff.db, owner.db]) {
+      for (const update of [{ price_cents: 1 }, { created_by: other.id }, { status: "completed" }]) {
+        assert.equal((await client.from("appointments").update(update).eq("id", row.id)).error?.code, "23514");
+      }
+      assert.equal((await client.rpc("finance_capability")).error?.code, "42501");
+    }
+    ok(await owner.db.from("appointments").update({ status: "confirmed" }).eq("id", row.id));
+    ok(await owner.db.from("services").update({ price_cents: 7900 }).eq("id", service));
+    const historical = ok(await owner.db.from("appointments").select("price_cents,created_by,status").eq("id", row.id).single());
+    assert.deepEqual(historical, { price_cents: 6500, created_by: staff.id, status: "confirmed" });
+    assert.deepEqual(ok(await other.db.from("appointments").select("id").eq("id", row.id)), []);
+    assert.deepEqual(ok(await other.db.from("customers").select("phone").eq("id", customer)), []);
+    assert.equal((await visitor.from("appointments").select("id").eq("id", row.id)).error?.code, "42501");
+    assert.equal((await visitor.rpc("finance_capability")).error?.code, "42501");
+    log("PASS hosted Data API tenant isolation, PII, permitted transition, historical price and creator, financial RPC denials");
+  } else if (process.argv.includes("--profile")) {
     phase = "profile";
     for (const [label, path, actor] of [
       ["login", "/login"], ["dashboard", "/dashboard", owner],
@@ -135,6 +168,20 @@ try {
     expectStatus(response, [302, 303, 307]);
     assert.equal(new URL(response.headers.get("location"), origin).pathname, "/login");
     log("PASS private HTML, nonce CSP and separated Access/application sessions");
+    const loginAction = process.env.K2C_LOGIN_ACTION_ID;
+    if (loginAction) {
+      assert.match(loginAction, /^[a-f0-9]{42}$/);
+      const actionHeaders = { origin, "content-type": "text/plain;charset=UTF-8", "next-action": loginAction, accept: "text/x-component" };
+      const invalid = await request("login_action_zod_invalid", "/login", { method: "POST", headers: actionHeaders, body: JSON.stringify([{}]) });
+      expectStatus(invalid, 200);
+      assert.match(await invalid.text(), /Revise os campos destacados/);
+      const valid = await request("login_action_valid", "/login", {
+        method: "POST", headers: actionHeaders, body: JSON.stringify([owner.credentials, "/dashboard"]),
+      });
+      expectStatus(valid, [200, 303]);
+      assert.match(valid.headers.get("x-action-redirect") ?? valid.headers.get("location") ?? "", /^\/dashboard(?:;|$)/);
+      assert.ok(valid.headers.getSetCookie().some((line) => line.startsWith("sb-kffhoimijhsddodqxezs-auth-token")));
+    }
   } else {
     phase = "media";
     const { png, jpeg, webp, animatedWebp, oversizedPixels, brokenPng } = await uploadImages();
@@ -206,7 +253,7 @@ try {
     log("PASS hosted media matrix");
   }
 } catch (error) {
-  log("FAIL", { phase, message: error.code === "ERR_ASSERTION" && error.message.includes("Unexpected status") ? error.message : error.name, suspended: !!suspended });
+  log("FAIL", { phase, message: error.code === "ERR_ASSERTION" && error.message.includes("Unexpected status") ? error.message : error.cause?.code ?? error.name, suspended: !!suspended });
   process.exitCode = 1;
 } finally {
   try {

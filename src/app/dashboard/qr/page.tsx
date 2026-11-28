@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "@/components/dashboard/account-j2.css";
-import QRCode from "qrcode";
+import { bookingQrImage } from "@/features/public-booking/qr/image";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { requireDashboardContext } from "@/lib/auth/dal";
 import { publicBarbershopLogoUrl } from "@/features/barbershop/logo";
@@ -20,14 +20,7 @@ export default async function BookingQrPage() {
     shop.slug,
     process.env.NODE_ENV === "development",
   );
-  const image = address
-    ? await QRCode.toDataURL(address.url, {
-        margin: 4,
-        scale: 16,
-        errorCorrectionLevel: "M",
-        color: { dark: "#000000", light: "#ffffff" },
-      })
-    : null;
+  const image = address ? await bookingQrImage(address.url) : null;
   const displayLogo = publicBarbershopLogoUrl(shop.id, shop.logo_url);
   return (
     <section className="j2-c3">

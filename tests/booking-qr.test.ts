@@ -1,4 +1,8 @@
 import { describe, it, expect } from "vitest";
+import QRCode from "qrcode";
+import sharp from "sharp";
+import jsQR from "jsqr";
+import { bookingQrImage } from "@/features/public-booking/qr/image";
 import {
   bookingAddress,
   printableLogo,
@@ -56,4 +60,17 @@ describe("endereço do QR", () => {
     ])
       expect(printableLogo(l, scope, store)).toBeNull();
   });
+});
+
+it("preserva os pixels, a margem e a leitura do QR otimizado para impressão", async () => {
+  const url = "https://agenda.example.org/agendar/minha-loja";
+  const baseline = await QRCode.toBuffer(url, {
+    margin: 4, scale: 16, errorCorrectionLevel: "M",
+    color: { dark: "#000000", light: "#ffffff" },
+  });
+  const optimized = Buffer.from((await bookingQrImage(url)).split(",")[1], "base64");
+  const decoded = await sharp(optimized).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  expect(decoded.data.equals(await sharp(baseline).ensureAlpha().raw().toBuffer())).toBe(true);
+  expect(decoded.info.width).toBe(decoded.info.height);
+  expect(jsQR(new Uint8ClampedArray(decoded.data), decoded.info.width, decoded.info.height)?.data).toBe(url);
 });

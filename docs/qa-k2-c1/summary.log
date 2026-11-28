@@ -1,0 +1,27 @@
+K2-C.1 | 2026-11-28 | sanitized evidence
+GitHub public missuryso2-svg/lps-agenda
+PASS fetch, fsck strict, checked source branch clean and both main refs ancestral
+PASS historical Gitleaks range 8d1e18b..3e159ab: one generic false positive, existing SQL suite basename
+PASS source tree Gitleaks: suite basename plus eight preexisting test fixture matches, exact blobs identical to origin/main
+PASS no new author/committer e-mail values, tracked env only .env.example, targeted secret markers absent in new history
+PASS baseline and candidate Vercel config git.deploymentEnabled=false
+PASS Cloudflare Worker settings offered Git repository connection, no linked repository
+PASS initial push 3e159ab32d1a968bbafcda504e3b2d8c305a829d (staging branch only)
+PASS zero GitHub Actions runs and zero Vercel deployments for staging branch after initial push
+PASS production ledger remained 29, last 20261120180000
+PASS explicit staging dry-run/apply 20261128082411_financial_mfa_required, no seed/Vault, staging ledger 37
+PASS 1727 candidate files scanned: correct staging origin and Supabase ref, none with production ref or stage server secrets
+Worker source 3e159ab
+Worker 100% fde7ea0a-03b2-410e-bf44-34fcf3df5cdf, Images binding, protected workers.dev only, previews false, preview HTTP 404
+PASS forwarded-header probe preserved canonical HTTPS app redirect
+PASS hosted SQL transaction post migration 37: financial_replay_and_payment_require_aal2_post_fix
+PASS hosted SQL transaction: rate_threshold_and_bucket_isolation_without_load
+PASS hosted SQL transaction: suspend_resume_cancel_with_payment_history
+PASS hosted SQL transaction: trial_cap_downgrade_consent_invoice_pix_idempotency_audit
+PASS hosted SQL transaction: trial_premium_once_welcome_exact_expiry_no_charge
+PASS final staging inventory {"auth_users":0,"shops":0,"financial_grants":0,"media_objects":0,"manual_trial":false,"auto_trial":false,"photos_public":false}
+PASS 43 Vitest files, 838 tests, Typecheck and Lint
+PASS standalone isolated Linux Next.js 16.4.5 production build and isolated OpenNext build from 3e159ab
+PASS Wrangler dry-run package: 13431.99 KiB / gzip 2916.06 KiB
+PASS local PostgreSQL MFA migration regression (see postgres-mfa.log)
+PASS git diff --check

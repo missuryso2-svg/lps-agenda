@@ -1,0 +1,6 @@
+PASS AAL1 role holders blocked by server, SQL reads and direct Pix RPC; ordinary user denied
+PASS live TOTP AAL2 roles and private server pages, manager-only grant/revoke and durable audit actor
+PASS synthetic recovery withdraws grant, replaces lost factor and restores only after verified TOTP and manager approval
+PASS AAL2 refresh retained scope, revoked token and expired session denied directly
+PASS HTTPS login Secure/SameSite=Lax SDK cookie, logout clears and revokes session, foreign origin denied
+PASS exact financial and Auth fixtures removed

@@ -1,0 +1,9 @@
+{"label":"anonymous_landing","status":302,"http_headers_ms":141}
+{"label":"anonymous_login","status":302,"http_headers_ms":47}
+{"label":"anonymous_logo","status":302,"http_headers_ms":49}
+{"label":"anonymous_asset","status":302,"http_headers_ms":36}
+{"label":"logo_smoke_png","status":200,"http_headers_ms":3134}
+{"label":"persisted_webp","bucket":"barbershop-logos","width":1200,"height":600,"bytes":1740,"alpha":true}
+{"label":"logo_smoke_delete","status":200,"http_headers_ms":1995}
+{"label":"PASS hosted Images Binding smoke"}
+{"label":"PASS synthetic fixture cleanup"}

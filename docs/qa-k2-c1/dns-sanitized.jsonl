@@ -1,0 +1,13 @@
+{"name":"lpsagenda.com.br","query":"NS","type":"NS","ttl":3600,"answer":"a.auto.dns.br"}
+{"name":"lpsagenda.com.br","query":"NS","type":"NS","ttl":3600,"answer":"b.auto.dns.br"}
+{"name":"lpsagenda.com.br","query":"SOA","type":"SOA","ttl":3600,"answer":"a.auto.dns.br serial=2026332350"}
+{"name":"lpsagenda.com.br","query":"A","answer":"none returned"}
+{"name":"lpsagenda.com.br","query":"AAAA","answer":"none returned"}
+{"name":"lpsagenda.com.br","query":"MX","type":"MX","ttl":900,"answer":"0 ."}
+{"name":"lpsagenda.com.br","query":"TXT","type":"TXT","ttl":900,"answer":"v=spf1 -all"}
+{"name":"lpsagenda.com.br","query":"CAA","answer":"resolution unavailable","class":"CannotConvertArgumentNoMessage,Microsoft.DnsClient.Commands.ResolveDnsName"}
+{"name":"lpsagenda.com.br","query":"DS","type":"DS","ttl":3600,"answer":"keytag=33150 algorithm=13 digest_type=2"}
+{"name":"www.lpsagenda.com.br","query":"CNAME","answer":"resolution unavailable","class":"DNS_ERROR_RCODE_NAME_ERROR,Microsoft.DnsClient.Commands.ResolveDnsName"}
+{"name":"www.lpsagenda.com.br","query":"A","answer":"resolution unavailable","class":"DNS_ERROR_RCODE_NAME_ERROR,Microsoft.DnsClient.Commands.ResolveDnsName"}
+{"name":"_dmarc.lpsagenda.com.br","query":"TXT","type":"TXT","ttl":900,"answer":"v=DMARC1; p=reject;"}
+{"name":"lpsagenda.com.br","query":"CAA","rcode":0,"answer_count":0,"source":"Google DoH"}

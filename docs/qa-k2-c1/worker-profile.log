@@ -1,0 +1,14 @@
+{"label":"anonymous_landing","status":302,"http_headers_ms":288}
+{"label":"anonymous_login","status":302,"http_headers_ms":60}
+{"label":"anonymous_logo","status":302,"http_headers_ms":64}
+{"label":"anonymous_asset","status":302,"http_headers_ms":49}
+{"label":"login","status":200,"http_headers_ms":556}
+{"label":"dashboard","status":200,"http_headers_ms":487}
+{"label":"agenda","status":200,"http_headers_ms":205}
+{"label":"qr","status":200,"http_headers_ms":205}
+{"label":"dashboard_access_without_app_session","status":307,"http_headers_ms":50}
+{"label":"PASS private HTML, nonce CSP and separated Access/application sessions"}
+{"label":"qr_sample_2","status":200,"http_headers_ms":225}
+{"label":"qr_sample_3","status":200,"http_headers_ms":205}
+{"label":"PASS hosted grayscale QR PNG header"}
+{"label":"PASS synthetic fixture cleanup"}

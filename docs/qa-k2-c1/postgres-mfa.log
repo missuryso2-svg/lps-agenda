@@ -1,0 +1,12 @@
+PASS AAL1 operator cannot read private financial data
+PASS AAL1 operator cannot confirm Pix directly
+PASS AAL2 ordinary user still lacks a grant
+PASS malformed session identifier denied
+PASS foreign AAL2 session denied
+PASS live AAL2 TOTP grants operator capability
+PASS operator cannot manage grants even at AAL2
+PASS live AAL2 TOTP grants manager capability and registry read
+PASS expired server session denied
+PASS removed verification denied despite old JWT
+PASS revoked manager session denied despite old JWT
+PASS no direct grants on Auth tables for REST roles

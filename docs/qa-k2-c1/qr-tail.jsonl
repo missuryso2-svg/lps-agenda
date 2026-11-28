@@ -1,0 +1,3 @@
+{"route":"/dashboard/qr","method":"GET","status":200,"outcome":"ok","cpu_ms":125,"wall_ms":972}
+{"route":"/dashboard/qr","method":"GET","status":200,"outcome":"ok","cpu_ms":108,"wall_ms":1166}
+{"route":"/dashboard/qr","method":"GET","status":200,"outcome":"ok","cpu_ms":121,"wall_ms":945}

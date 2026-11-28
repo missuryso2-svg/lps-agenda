@@ -41,3 +41,20 @@ describe("proteção anti-enumeração no cadastro", () => {
     expect(await signUpAction(application)).toMatchObject({ status: "error" });
   });
 });
+
+describe("transporte do cookie de sessão", () => {
+  it.each([
+    ["https://qa.example.test", true],
+    ["http://127.0.0.1:59336", false],
+  ])("segue a origem canônica %s", async (origin, secure) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", origin);
+    vi.resetModules();
+    try {
+      const { authCookieOptions } = await import("@/lib/supabase/auth-cookie-options");
+      expect(authCookieOptions).toEqual({ secure });
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+});

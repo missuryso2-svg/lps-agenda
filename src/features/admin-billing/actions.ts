@@ -16,6 +16,8 @@ export async function submitFinancialOperation(
     const session = await financialSession();
     if (session.status === "anonymous")
       return failure("Sessão expirada. Entre novamente.");
+    if (session.status === "mfa_required")
+      return failure("Confirme o código do autenticador antes de continuar.");
     if (session.status !== "authorized")
       return failure("Acesso financeiro negado.");
     const parsed = operation.safeParse(input);
@@ -93,6 +95,8 @@ export async function submitFinancialOperation(
         return failure("A equipe ativa excede o limite do plano escolhido. Escolha um plano que comporte os profissionais ativos.");
       if (code === "LP033" && v.kind === "agreement")
         return failure("Confirme o impacto nos agendamentos para encerrar o período grátis e registrar o contrato.");
+      if (code === "LP037")
+        return failure("Confirme o código do autenticador antes de continuar.");
       if (code === "42501") return failure("Acesso financeiro negado.");
       if (code === "55000" && v.kind === "pix")
         return failure(
